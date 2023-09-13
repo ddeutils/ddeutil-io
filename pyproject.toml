@@ -1,0 +1,144 @@
+[project]
+name = "ddeutil-io"
+description = "Data Developer & Engineer IO Utility Objects"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "MIT"}
+authors = [{ name = "korawica", email = "korawich.anu@gmail.com" }]
+keywords = ['data', 'config', 'utility']
+classifiers = [
+    "Topic :: Utilities",
+    "Natural Language :: English",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.8.10"
+dependencies = [
+    "ddeutil",
+    "fmtutil",
+    "pydantic==2.3.0",
+    "deepdiff==6.3.1",
+    "pyyaml==6.0.1",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/korawica/ddeutil-io/"
+"Source Code" = "https://github.com/korawica/ddeutil-io/"
+
+[project.optional-dependencies]
+dev = [
+    "clishelf",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "ddeutil.io.__about__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.utils.version]
+version = "./src/ddeutil/io/__about__.py"
+changelog = "CHANGELOG.md"
+
+[tool.coverage.run]
+branch = true
+concurrency = ["thread", "multiprocessing"]
+source = ["ddeutil", "tests"]
+omit = [
+    "*/perfs/",
+    "scripts/",
+    "perf_*.py",
+]
+relative_files = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "raise NotImplementedError"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+console_output_style = "count"
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+]
+filterwarnings = ["error"]
+
+[tool.mypy]
+python_version = "3.8"
+files = ["ddeutil"]
+show_error_codes = true
+pretty = true
+strict = true
+local_partial_types = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "ddeutil.io"
+warn_unused_ignores = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.black]
+line-length = 80
+target-version = ['py38']
+exclude = """
+/(
+    \\.git
+    | \\.__pycache__
+    | \\.idea
+    | \\.ruff_cache
+    | \\.mypy_cache
+    | \\.pytest_cache
+    | \\.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)/
+"""
+
+[tool.ruff]
+line-length = 80
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pypackages__",
+    "build",
+    "dist",
+    "venv",
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
