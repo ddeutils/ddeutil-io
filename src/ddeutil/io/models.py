@@ -129,7 +129,19 @@ class StageData(BaseModel):
         return value
 
 
-# class Params(BaseModel, validate_assignment=True):
+class PathData(BaseModel):
+    ...
+
+
+class FlagData(BaseModel):
+    ...
+
+
+class Engine(BaseModel):
+    paths: Dict[str, pathlib.Path] = Field(default_factory=dict)
+    flags: Dict[str, bool] = Field(default_factory=dict)
+
+
 class Params(BaseModel, validate_assignment=True):
     stages: Dict[str, StageData]
     engine: Dict[str, Any] = Field(default_factory=dict)

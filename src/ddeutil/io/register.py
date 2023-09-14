@@ -14,6 +14,7 @@ from typing import (
     Any,
     Dict,
     List,
+    NoReturn,
     Optional,
     Tuple,
     TypedDict,
@@ -55,6 +56,9 @@ EXC_KEYS: Tuple[str, ...] = (
     "updt",
 )
 DT_FMT: str = "%Y-%m-%d %H:%M:%S"
+ARCHIVED_FLG: bool = True
+AUTO_UPDT_FLG: bool = True
+METADATA: Dict[Any, Any] = {}
 
 
 CompressConst: ConstantType = make_const(
@@ -146,46 +150,39 @@ class Register(BaseRegister):
     properties in the `parameter.yaml` file.
     """
 
-    # @classmethod
-    # def reset(
-    #         cls,
-    #         name: str,
-    #         *,
-    #         author: Optional[str] = None,
-    # ) -> "Register":
-    #     """Reset all configuration data files that exists in any stage but
-    #     does not do anything in the base stage. This method will use when the
-    #     config name of data was changed and does not use the old name. If the
-    #     name was changed and that config data does not reset,
-    #     the configuration files of this data will exist in any moved stage.
-    #
-    #     :param name: str : The fullname of configuration.
-    #
-    #     :param author: Optional[str] : ...
-    #     """
-    #     _name: str = concat(name.split())
-    #     if cls.DOM_PTT in _name:
-    #         _, _name = _name.rsplit(cls.DOM_PTT, maxsplit=1)
-    #
-    #     # Delete all config file from any stage.
-    #     for stage in params.stages:
-    #         cls(
-    #             name,
-    #             stage=stage,
-    #             config={
-    #                 "author": author,
-    #                 "auto_update": False,
-    #                 "force_exists": True,
-    #             },
-    #         ).remove()
-    #
-    #     # Delete data form metadata.
-    #     ConfMetadata(
-    #         params.engine.path.metadata,
-    #         name=_name,
-    #         environ=Env(config=params).name,
-    #     ).remove()
-    #     return cls(name, config={"author": author})
+    @classmethod
+    def reset(
+        cls,
+        name: str,
+        config: Params,
+    ) -> Register:
+        """Reset all configuration data files that exists in any stage but
+        does not do anything in the base stage. This method will use when the
+        config name of data was changed and does not use the old name. If the
+        name was changed and that config data does not reset,
+        the configuration files of this data will exist in any moved stage.
+
+        :param name: str : The fullname of configuration.
+
+        :param config:
+        :type config: Params
+        """
+
+        # Delete all config file from any stage.
+        for stage in config.stages:
+            cls(
+                name,
+                stage=stage,
+                config=config,
+            ).remove()
+
+        # # Delete data form metadata.
+        # ConfMetadata(
+        #     params.engine.path.metadata,
+        #     name=_name,
+        #     environ=Env(config=params).name,
+        # ).remove()
+        return cls(name, config=config)
 
     def __init__(
         self,
@@ -216,9 +213,8 @@ class Register(BaseRegister):
             )
 
         # TODO: Implement meta object
-        self.meta = {}
-        # # Generate data for all conditions of the Register object
-        # self.updt: dt.datetime = get_date("datetime")
+        self.meta = METADATA
+        # Generate data for all conditions of the Register object
         # self.__meta: ConfLoader = ConfMetadata(
         #     params.engine.path.metadata,
         #     name=self.name,
@@ -239,15 +235,15 @@ class Register(BaseRegister):
         # if params.engine.path.stage_archive:
         #     self._cf_archive: bool = True
         #
-        # # Update metadata if the configuration data does not exist, or
-        # # it has any changes.
-        # if not self.config.auto_update:
-        #     self.__log.p_debug("Skip update metadata table/file ...")
-        # elif self.changed == 99:
-        #     self.__log.p_debug(
-        #         f"Configuration data with stage: {self.stage!r} does not "
-        #         f"exists in metadata ..."
-        #     )
+        # Update metadata if the configuration data does not exist, or
+        # it has any changes.
+        if not AUTO_UPDT_FLG:
+            print("Skip update metadata table/file ...")
+        elif self.changed == 99:
+            print(
+                f"Configuration data with stage: {self.stage!r} does not "
+                f"exists in metadata ..."
+            )
         #     self.__log.p_debug(
         #         "The Process will automate update this data to metadata ..."
         #     )
@@ -262,12 +258,11 @@ class Register(BaseRegister):
         #             )
         #         }
         #     )
-        # elif self.changed > 0:
-        #     self.__log.p_debug(
-        #         f"Should update metadata because difference level is "
-        #         f"{self.changed}"
-        #     )
-        #     _version_stm: str = f"v{str(self.version((self.stage != 'base')))}"
+        elif self.changed > 0:
+            print(
+                f"Should update metadata because diff level is {self.changed}."
+            )
+            _version_stm: str = f"v{str(self.version((self.stage != 'base')))}"
         #     self.meta_update(
         #         config_data={
         #             self.stage: merge_dict(
@@ -279,8 +274,8 @@ class Register(BaseRegister):
         #             )
         #         }
         #     )
-        #
-        # # Save logging.
+
+        # Save logging.
         # self.__log.save_logging()
 
     def __hash__(self):
@@ -289,23 +284,20 @@ class Register(BaseRegister):
     def __str__(self) -> str:
         return f"({self.fullname}, {self.stage})"
 
-    # def __repr__(self) -> str:
-    #     _params: list = [f"name={self.fullname!r}"]
-    #     if self.stage != "base":
-    #         _params.append(f"stage={self.stage!r}")
-    #     if self.config.author != "unknown":
-    #         _params.append(f"author={self.config.author!r}")
-    #     return f"<{self.__class__.__name__}({', '.join(_params)})>"
-    #
-    # def __eq__(self, other) -> bool:
-    #     if isinstance(other, self.__class__):
-    #         return (
-    #             self.name == other.name
-    #             and self.domain == other.domain
-    #             and self.stage == other.stage
-    #             and self.config.author == other.config.author
-    #         )
-    #     return False
+    def __repr__(self) -> str:
+        _params: list = [f"name={self.fullname!r}"]
+        if self.stage != "base":
+            _params.append(f"stage={self.stage!r}")
+        return f"<{self.__class__.__name__}({', '.join(_params)})>"
+
+    def __eq__(self, other: Register) -> bool:
+        if isinstance(other, self.__class__):
+            return (
+                self.fullname == other.fullname
+                and self.stage == other.stage
+                and self.timestamp == other.timestamp
+            )
+        return NotImplemented
 
     def data(self, hashing: bool = False) -> Dict[str, Any]:
         """Return the data with the configuration name."""
@@ -347,7 +339,7 @@ class Register(BaseRegister):
     #             _meta,
     #         )
     #     )
-    #
+
     # def meta_update(
     #         self,
     #         data: Optional[dict] = None,
@@ -390,6 +382,10 @@ class Register(BaseRegister):
         if self.config is None:
             raise NotImplementedError
         return self.config
+
+    @params.setter
+    def params(self, config: Params) -> NoReturn:
+        self.config = config
 
     @property
     def timestamp(self) -> datetime.datetime:
@@ -567,10 +563,9 @@ class Register(BaseRegister):
                     },
                 ),
             )
-            # TODO: Implement retention
             # Retention process after move data to the stage successful
-            # if retention:
-            #     self.purge(stage=stage)
+            if retention:
+                self.purge(stage=stage)
         else:
             print(
                 f"Config {self.name!r} can not move {self.stage!r} -> "
@@ -604,9 +599,10 @@ class Register(BaseRegister):
             key=lambda x: (x[1]["parse"],),
         )[1]["parse"]
 
+        upper_bound: Optional[FormatterGroup] = None
         if (_rtt_value := _rules.timestamp) > 0:
             _metric: Optional[str] = _rules.timestamp_metric
-            max_file.adjust(
+            upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**{_metric: _rtt_value})}
             )
         # elif _rtt_value := _rules.version:
@@ -614,23 +610,21 @@ class Register(BaseRegister):
         #         {'version': _rtt_value}
         #     )
 
-        # if upper_bound:
-        #     for _, data in filter(
-        #         lambda x: x[1]["parse"] < upper_bound,
-        #         results.items(),
-        #     ):
-        #         _file: str = data["file"]
-        #         if self.params.engine.path.is_archived:
-        #             _ac_path: str = (
-        #                 f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
-        #             )
-        #             loading.move(
-        #                 _file,
-        #                 join_root_with(
-        #                     join_path(env.ARCHIVE_PATH, _ac_path, abs=False)
-        #                 ),
-        #             )
-        #         loading.remove(_file)
+        if upper_bound is not None:
+            for _, data in filter(
+                lambda x: x[1]["parse"] < upper_bound,
+                results.items(),
+            ):
+                _file: str = data["file"]
+                if ARCHIVED_FLG:
+                    _ac_path: str = (
+                        f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
+                    )
+                    loading.move(
+                        _file,
+                        destination=PCK_PATH / "data/.archive_purge" / _ac_path,
+                    )
+                remove_file(loading.path / _file)
 
     def deploy(self, stop: Optional[str] = None) -> Register:
         """Deploy data that move from base to final stage.
@@ -650,18 +644,21 @@ class Register(BaseRegister):
         return _base
 
     def remove(self, stage: Optional[str] = None) -> None:
-        """Remove config file from the stage storage."""
+        """Remove config file from the stage storage.
+
+        :param stage:
+        :type stage: Optional[str]
+        """
         _stage: str = stage or self.stage
         assert (
             _stage != "base"
-        ), "The remove method should not process on the 'base' stage"
+        ), "The remove method can not process on the 'base' stage."
         loading = ConfFile(path=PCK_PATH / "data/.archive" / stage)
-        results: dict = self.__stage_files(_stage, loading)
 
         # Remove all files from the stage.
-        for _, data in results.items():
+        for _, data in self.__stage_files(_stage, loading).items():
             _file: str = data["file"]
-            if self.params.engine.path.is_archived:
+            if ARCHIVED_FLG:
                 _ac_path: str = (
                     f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                 )

@@ -12,7 +12,15 @@ This **Utility IO** Object was created for `load` the config data from any file
 format types like `.yaml`, `.json`, or `.toml`, and manage retention and version
 of this config file lifecycle.
 
+**Install from PyPI**:
+
+```shell
+pip install ddeutil-io
+```
+
 ## Config
+
+The **Config Object** is the file system handler object.
 
 ```python
 
