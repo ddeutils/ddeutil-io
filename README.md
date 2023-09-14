@@ -1,10 +1,10 @@
 # Data Utility Package: _IO_
 
+[![test](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml)
+[![size](https://img.shields.io/github/languages/code-size/korawica/ddeutil-io)](https://github.com/korawica/ddeutil-io)
+
 **Table of Contents**:
 
-- [Base](#)
-  - Files
-  - Path
 - [Config](#config)
 - [Register](#register)
 
@@ -23,7 +23,10 @@ pip install ddeutil-io
 The **Config Object** is the file system handler object.
 
 ```python
+from pathlib import Path
+from ddeutil.io.config import ConfFile
 
+config: ConfFile = ConfFile(path=Path(), compress="gzip")
 ```
 
 ## Register
@@ -34,33 +37,15 @@ in any stage storage and generate its metadata to you.
 
 ```python
 from ddeutil.io.register import Register
+from ddeutil.io.models import Params
 
-registry = Register(
+registry: Register = Register(
     name='examples:conn_data_local_file',
-    config={
-        'format': '{name}_{timestamp}*',
-    }
-)
-```
-
-```python
-from ddeutil.io.register import Register
-
-registry = Register(
-    name='examples:conn_data_local_file',
-    config={
-        'stages': {
-            'raw': {
-                'format': '{name}_{timestamp}*',
-                'rules': {
-                    'timestamp': 15
-                }
-            },
-            'persisted': {
-                'format': '{name}_{timestamp}*',
-            }
+    config=Params.model_validate({
+        "stages": {
+          "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
         },
-    }
+    }),
 )
 ```
 
