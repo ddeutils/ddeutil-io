@@ -19,7 +19,8 @@ class RegisterTestCase(unittest.TestCase):
 
     def test_register_init(self):
         register = rgt.Register(
-            name="demo:conn_local_data_landing", config=self.param_config
+            name="demo:conn_local_data_landing",
+            config=self.param_config,
         )
 
         self.assertEqual("base", register.stage)
@@ -56,4 +57,24 @@ class RegisterTestCase(unittest.TestCase):
         rgt.Register.reset(
             name="demo:conn_local_data_landing",
             config=self.param_config,
+        )
+
+    def test_register_without_config(self):
+        register = rgt.Register(name="demo:conn_local_data_landing")
+        self.assertEqual("base", register.stage)
+        self.assertDictEqual(
+            {
+                "alias": "conn_local_data_landing",
+                "type": "connection.LocalSystem",
+                "endpoint": "file:///N/A/data/demo/landing",
+            },
+            register.data(),
+        )
+        self.assertDictEqual(
+            {
+                "alias": "8568c1f93ae0441b5648ad7768c16c66",
+                "type": "4a5a116820c0ae3f54269945c1d81863",
+                "endpoint": "0e029e878279e73aba794c90cce8e48c",
+            },
+            register.data(hashing=True),
         )
