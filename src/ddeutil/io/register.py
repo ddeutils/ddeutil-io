@@ -170,11 +170,14 @@ class Register(BaseRegister):
 
         # Delete all config file from any stage.
         for stage in config.stages:
-            cls(
-                name,
-                stage=stage,
-                config=config,
-            ).remove()
+            try:
+                cls(
+                    name,
+                    stage=stage,
+                    config=config,
+                ).remove()
+            except ConfigNotFound:
+                continue
 
         # # Delete data form metadata.
         # ConfMetadata(
@@ -600,10 +603,10 @@ class Register(BaseRegister):
         )[1]["parse"]
 
         upper_bound: Optional[FormatterGroup] = None
-        if (_rtt_value := _rules.timestamp) > 0:
+        if _rtt_ts := _rules.timestamp:
             _metric: Optional[str] = _rules.timestamp_metric
             upper_bound = max_file.adjust(
-                {"timestamp": relativedelta(**{_metric: _rtt_value})}
+                {"timestamp": relativedelta(**_rtt_ts)}
             )
         # elif _rtt_value := _rules.version:
         #     upper_bound = max_file.adjust(
@@ -622,7 +625,7 @@ class Register(BaseRegister):
                     )
                     loading.move(
                         _file,
-                        destination=PCK_PATH / "data/.archive_purge" / _ac_path,
+                        destination=PCK_PATH / "data/.archive.purge" / _ac_path,
                     )
                 remove_file(loading.path / _file)
 
@@ -653,16 +656,19 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading = ConfFile(path=PCK_PATH / "data/.archive" / stage)
+        loading = ConfFile(path=PCK_PATH / "data/.archive" / _stage)
 
         # Remove all files from the stage.
         for _, data in self.__stage_files(_stage, loading).items():
             _file: str = data["file"]
             if ARCHIVED_FLG:
                 _ac_path: str = (
-                    f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
+                    f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                 )
-                loading.move(_file, PCK_PATH / "data/.archive" / stage)
+                loading.move(
+                    _file,
+                    destination=PCK_PATH / "data/.archive.purge" / _ac_path,
+                )
             remove_file(loading.path / _file)
 
 

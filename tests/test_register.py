@@ -8,22 +8,18 @@ from ddeutil.io.models import Params
 class RegisterTestCase(unittest.TestCase):
     def setUp(self) -> None:
         warnings.simplefilter("ignore", category=ResourceWarning)
+        self.param_config = Params.model_validate(
+            {
+                "stages": {
+                    "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
+                    "persisted": {"format": "{naming:%s}.{version:v%m.%n.%c}"},
+                }
+            }
+        )
 
     def test_register_init(self):
         register = rgt.Register(
-            name="demo:conn_local_data_landing",
-            config=Params.model_validate(
-                {
-                    "stages": {
-                        "raw": {
-                            "format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"
-                        },
-                        "persisted": {
-                            "format": "{naming:%s}.{version:v%m.%n.%c}"
-                        },
-                    }
-                }
-            ),
+            name="demo:conn_local_data_landing", config=self.param_config
         )
 
         self.assertEqual("base", register.stage)
@@ -55,4 +51,9 @@ class RegisterTestCase(unittest.TestCase):
         self.assertEqual(
             "8568c1f93ae0441b5648ad7768c16c66",
             rsg_raw.data(hashing=True)["alias"],
+        )
+
+        rgt.Register.reset(
+            name="demo:conn_local_data_landing",
+            config=self.param_config,
         )

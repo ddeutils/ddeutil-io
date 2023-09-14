@@ -59,9 +59,7 @@ class RuleData(BaseModel):
         }
     """
 
-    # timestamp: Optional[Dict[str, int]] = Field(default_factory=dict)
-    timestamp: int = Field(default=0)
-    timestamp_metric: str = Field(default="minutes")
+    timestamp: Optional[Dict[str, int]] = Field(default_factory=dict)
 
     version: Optional[str] = Field(default=None)
     excluded: Optional[List[str]] = Field(default_factory=list)

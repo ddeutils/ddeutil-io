@@ -12,8 +12,7 @@ class ModelTestCase(unittest.TestCase):
 
         self.assertDictEqual(
             {
-                "timestamp": 0,
-                "timestamp_metric": "minutes",
+                "timestamp": {},
                 "version": None,
                 "excluded": [],
                 "compress": None,
@@ -27,7 +26,7 @@ class ModelTestCase(unittest.TestCase):
                 "alias": "persisted",
                 "format": "{timestamp:%Y-%m-%d}{naming:%c}.json",
                 "rules": {
-                    "timestamp": 15,
+                    "timestamp": {"minutes": 15},
                 },
             }
         )
@@ -37,8 +36,7 @@ class ModelTestCase(unittest.TestCase):
                 "alias": "persisted",
                 "format": "{timestamp:%Y-%m-%d}{naming:%c}.json",
                 "rules": {
-                    "timestamp": 15,
-                    "timestamp_metric": "minutes",
+                    "timestamp": {"minutes": 15},
                     "version": None,
                     "excluded": [],
                     "compress": None,
@@ -67,8 +65,7 @@ class ModelTestCase(unittest.TestCase):
                         "format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}",
                         "alias": "raw",
                         "rules": {
-                            "timestamp": 0,
-                            "timestamp_metric": "minutes",
+                            "timestamp": {},
                             "version": None,
                             "excluded": [],
                             "compress": None,
@@ -79,8 +76,7 @@ class ModelTestCase(unittest.TestCase):
                         "format": "{naming:%s}.{version:v%m.%n.%c}",
                         "alias": "persisted",
                         "rules": {
-                            "timestamp": 0,
-                            "timestamp_metric": "minutes",
+                            "timestamp": {},
                             "version": None,
                             "excluded": [],
                             "compress": None,
@@ -91,8 +87,7 @@ class ModelTestCase(unittest.TestCase):
                         "format": "{domain:%s}_{naming:%s}.{compress:%-g}",
                         "alias": "curated",
                         "rules": {
-                            "timestamp": 0,
-                            "timestamp_metric": "minutes",
+                            "timestamp": {},
                             "version": None,
                             "excluded": [],
                             "compress": None,
