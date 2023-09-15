@@ -656,12 +656,13 @@ class Register(BaseRegister):
         :type stop: str
         """
         _base: Register = self
+        _stop: str = stop or self.params.stage_final
         assert (
-            stop in self.params.stages
-        ), "a `stop` argument should exists in `parameter.yaml` file."
+            _stop in self.params.stages
+        ), "a `stop` argument should exists in stages data on Param config."
         for stage in self.params.stages:
             _base: Register = _base.move(stage)
-            if stop and (stage == stop):
+            if _stop and (stage == _stop):
                 break
         return _base
 
