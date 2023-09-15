@@ -164,7 +164,7 @@ class ValueData(BaseModel):
     )
 
 
-class Engine(BaseModel):
+class EngineData(BaseModel):
     paths: PathData = Field(default_factory=PathData)
     flags: FlagData = Field(default_factory=FlagData)
     values: ValueData = Field(default_factory=ValueData)
@@ -172,7 +172,7 @@ class Engine(BaseModel):
 
 class Params(BaseModel, validate_assignment=True):
     stages: Dict[str, StageData] = Field(default_factory=dict)
-    engine: Engine = Field(default_factory=Engine)
+    engine: EngineData = Field(default_factory=EngineData)
 
     @classmethod
     def from_file(cls, path: Union[str, pathlib.Path]):
