@@ -128,21 +128,51 @@ class StageData(BaseModel):
 
 
 class PathData(BaseModel):
-    ...
+    root: Union[str, pathlib.Path] = Field(default_factory=pathlib.Path)
+    data: pathlib.Path = Field(default="data", validate_default=True)
+    conf: pathlib.Path = Field(default="conf", validate_default=True)
+    archive: pathlib.Path = Field(default=".archive", validate_default=True)
+
+    @field_validator("root", mode="before")
+    def prepare_root(cls, v):
+        if isinstance(v, str):
+            return pathlib.Path(v)
+        return v
+
+    @field_validator("data", "conf", "archive", mode="before")
+    def prepare_path_from_str(
+        cls,
+        v,
+        info: FieldValidationInfo,
+    ) -> pathlib.Path:
+        _root: pathlib.Path = info.data["root"]
+        return v if isinstance(v, pathlib.Path) else (_root / v)
 
 
 class FlagData(BaseModel):
-    ...
+    archive: bool = Field(default=False)
+    auto_update: bool = Field(default=False)
+
+
+class ValueData(BaseModel):
+    datetime_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
+    excluded_keys: Tuple[str, ...] = Field(
+        default=(
+            "version",
+            "updt",
+        )
+    )
 
 
 class Engine(BaseModel):
-    paths: Dict[str, pathlib.Path] = Field(default_factory=dict)
-    flags: Dict[str, bool] = Field(default_factory=dict)
+    paths: PathData = Field(default_factory=PathData)
+    flags: FlagData = Field(default_factory=FlagData)
+    values: ValueData = Field(default_factory=ValueData)
 
 
 class Params(BaseModel, validate_assignment=True):
-    stages: Dict[str, StageData]
-    engine: Dict[str, Any] = Field(default_factory=dict)
+    stages: Dict[str, StageData] = Field(default_factory=dict)
+    engine: Engine = Field(default_factory=Engine)
 
     @classmethod
     def from_file(cls, path: Union[str, pathlib.Path]):

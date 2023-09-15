@@ -18,7 +18,6 @@ import sys
 from datetime import datetime
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -28,10 +27,7 @@ from typing import (
     Union,
 )
 
-from ddeutil.core import merge_dict, str2args
-from ddeutil.core.base import (
-    import_string,
-)
+from ddeutil.core import merge_dict
 
 from .base import (
     CSVPipeDim,
@@ -41,7 +37,6 @@ from .base import (
     YamlEnv,
 )
 from .base.pathutils import PathSearch, remove_file
-from .base.settings import SettingRegex
 from .exceptions import ConfigArgumentError
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -54,61 +49,6 @@ FILE_EXTENSION: Dict[str, Type[OpenFile]] = {
     "csv": CSVPipeDim,
     "pickle": Pickle,
 }
-
-
-def map_secret(value: Any) -> Union[Union[dict, str], Any]:
-    """Map the secret value to configuration data."""
-    if isinstance(value, dict):
-        return {k: map_secret(value[k]) for k in value}
-    elif isinstance(value, (list, tuple)):
-        return type(value)([map_secret(i) for i in value])
-    elif not isinstance(value, str):
-        return value
-    for search in SettingRegex.RE_SECRETS.finditer(value):
-        searches: dict = search.groupdict()
-        if "." in (br := searches["braced"]):
-            raise ConfigArgumentError(
-                "secrets",
-                f", value {br!r},  should not contain dot ('.') in get value.",
-            )
-        # TODO: Implement this secrets data
-        secrets = {}
-        value: str = value.replace(
-            searches["search"],
-            secrets.get(br.strip(), searches["braced_default"]),
-        )
-    return value
-
-
-def map_function(value: Any) -> Union[Union[dict, str], Any]:
-    """Map the function result to configuration data."""
-    if isinstance(value, dict):
-        return {k: map_secret(value[k]) for k in value}
-    elif isinstance(value, (list, tuple)):
-        return type(value)([map_secret(i) for i in value])
-    elif not isinstance(value, str):
-        return value
-    for search in SettingRegex.RE_FUNCTION.finditer(value):
-        searches: dict = search.groupdict()
-        if not callable(_fn := import_string(searches["function"])):
-            raise ConfigArgumentError(
-                "@function",
-                f'from function {searches["function"]!r} is not callable.',
-            )
-        args, kwargs = str2args(searches["arguments"])
-        value: str = value.replace(searches["search"], _fn(*args, **kwargs))
-    return value
-
-
-def map_func_to_str(value: Any, fn: Callable[[str], str]) -> Any:
-    """Map any function from input argument to configuration data."""
-    if isinstance(value, dict):
-        return {k: map_func_to_str(value[k], fn) for k in value}
-    elif isinstance(value, (list, tuple)):
-        return type(value)([map_func_to_str(i, fn) for i in value])
-    elif not isinstance(value, str):
-        return value
-    return fn(value)
 
 
 class BaseConfFile:
@@ -500,9 +440,6 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
 
 
 __all__ = (
-    "map_secret",
-    "map_function",
-    "map_func_to_str",
     "ConfAdapter",
     "ConfFile",
     "ConfSQLite",

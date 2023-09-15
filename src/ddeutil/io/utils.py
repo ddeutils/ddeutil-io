@@ -12,9 +12,14 @@ from .exceptions import ConfigArgumentError
 
 
 def map_secret(
-    value: Any, secrets: Dict[str, Any]
+    value: Any,
+    secrets: Dict[str, Any],
 ) -> Union[Union[dict, str], Any]:
-    """Map the secret value to configuration data."""
+    """Map the secret value to configuration data.
+
+    :param value:
+    :param secrets:
+    """
     if isinstance(value, dict):
         return {k: map_secret(value[k], secrets) for k in value}
     elif isinstance(value, (list, tuple)):

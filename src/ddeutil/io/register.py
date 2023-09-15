@@ -8,7 +8,6 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-import pathlib
 import sys
 from typing import (
     Any,
@@ -16,7 +15,6 @@ from typing import (
     List,
     NoReturn,
     Optional,
-    Tuple,
     TypedDict,
 )
 
@@ -50,14 +48,14 @@ from .models import Params
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-PCK_PATH: pathlib.Path = pathlib.Path(__file__).parent / "../../.."
-EXC_KEYS: Tuple[str, ...] = (
-    "version",
-    "updt",
-)
-DT_FMT: str = "%Y-%m-%d %H:%M:%S"
-ARCHIVED_FLG: bool = True
-AUTO_UPDT_FLG: bool = True
+# PCK_PATH: pathlib.Path = pathlib.Path(__file__).parent / "../../.."
+# EXC_KEYS: Tuple[str, ...] = (
+#     "version",
+#     "updt",
+# )
+# DT_FMT: str = "%Y-%m-%d %H:%M:%S"
+# ARCHIVED_FLG: bool = True
+# AUTO_UPDT_FLG: bool = True
 METADATA: Dict[Any, Any] = {}
 
 
@@ -240,7 +238,7 @@ class Register(BaseRegister):
         #
         # Update metadata if the configuration data does not exist, or
         # it has any changes.
-        if not AUTO_UPDT_FLG:
+        if not self.params.engine.flags.auto_update:
             print("Skip update metadata table/file ...")
         elif self.changed == 99:
             print(
@@ -282,7 +280,11 @@ class Register(BaseRegister):
         # self.__log.save_logging()
 
     def __hash__(self):
-        return hash(self.fullname + self.stage + f"{self.timestamp:{DT_FMT}}")
+        return hash(
+            self.fullname
+            + self.stage
+            + f"{self.timestamp:{self.params.engine.values.datetime_fmt}}"
+        )
 
     def __str__(self) -> str:
         return f"({self.fullname}, {self.stage})"
@@ -310,11 +312,18 @@ class Register(BaseRegister):
                 {
                     k: v
                     for k, v in (self.meta.get(self.stage, {}).items())
-                    if k in EXC_KEYS
+                    if k in self.params.engine.values.excluded_keys
                 },
                 self.__data,
             )
-        return hash_all(_data, exclude=set(EXC_KEYS)) if hashing else _data
+        return (
+            hash_all(
+                _data,
+                exclude=set(self.params.engine.values.excluded_keys),
+            )
+            if hashing
+            else _data
+        )
 
     # @property
     # def meta(self) -> RegisterMetaData:
@@ -381,9 +390,12 @@ class Register(BaseRegister):
     #     )
 
     @property
-    def params(self):
+    def params(self) -> Params:
         if self.config is None:
-            raise NotImplementedError
+            raise NotImplementedError(
+                "This register instance can not do any actions because config "
+                "param does not set."
+            )
         return self.config
 
     @params.setter
@@ -400,7 +412,10 @@ class Register(BaseRegister):
         if self.changed > 0:
             return self.updt
         elif _dt := self.data().get("updt"):
-            return datetime.datetime.strptime(_dt, DT_FMT)
+            return datetime.datetime.strptime(
+                _dt,
+                self.params.engine.values.datetime_fmt,
+            )
         return self.updt
 
     def version(self, _next: bool = False) -> packaging.version.Version:
@@ -451,7 +466,10 @@ class Register(BaseRegister):
             self.data(hashing=True),
             target,
             ignore_order=True,
-            exclude_paths={f"root[{key!r}]" for key in EXC_KEYS},
+            exclude_paths={
+                f"root[{key!r}]"
+                for key in self.params.engine.values.excluded_keys
+            },
         )
         if any(
             _ in results
@@ -506,11 +524,11 @@ class Register(BaseRegister):
         # Load data from source
         if (stage is None) or (stage == "base"):
             return ConfFile(
-                path=PCK_PATH / "tests/examples/conf" / self.domain
+                path=(self.params.engine.paths.conf / self.domain)
             ).load(name=self.name, order=order)
 
         loading = ConfFile(
-            path=PCK_PATH / "data/.archive" / stage,
+            path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
         )
 
@@ -534,14 +552,14 @@ class Register(BaseRegister):
     ) -> Register:
         """"""
         loading = ConfFile(
-            path=PCK_PATH / "data/.archive" / stage,
+            path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
         )
         if (
             self.compare_data(
                 hash_all(
                     self.pick(stage=stage),
-                    exclude=set(EXC_KEYS),
+                    exclude=set(self.params.engine.values.excluded_keys),
                 )
             )
             > 0
@@ -556,12 +574,13 @@ class Register(BaseRegister):
                     f"file {_filename!r} already exists in the "
                     f"{stage!r} stage.",
                 )
+            _dt_fmt: str = self.params.engine.values.datetime_fmt
             loading.save_stage(
                 path=(loading.path / _filename),
                 data=merge_dict(
                     self.data(),
                     {
-                        "updt": f"{self.timestamp:{DT_FMT}}",
+                        "updt": f"{self.timestamp:{_dt_fmt}}",
                         "version": f"v{str(self.version())}",
                     },
                 ),
@@ -593,7 +612,7 @@ class Register(BaseRegister):
         if not (_rules := self.params.get_stage(_stage).rules):
             return
         loading = ConfFile(
-            path=PCK_PATH / "data/.archive" / stage,
+            path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
         )
         results: dict = self.__stage_files(_stage, loading)
@@ -619,13 +638,13 @@ class Register(BaseRegister):
                 results.items(),
             ):
                 _file: str = data["file"]
-                if ARCHIVED_FLG:
+                if self.params.engine.flags.archive:
                     _ac_path: str = (
                         f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                     )
                     loading.move(
                         _file,
-                        destination=PCK_PATH / "data/.archive.purge" / _ac_path,
+                        destination=self.params.engine.paths.archive / _ac_path,
                     )
                 remove_file(loading.path / _file)
 
@@ -656,18 +675,18 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading = ConfFile(path=PCK_PATH / "data/.archive" / _stage)
+        loading = ConfFile(path=self.params.engine.paths.data / _stage)
 
         # Remove all files from the stage.
         for _, data in self.__stage_files(_stage, loading).items():
             _file: str = data["file"]
-            if ARCHIVED_FLG:
+            if self.params.engine.flags.archive:
                 _ac_path: str = (
                     f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                 )
                 loading.move(
                     _file,
-                    destination=PCK_PATH / "data/.archive.purge" / _ac_path,
+                    destination=self.params.engine.paths.archive / _ac_path,
                 )
             remove_file(loading.path / _file)
 
