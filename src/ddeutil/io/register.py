@@ -153,6 +153,8 @@ class Register(BaseRegister):
         cls,
         name: str,
         config: Params,
+        *,
+        loader: Optional = None,
     ) -> Register:
         """Reset all configuration data files that exists in any stage but
         does not do anything in the base stage. This method will use when the
@@ -161,9 +163,9 @@ class Register(BaseRegister):
         the configuration files of this data will exist in any moved stage.
 
         :param name: str : The fullname of configuration.
-
         :param config:
         :type config: Params
+        :param loader:
         """
 
         # Delete all config file from any stage.

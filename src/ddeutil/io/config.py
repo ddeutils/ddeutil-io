@@ -30,10 +30,8 @@ from typing import (
 from ddeutil.core import merge_dict
 
 from .base import (
-    CSVPipeDim,
     Json,
     OpenFile,
-    Pickle,
     YamlEnv,
 )
 from .base.pathutils import PathSearch, remove_file
@@ -43,22 +41,10 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-FILE_EXTENSION: Dict[str, Type[OpenFile]] = {
-    "json": Json,
-    "yaml": YamlEnv,
-    "csv": CSVPipeDim,
-    "pickle": Pickle,
-}
-
-
 class BaseConfFile:
     """Base Config File object for getting data with `.yaml` format and mapping
     environment variables to the content data.
     """
-
-    CONF_OPEN_FIL: Type[OpenFile] = YamlEnv
-
-    CONF_FMT_EXC: List[str] = [".json", ".toml"]
 
     def __init__(
         self,
@@ -66,6 +52,8 @@ class BaseConfFile:
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
+        open_file: Optional[Type[OpenFile]] = None,
+        fil_fmt_exc: Optional[List[str]] = None,
     ):
         self.path: pathlib.Path = (
             pathlib.Path(path) if isinstance(path, str) else path
@@ -75,6 +63,8 @@ class BaseConfFile:
             if not auto_create:
                 raise FileNotFoundError(f"Path {path} does not exists.")
             os.makedirs(self.path)
+        self.open_file: Type[OpenFile] = open_file or YamlEnv
+        self.fil_fmt_exc: List[str] = fil_fmt_exc or [".json", ".toml"]
 
     def load(
         self,
@@ -93,9 +83,9 @@ class BaseConfFile:
         rs: List[Dict[Any, Any]]
         if rs := [
             merge_dict({"alias": name}, data)
-            for file in self.files(excluded=self.CONF_FMT_EXC)
+            for file in self.files(excluded=self.fil_fmt_exc)
             if (
-                data := self.CONF_OPEN_FIL(path=file, compress=self.compress)
+                data := self.open_file(path=file, compress=self.compress)
                 .read()
                 .get(name)
             )
@@ -181,14 +171,13 @@ class ConfAdapter(abc.ABC):
 class ConfFile(BaseConfFile, ConfAdapter):
     """Config File Loading Object for get data from configuration and stage."""
 
-    CONF_OPEN_FIL_STG: Type[OpenFile] = Json
-
     def __init__(
         self,
         path: Union[str, pathlib.Path],
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
+        open_fil_stg: Optional[Type[OpenFile]] = None,
     ):
         """Main initialize of config file loading object.
 
@@ -201,6 +190,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
             compress=compress,
             auto_create=auto_create,
         )
+        self.open_fil_stg: Type[OpenFile] = open_fil_stg or Json
 
     def load_stage(
         self,
@@ -209,7 +199,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
     ) -> Union[Dict[Any, Any], List[Any]]:
         """Return content data from file with filename, default empty dict."""
         try:
-            return self.CONF_OPEN_FIL_STG(
+            return self.open_fil_stg(
                 path=path,
                 compress=self.compress,
             ).read()
@@ -228,13 +218,13 @@ class ConfFile(BaseConfFile, ConfAdapter):
         before write.
         """
         if not merge:
-            self.CONF_OPEN_FIL_STG(path, compress=self.compress).write(data)
+            self.open_fil_stg(path, compress=self.compress).write(data)
             return
         elif merge and (
             "mode"
-            in inspect.getfullargspec(self.CONF_OPEN_FIL_STG.write).annotations
+            in inspect.getfullargspec(self.open_fil_stg.write).annotations
         ):
-            self.CONF_OPEN_FIL_STG(path, compress=self.compress).write(
+            self.open_fil_stg(path, compress=self.compress).write(
                 **{
                     "data": data,
                     "mode": "a",
@@ -252,13 +242,11 @@ class ConfFile(BaseConfFile, ConfAdapter):
                     _merge_data.extend(data)
             else:
                 _merge_data: Union[dict, list] = merge_dict(all_data, data)
-            self.CONF_OPEN_FIL_STG(path, compress=self.compress).write(
-                _merge_data
-            )
+            self.open_fil_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
             remove_file(path=path)
             if all_data:
-                self.CONF_OPEN_FIL_STG(path, compress=self.compress).write(
+                self.open_fil_stg(path, compress=self.compress).write(
                     all_data,
                 )
             raise err
@@ -267,7 +255,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
         """Remove data by name from file with filename."""
         if all_data := self.load_stage(path=path):
             all_data.pop(name, None)
-            self.CONF_OPEN_FIL_STG(path, compress=self.compress).write(
+            self.open_fil_stg(path, compress=self.compress).write(
                 all_data,
             )
 

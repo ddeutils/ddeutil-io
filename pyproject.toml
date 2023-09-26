@@ -129,7 +129,6 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
-# Exclude a variety of commonly ignored directories.
 exclude = [
     ".git",
     ".mypy_cache",

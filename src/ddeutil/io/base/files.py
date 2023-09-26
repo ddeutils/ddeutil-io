@@ -6,7 +6,7 @@
 """
 This is then main function for open any files in local or remote space
 with the best python libraries and the best practice such as build-in
-fileopen, mmap, etc.
+io.open, mmap, etc.
 """
 import abc
 import csv
@@ -47,9 +47,9 @@ from .utils import search_env, search_env_replace
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 
 # TODO: add more compress type such as
-#  h5,hdf5(h5py)
-#  fits(astropy)
-#  rar(...)
+#  - h5,hdf5(h5py)
+#  - fits(astropy)
+#  - rar(...)
 DirCompressType = Literal["zip", "rar"]
 
 
@@ -88,8 +88,8 @@ class OpenFile(BaseFile):
         # Action anything after set up attributes.
         self._do_after_set_attrs()
 
-    def _do_after_set_attrs(self):
-        return
+    def _do_after_set_attrs(self) -> NoReturn:
+        ...
 
     @property
     def compress_lib(self) -> CompressModule:
@@ -255,22 +255,16 @@ class YamlEnv(Yaml):
     def read(
         self,
         safe: bool = True,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 _debug = _r.read()
-                # if _result := yaml.load(
-                #         self._search_yaml(RE_YAML_COMMENT.sub("", _r.read())),
-                #         SafeLoader,
-                # ):
                 _env_search: str = search_env_replace(
                     SettingRegex.RE_YAML_COMMENT.sub("", _debug),
                     raise_if_default_not_exists=self.RAISE_IF_NOT_DEFAULT,
                     default_value=self.DEFAULT,
                     escape_replaced=self.ESCAPE,
                 )
-                # print(_env_search)
-                # if _result := yaml.load(_env_search, BaseLoader):
                 if _result := yaml.load(_env_search, SafeLoader):
                     return _result
                 return {}
@@ -321,7 +315,7 @@ class CSV(OpenFile):
                 writer.writerows(data)
 
     @property
-    def has_header(self):
+    def has_header(self) -> bool:
         with self.open(mode="r") as _r:
             try:
                 return csv.Sniffer().has_header(_r.read(128))
@@ -330,7 +324,7 @@ class CSV(OpenFile):
 
 
 class CSVPipeDim(CSV):
-    def _do_after_set_attrs(self):
+    def _do_after_set_attrs(self) -> NoReturn:
         csv.register_dialect(
             "pipe_delimiter", delimiter="|", quoting=csv.QUOTE_ALL
         )
