@@ -6,20 +6,24 @@
 
 **Table of Contents**:
 
-- [Config](#config)
-- [Register](#register)
+- [Installation](#installation)
+- [Features](#features)
+  - [Config](#config)
+  - [Register](#register)
 
 This **Utility IO** Object was created for `load` the config data from any file
 format types like `.yaml`, `.json`, or `.toml`, and manage retention and version
 of this config file lifecycle.
 
-**Install from PyPI**:
+## Installation
 
 ```shell
 pip install ddeutil-io
 ```
 
-## Config
+## Features
+
+### Config
 
 The **Config Object** is the file system handler object.
 
@@ -30,7 +34,7 @@ from ddeutil.io.config import ConfFile
 config: ConfFile = ConfFile(path=Path(), compress="gzip")
 ```
 
-## Register
+### Register
 
 The **Register Object** is the metadata generator object for the config data.
 If you passing name and configs to this object, it will find the config name
