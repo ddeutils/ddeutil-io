@@ -2,6 +2,22 @@
 
 ## Latest Changes
 
+## 0.0.3
+
+### Features
+
+- :dart: feat: add loader arg to Register object for dynamic config loader. (_2023-09-26_)
+- :dart: feat: add OpenDir object that read compress dir like zip or tar. (_2023-09-26_)
+
+### Code Changes
+
+- :construction: refactored: change openfile cls attr to init attr for dynamic open file. (_2023-09-26_)
+- :construction: refactored: add classmethod after field_validate decorator. (_2023-09-16_)
+
+### Documents
+
+- :page_facing_up: docs: update README file that move all module to features topic. (_2023-09-26_)
+
 ## 0.0.2
 
 ### Features
