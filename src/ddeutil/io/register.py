@@ -15,6 +15,7 @@ from typing import (
     List,
     NoReturn,
     Optional,
+    Type,
     TypedDict,
 )
 
@@ -41,7 +42,7 @@ from fmtutil import (
 )
 
 from .base.pathutils import remove_file
-from .config import ConfFile
+from .config import ConfFile, OpenFile
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 
@@ -153,8 +154,6 @@ class Register(BaseRegister):
         cls,
         name: str,
         config: Params,
-        *,
-        loader: Optional = None,
     ) -> Register:
         """Reset all configuration data files that exists in any stage but
         does not do anything in the base stage. This method will use when the
@@ -165,7 +164,6 @@ class Register(BaseRegister):
         :param name: str : The fullname of configuration.
         :param config:
         :type config: Params
-        :param loader:
         """
 
         # Delete all config file from any stage.
@@ -193,6 +191,7 @@ class Register(BaseRegister):
         stage: Optional[str] = None,
         *,
         config: Optional[Params] = None,
+        loader: Optional[Type[OpenFile]] = None,
     ):
         _domain, _name = rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(
@@ -200,8 +199,8 @@ class Register(BaseRegister):
             domain=_domain,
         )
         self.config = config
-
         self.stage = stage or "base"
+        self.loader = loader
 
         # Load latest version of data from data lake or data store of
         # configuration files
@@ -526,12 +525,14 @@ class Register(BaseRegister):
         # Load data from source
         if (stage is None) or (stage == "base"):
             return ConfFile(
-                path=(self.params.engine.paths.conf / self.domain)
+                path=(self.params.engine.paths.conf / self.domain),
+                open_fil=self.loader,
             ).load(name=self.name, order=order)
 
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
+            open_fil=self.loader,
         )
 
         if results := self.__stage_files(stage, loading):
@@ -556,6 +557,7 @@ class Register(BaseRegister):
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
+            open_fil=self.loader,
         )
         if (
             self.compare_data(
@@ -616,6 +618,7 @@ class Register(BaseRegister):
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
+            open_fil=self.loader,
         )
         results: dict = self.__stage_files(_stage, loading)
         max_file: FormatterGroup = max(
@@ -678,7 +681,10 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading = ConfFile(path=self.params.engine.paths.data / _stage)
+        loading = ConfFile(
+            path=self.params.engine.paths.data / _stage,
+            open_fil=self.loader,
+        )
 
         # Remove all files from the stage.
         for _, data in self.__stage_files(_stage, loading).items():

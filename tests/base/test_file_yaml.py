@@ -114,7 +114,9 @@ class YamlEnvFileTestCase(unittest.TestCase):
 
         os.environ["DEMO_ENV_VALUE"] = "demo"
 
-        data = fl.YamlEnv(path=yaml_path).read(prepare=lambda x: f"{x}!!")
+        yml_loader = fl.YamlEnv(path=yaml_path)
+        yml_loader.prepare = lambda x: f"{x}!!"
+        data = yml_loader.read()
         self.assertDictEqual(
             {
                 "main_key": {

@@ -293,6 +293,7 @@ class YamlEnv(Yaml):
     default: str = "N/A"
     escape: str = "ESC"
 
+    @staticmethod
     def prepare(x: str) -> str:
         return x
 
@@ -444,6 +445,7 @@ class JsonEnv(Json):
     default: str = "N/A"
     escape: str = "ESC"
 
+    @staticmethod
     def prepare(x: str) -> str:
         return x
 

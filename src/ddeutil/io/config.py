@@ -52,7 +52,7 @@ class BaseConfFile:
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
-        open_file: Optional[Type[OpenFile]] = None,
+        open_fil: Optional[Type[OpenFile]] = None,
         fil_fmt_exc: Optional[List[str]] = None,
     ):
         self.path: pathlib.Path = (
@@ -63,7 +63,7 @@ class BaseConfFile:
             if not auto_create:
                 raise FileNotFoundError(f"Path {path} does not exists.")
             os.makedirs(self.path)
-        self.open_file: Type[OpenFile] = open_file or YamlEnv
+        self.open_fil: Type[OpenFile] = open_fil or YamlEnv
         self.fil_fmt_exc: List[str] = fil_fmt_exc or [".json", ".toml"]
 
     def load(
@@ -85,7 +85,7 @@ class BaseConfFile:
             merge_dict({"alias": name}, data)
             for file in self.files(excluded=self.fil_fmt_exc)
             if (
-                data := self.open_file(path=file, compress=self.compress)
+                data := self.open_fil(path=file, compress=self.compress)
                 .read()
                 .get(name)
             )
@@ -177,6 +177,8 @@ class ConfFile(BaseConfFile, ConfAdapter):
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
+        open_fil: Optional[Type[OpenFile]] = None,
+        fil_fmt_exc: Optional[List[str]] = None,
         open_fil_stg: Optional[Type[OpenFile]] = None,
     ):
         """Main initialize of config file loading object.
@@ -189,6 +191,8 @@ class ConfFile(BaseConfFile, ConfAdapter):
             path,
             compress=compress,
             auto_create=auto_create,
+            open_fil=open_fil,
+            fil_fmt_exc=fil_fmt_exc,
         )
         self.open_fil_stg: Type[OpenFile] = open_fil_stg or Json
 
@@ -431,4 +435,5 @@ __all__ = (
     "ConfAdapter",
     "ConfFile",
     "ConfSQLite",
+    "OpenFile",
 )
