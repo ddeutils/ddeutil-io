@@ -131,8 +131,10 @@ class SettingRegex:
         (\$(?:                              # start with non-capturing group
             (?P<escaped>\$|\d+)             # escape $ or number like $1
             |
-            ({(?P<braced>.*?)               # value if use braced {}
-            (:(?P<braced_default>.*?))?})   # value default with sep :
+            (\{
+                (?P<braced>.*?)             # value if use braced {}
+                (:(?P<braced_default>.*?))? # value default with sep :
+            })
         ))
         [\"\']?                             # single or double quoted value
     """,

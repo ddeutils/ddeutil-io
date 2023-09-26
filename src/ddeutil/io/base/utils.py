@@ -1,5 +1,9 @@
 import os
-from typing import Dict, Optional
+from typing import (
+    Callable,
+    Dict,
+    Optional,
+)
 
 from .settings import SettingRegex
 
@@ -15,6 +19,7 @@ def search_env_replace(
     raise_if_default_not_exists: bool = False,
     default_value: str = "N/A",
     escape_replaced: str = "ESC",
+    caller: Callable[[str], str] = (lambda x: x),
 ) -> str:
     """Prepare content data before parse to any file loading method"""
     shifting: int = 0
@@ -35,16 +40,16 @@ def search_env_replace(
                     f"Value {search!r} in `.yaml` file has something wrong "
                     f"with regular expression"
                 )
-            replaces[search] = (
+            replaces[search] = caller(
                 os.environ.get(variable, default) or default_value
             )
         elif "$" in escaped:
             span = content.span()
             search = f"${{{escape_replaced}{escaped}}}"
             contents = (
-                contents[: span[0] + shifting]
+                contents[: (span[0] + shifting)]
                 + search
-                + contents[span[1] + shifting :]
+                + contents[(span[1] + shifting) :]
             )
             shifting += len(search) - (span[1] - span[0])
             replaces_esc[search] = "$"
@@ -98,14 +103,23 @@ def search_env(
             value: str = SettingRegex.RE_ENV_ESCAPE.sub(r"\1", value)
 
         # Substitute variables in a value
-        for sub_content in SettingRegex.RE_DOTENV_VAR.findall(value):
-            replace: str = "".join(sub_content[1:-1])
-            if sub_content[0] != "\\":
-                # Replace it with the value from the environment
-                replace: str = env.get(
-                    sub_content[-1],
-                    os.environ.get(sub_content[-1], _default),
-                )
-            value: str = value.replace("".join(sub_content[:-1]), replace)
-        env[name] = value
+        env[name] = __search_var(value, env, default)
     return env
+
+
+def __search_var(
+    value: str,
+    env: Dict[str, str],
+    default: Optional[str] = None,
+) -> str:
+    _default: str = default or ""
+    for sub_content in SettingRegex.RE_DOTENV_VAR.findall(value):
+        replace: str = "".join(sub_content[1:-1])
+        if sub_content[0] != "\\":
+            # Replace it with the value from the environment
+            replace: str = env.get(
+                sub_content[-1],
+                os.environ.get(sub_content[-1], _default),
+            )
+        value: str = value.replace("".join(sub_content[:-1]), replace)
+    return value

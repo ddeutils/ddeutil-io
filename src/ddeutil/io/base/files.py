@@ -50,7 +50,7 @@ FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 #  - h5,hdf5(h5py)
 #  - fits(astropy)
 #  - rar(...)
-DirCompressType = Literal["zip", "rar"]
+DirCompressType = Literal["zip", "rar", "tar"]
 
 
 class CompressModule(ModuleType):
@@ -198,6 +198,47 @@ class OpenFile(BaseFile):
         raise NotImplementedError
 
 
+class OpenDir:
+    """Open File Object"""
+
+    def __init__(
+        self,
+        path: Union[str, Path],
+        *,
+        compress: Optional[DirCompressType] = None,
+    ):
+        self.path = path
+        self.compress = compress
+        # Action anything after set up attributes.
+        self._do_after_set_attrs()
+
+    def _do_after_set_attrs(self) -> NoReturn:
+        ...
+
+    def open(self, *, mode: str, **kwargs):
+        if not self.compress:
+            return ""
+        elif self.compress in {"zip"}:
+            import zipfile
+
+            return zipfile.ZipFile(
+                self.path,
+                mode=mode,
+                compression=zipfile.ZIP_DEFLATED,
+                **kwargs,
+            )
+        elif self.compress in {"tar"}:
+            import tarfile
+
+            # TODO: Wrapped tar module with change some methods like,
+            #   - add --> write
+            return tarfile.open(
+                self.path,
+                mode=f"{mode}:gz",  # w:bz2
+            )
+        return NotImplementedError
+
+
 class Env(OpenFile):
     """Env object which mapping search engine"""
 
@@ -234,7 +275,7 @@ class Yaml(OpenFile):
     def read(
         self,
         safe: bool = True,
-    ):
+    ) -> Dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 return yaml.load(_r.read(), SafeLoader)
@@ -248,9 +289,12 @@ class Yaml(OpenFile):
 class YamlEnv(Yaml):
     """Yaml object which mapping search environment variable."""
 
-    RAISE_IF_NOT_DEFAULT: bool = False
-    DEFAULT: str = "N/A"
-    ESCAPE: str = "ESC"
+    raise_if_not_default: bool = False
+    default: str = "N/A"
+    escape: str = "ESC"
+
+    def prepare(x: str) -> str:
+        return x
 
     def read(
         self,
@@ -258,14 +302,14 @@ class YamlEnv(Yaml):
     ) -> Dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
-                _debug = _r.read()
-                _env_search: str = search_env_replace(
-                    SettingRegex.RE_YAML_COMMENT.sub("", _debug),
-                    raise_if_default_not_exists=self.RAISE_IF_NOT_DEFAULT,
-                    default_value=self.DEFAULT,
-                    escape_replaced=self.ESCAPE,
+                _env_replace: str = search_env_replace(
+                    SettingRegex.RE_YAML_COMMENT.sub("", _r.read()),
+                    raise_if_default_not_exists=self.raise_if_not_default,
+                    default_value=self.default,
+                    escape_replaced=self.escape,
+                    caller=self.prepare,
                 )
-                if _result := yaml.load(_env_search, SafeLoader):
+                if _result := yaml.load(_env_replace, SafeLoader):
                     return _result
                 return {}
         return NotImplementedError
@@ -396,18 +440,22 @@ class Json(OpenFile):
 
 
 class JsonEnv(Json):
-    RAISE_IF_NOT_DEFAULT: bool = False
-    DEFAULT: str = "N/A"
-    ESCAPE: str = "ESC"
+    raise_if_not_default: bool = False
+    default: str = "N/A"
+    escape: str = "ESC"
+
+    def prepare(x: str) -> str:
+        return x
 
     def read(self) -> Union[Dict[Any, Any], List[Any]]:
         with self.open(mode="r") as _r:
             return json.loads(
                 search_env_replace(
                     _r.read(),
-                    raise_if_default_not_exists=self.RAISE_IF_NOT_DEFAULT,
-                    default_value=self.DEFAULT,
-                    escape_replaced=self.ESCAPE,
+                    raise_if_default_not_exists=self.raise_if_not_default,
+                    default_value=self.default,
+                    escape_replaced=self.escape,
+                    caller=self.prepare,
                 )
             )
 
@@ -433,26 +481,6 @@ class Marshal(OpenFile):
     def write(self, data):
         with self.open(mode="wb") as _w:
             marshal.dump(data, _w)
-
-
-class OpenDir:
-    """Open File Object"""
-
-    def __init__(
-        self, path: str, *, compress: Optional[DirCompressType] = None
-    ):
-        self.path = path
-        self.compress = compress
-
-    def compress_lib(self):
-        if not self.compress:
-            return ""
-        elif self.compress in {"zip"}:
-            # Note: import zipfile
-            import zipfile
-
-            return zipfile
-        return NotImplementedError
 
 
 __all__ = (
