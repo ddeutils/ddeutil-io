@@ -20,11 +20,11 @@ class BaseConfigFileTestCase(unittest.TestCase):
 
         self.assertDictEqual(
             {
-                "alias": "conn_local_data_landing",
-                "endpoint": "file:///N/A/data/demo/landing",
-                "type": "connection.LocalSystem",
+                "alias": "conn_local_file",
+                "endpoint": "file:///N/A/tests/examples/dummy",
+                "type": "connection.LocalFileStorage",
             },
-            bcf.load(name="conn_local_data_landing"),
+            bcf.load(name="conn_local_file"),
         )
 
         bcf.move(
@@ -35,11 +35,11 @@ class BaseConfigFileTestCase(unittest.TestCase):
         bcf_temp = conf.BaseConfFile(self.target_path)
         self.assertDictEqual(
             {
-                "alias": "conn_local_data_landing",
-                "endpoint": "file:///N/A/data/demo/landing",
-                "type": "connection.LocalSystem",
+                "alias": "conn_local_file",
+                "endpoint": "file:///N/A/tests/examples/dummy",
+                "type": "connection.LocalFileStorage",
             },
-            bcf_temp.load(name="conn_local_data_landing"),
+            bcf_temp.load(name="conn_local_file"),
         )
 
         self.assertTrue(
@@ -69,20 +69,20 @@ class ConfigFileTestCase(unittest.TestCase):
 
         cf.create(path=_stage_path)
         self.assertTrue(os.path.exists(_stage_path))
-        cf.save_stage(path=_stage_path, data=cf.load("conn_local_data_landing"))
+        cf.save_stage(path=_stage_path, data=cf.load("conn_local_file"))
 
         self.assertDictEqual(
             {
-                "alias": "conn_local_data_landing",
-                "endpoint": "file:///N/A/data/demo/landing",
-                "type": "connection.LocalSystem",
+                "alias": "conn_local_file",
+                "endpoint": "file:///N/A/tests/examples/dummy",
+                "type": "connection.LocalFileStorage",
             },
             cf.load_stage(path=_stage_path),
         )
 
         cf.save_stage(
             path=_stage_path,
-            data={"temp_additional": cf.load("conn_local_data_landing")},
+            data={"temp_additional": cf.load("conn_local_file")},
             merge=True,
         )
 
@@ -93,9 +93,9 @@ class ConfigFileTestCase(unittest.TestCase):
 
         self.assertDictEqual(
             {
-                "alias": "conn_local_data_landing",
-                "endpoint": "file:///N/A/data/demo/landing",
-                "type": "connection.LocalSystem",
+                "alias": "conn_local_file",
+                "endpoint": "file:///N/A/tests/examples/dummy",
+                "type": "connection.LocalFileStorage",
             },
             cf.load_stage(path=_stage_path),
         )

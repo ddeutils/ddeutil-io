@@ -11,17 +11,17 @@ class ModelTestCase(unittest.TestCase):
     def test_model_path_data(self):
         p = md.PathData.model_validate(
             {
-                "data": pathlib.Path("."),
-                "conf": pathlib.Path("."),
-                "archive": pathlib.Path("."),
+                "data": pathlib.Path(".."),
+                "conf": pathlib.Path(".."),
+                "archive": pathlib.Path(".."),
             }
         )
 
         self.assertDictEqual(
             {
-                "data": pathlib.Path("."),
-                "conf": pathlib.Path("."),
-                "archive": pathlib.Path("."),
+                "data": pathlib.Path(".."),
+                "conf": pathlib.Path(".."),
+                "archive": pathlib.Path(".."),
                 "root": pathlib.Path("."),
             },
             p.model_dump(),

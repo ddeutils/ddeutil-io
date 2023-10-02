@@ -23,13 +23,19 @@
 #
 
 
-conn_local_data_landing:
-    type: "connection.LocalSystem"
-    endpoint: "file:///${APP_PATH}/data/demo/landing"
+conn_local_file:
+    type: "connection.LocalFileStorage"
+    endpoint: "file:///${APP_PATH}/tests/examples/dummy"
 
-conn_local_data_with_datetime:
-    type: "connection.LocalSystem"
-    endpoint: "file:///${APP_PATH}/data/demo/%Y%m%d"
+
+conn_local_file_with_datetime:
+    type: "connection.LocalFileStorage"
+    endpoint: "file:///${APP_PATH}/tests/examples/dummy/%Y%m%d"
+
+
+conn_sftp:
+    type: "connection.SFTPStorage"
+    endpoint: "sftp://${SFTP_USER}:${SFTP_PASSWORD}@${SFTP_HOST}//home/deadmin"
 
 
 conn_local_sqlite_bu01:

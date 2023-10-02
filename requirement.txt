@@ -1,0 +1,28 @@
+# ======================================
+# Core
+# -------------------
+# `pyyaml`:
+# `tomlkit`, `tomli`
+# `deepdiff`: MIT License :
+# `pandas`:
+# `openpyxl`: : For reading excel file with the `pandas`
+# `sqlalchemy`: : For DBMS connection
+#   - `psycopg2`: Postgres connection
+#   - `pyodbc`: ODBC connection
+# `fsspec`: : For storage connection
+#   - `s3fs`: : AWS S3 connection
+#   - `adlfs`: : Azure Data Lake connection
+#   - `gcsfs`: : Google Cloud Storage connection
+# -------------------
+toml==0.10.2
+polars==0.18.15
+openpyxl==3.0.10
+sqlalchemy==1.4.41
+psycopg2==2.9.3
+pyodbc==4.0.34
+boto3==1.28.35
+
+# ======================================
+# Core-Analytic
+# -------------------
+scipy==1.9.2

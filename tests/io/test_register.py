@@ -29,25 +29,25 @@ class RegisterTestCase(unittest.TestCase):
 
     def test_register_init(self):
         register = rgt.Register(
-            name="demo:conn_local_data_landing",
+            name="demo:conn_local_file",
             config=self.param_config,
         )
 
         self.assertEqual("base", register.stage)
         self.assertDictEqual(
             {
-                "alias": "conn_local_data_landing",
-                "type": "connection.LocalSystem",
-                "endpoint": "file:///N/A/data/demo/landing",
+                "alias": "conn_local_file",
+                "type": "connection.LocalFileStorage",
+                "endpoint": "file:///N/A/tests/examples/dummy",
             },
             register.data(),
         )
 
         self.assertDictEqual(
             {
-                "alias": "8568c1f93ae0441b5648ad7768c16c66",
-                "type": "4a5a116820c0ae3f54269945c1d81863",
-                "endpoint": "0e029e878279e73aba794c90cce8e48c",
+                "alias": "62d877a16819c672578d7bded7f5903c",
+                "type": "cece9f1b3f4791a04ec3d695cb5ba1a9",
+                "endpoint": "417ba4419f0da763b0dfae29f7f5290d",
             },
             register.data(hashing=True),
         )
@@ -60,18 +60,18 @@ class RegisterTestCase(unittest.TestCase):
         self.assertEqual("raw", rsg_raw.stage)
 
         self.assertEqual(
-            "8568c1f93ae0441b5648ad7768c16c66",
+            "62d877a16819c672578d7bded7f5903c",
             rsg_raw.data(hashing=True)["alias"],
         )
 
         rgt.Register.reset(
-            name="demo:conn_local_data_landing",
+            name="demo:conn_local_file",
             config=self.param_config,
         )
 
     def test_register_without_config(self):
         with self.assertRaises(NotImplementedError) as context:
-            rgt.Register(name="demo:conn_local_data_landing")
+            rgt.Register(name="demo:conn_local_file")
         self.assertEqual(
             (
                 "This register instance can not do any actions because config "

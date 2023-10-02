@@ -25,6 +25,8 @@ dependencies = [
     "pydantic==2.3.0",
     "deepdiff==6.3.1",
     "pyyaml==6.0.1",
+    "sqlalchemy==2.0.20",
+    "pandas==2.0.3",
 ]
 dynamic = ["version"]
 
@@ -35,6 +37,13 @@ Homepage = "https://github.com/korawica/ddeutil-io/"
 [project.optional-dependencies]
 dev = [
     "clishelf",
+    "python-dotenv==1.0.0",
+]
+s3 = [
+    "boto3>=1.28.49",
+]
+sftp = [
+    "sshtunnel==0.4.0",
 ]
 
 [build-system]
