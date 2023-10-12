@@ -19,7 +19,7 @@ from typing import (
     TypedDict,
 )
 
-import packaging.version
+# import packaging.version
 from dateutil.relativedelta import relativedelta
 from ddeutil.core import (
     concat,
@@ -36,6 +36,7 @@ from fmtutil import (
     FormatterGroup,
     FormatterGroupType,
     Naming,
+    VerPackage,
     Version,
     make_const,
     make_group,
@@ -419,27 +420,23 @@ class Register(BaseRegister):
             )
         return self.updt
 
-    def version(self, _next: bool = False) -> packaging.version.Version:
+    def version(self, _next: bool = False) -> VerPackage:
         """Generate version value from the pick method. If version value does
         not exist from configuration data, this property will return the
         default, `v0.0.1`. If the initialization process tracking some change
         from configuration data between metadata and the latest data in the
         stage, the _next will be generated.
 
-        :return: packaging.version.Version
+        :return: VerPackage
         """
-        _vs = packaging.version.parse(self.data().get("version", "v0.0.1"))
-        if not _next or _vs == 0:
-            return packaging.version.parse(self.data().get("version", "v0.0.1"))
+        _vs = VerPackage.parse(self.data().get("version", "v0.0.1"))
+        if not _next or self.changed == 0:
+            return _vs
         elif self.changed >= 3:
-            return packaging.version.parse(f"v{str(_vs.major + 1)}.0.0")
+            return _vs.bump_major()
         elif self.changed == 2:
-            return packaging.version.parse(
-                f"v{_vs.major}.{str(_vs.minor + 1)}.0"
-            )
-        return packaging.version.parse(
-            f"v{_vs.major}.{_vs.minor}.{str(_vs.micro + 1)}"
-        )
+            return _vs.bump_minor()
+        return _vs.bump_patch()
 
     def fmt(self, update: Optional[Dict[str, Any]] = None):
         return self.fmt_group(
