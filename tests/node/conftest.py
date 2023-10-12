@@ -2,7 +2,15 @@ import os
 import pathlib
 
 import pytest
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+
+    def load_dotenv(path: str) -> None:
+        _ = path
+        return
+
 
 load_dotenv("../.env")
 
