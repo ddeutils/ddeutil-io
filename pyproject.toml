@@ -3,7 +3,7 @@ name = "ddeutil-io"
 description = "Data Developer & Engineer IO Utility Objects"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
-authors = [{ name = "korawica", email = "korawich.anu@gmail.com" }]
+authors = [{ name = "ddeutils", email = "korawich.anu@gmail.com" }]
 keywords = ['data', 'config', 'utility']
 classifiers = [
     "Topic :: Utilities",

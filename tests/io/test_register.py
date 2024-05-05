@@ -38,7 +38,7 @@ class RegisterTestCase(unittest.TestCase):
             {
                 "alias": "conn_local_file",
                 "type": "connection.LocalFileStorage",
-                "endpoint": "file:///N/A/tests/examples/dummy",
+                "endpoint": "file:///N%2FA/tests/examples/dummy",
             },
             register.data(),
         )
@@ -47,7 +47,7 @@ class RegisterTestCase(unittest.TestCase):
             {
                 "alias": "62d877a16819c672578d7bded7f5903c",
                 "type": "cece9f1b3f4791a04ec3d695cb5ba1a9",
-                "endpoint": "417ba4419f0da763b0dfae29f7f5290d",
+                "endpoint": "853dd5b0a2a4c58d8be2babdff0d7da8",
             },
             register.data(hashing=True),
         )

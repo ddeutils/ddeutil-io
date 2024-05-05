@@ -21,7 +21,7 @@ class BaseConfigFileTestCase(unittest.TestCase):
         self.assertDictEqual(
             {
                 "alias": "conn_local_file",
-                "endpoint": "file:///N/A/tests/examples/dummy",
+                "endpoint": "file:///N%2FA/tests/examples/dummy",
                 "type": "connection.LocalFileStorage",
             },
             bcf.load(name="conn_local_file"),
@@ -36,7 +36,7 @@ class BaseConfigFileTestCase(unittest.TestCase):
         self.assertDictEqual(
             {
                 "alias": "conn_local_file",
-                "endpoint": "file:///N/A/tests/examples/dummy",
+                "endpoint": "file:///N%2FA/tests/examples/dummy",
                 "type": "connection.LocalFileStorage",
             },
             bcf_temp.load(name="conn_local_file"),
@@ -74,7 +74,7 @@ class ConfigFileTestCase(unittest.TestCase):
         self.assertDictEqual(
             {
                 "alias": "conn_local_file",
-                "endpoint": "file:///N/A/tests/examples/dummy",
+                "endpoint": "file:///N%2FA/tests/examples/dummy",
                 "type": "connection.LocalFileStorage",
             },
             cf.load_stage(path=_stage_path),
@@ -94,7 +94,7 @@ class ConfigFileTestCase(unittest.TestCase):
         self.assertDictEqual(
             {
                 "alias": "conn_local_file",
-                "endpoint": "file:///N/A/tests/examples/dummy",
+                "endpoint": "file:///N%2FA/tests/examples/dummy",
                 "type": "connection.LocalFileStorage",
             },
             cf.load_stage(path=_stage_path),
