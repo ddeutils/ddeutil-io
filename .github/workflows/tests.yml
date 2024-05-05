@@ -7,10 +7,9 @@ on:
       - '*.md'
       - '*.rst'
   pull_request:
-    branches: [
-      "main",
-      "*.*.*"
-    ]
+    branches:
+      - "main"
+      - "*.*.*"
     paths-ignore:
       - 'docs/**'
       - '*.md'
@@ -32,43 +31,47 @@ jobs:
         os:
           - ubuntu-latest
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache-dependency-path: pyproject.toml
 
-      # Cache your dependencies (i.e. all the stuff in your `pyproject.toml`).
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache
         with:
-          path: ${{ env.pythonLocation }}
-          key:  ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
+          path: .venv
+          key: ${{ runner.os }}-python-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('pyproject.toml') }}-test
 
-      # The `if` statement ensures this only runs on a cache miss.
-      - name: Install Dependencies
-        if:  steps.cache.outputs.cache-hit != 'true'
+      - name: Install Python Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install --upgrade pip
-          pip install -e .
-          pip install pytest
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv venv
+          uv pip install -U pip
+          uv pip install -e .
+          uv pip install pytest
+
+      - name: Use Python virtual environment
+        run: |
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> $GITHUB_ENV
 
       - name: Check git is working
         run: |
-          git config --global user.email "korawica@github.actions"
-          git config --global user.name "Testing Git on Travis CI"
+          git config --global user.email "ddeutils@github.actions"
+          git config --global user.name "Testing Git on Testing"
           git --version
           git config --list
 
-      - name: Test with pytest
+      - name: Test with Pytest
         run: |
           pytest -v

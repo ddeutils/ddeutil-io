@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/" # Location of package manifests
+    schedule:
+      # interval: "weekly"
+      interval: "monthly"
+      day: "monday"
+      time: "12:00"
+      timezone: "Etc/UTC"
+    commit-message:
+      prefix: ⬆
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: 📦
