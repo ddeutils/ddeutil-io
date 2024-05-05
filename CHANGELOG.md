@@ -2,6 +2,27 @@
 
 ## Latest Changes
 
+## 0.1.0
+
+### :sparkles: Features
+
+- :dart: feat: migrate ddeutil-node to this package. (_2023-10-02_)
+
+### :black_nib: Code Changes
+
+- :bookmark: Bump up to version 0.0.3 -> 0.0.4. (_2024-05-05_)
+- :test_tube: test: reformat testcase results. (_2024-05-05_)
+- :test_tube: test: add optional import dotenv package for dev env. (_2023-10-12_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: update python version from 38 to 39. (_2024-05-05_)
+- :gear: fixed: change version deps that updated from fmtutil. (_2023-10-12_)
+
+### :package: Build & Workflow
+
+- :toolbox: build: split step on publish workflow for each env. (_2024-05-05_)
+
 ## 0.0.4
 
 ### :sparkles: Features
