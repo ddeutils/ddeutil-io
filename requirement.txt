@@ -18,7 +18,7 @@ toml==0.10.2
 polars==0.18.15
 openpyxl==3.0.10
 sqlalchemy==1.4.41
-psycopg2==2.9.3
+psycopg2==2.9.9
 pyodbc==4.0.34
 boto3==1.28.35
 
