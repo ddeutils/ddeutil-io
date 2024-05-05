@@ -26,7 +26,7 @@ from ddeutil.io.exceptions import ConfigArgumentError
 from pydantic import (
     BaseModel,
     Field,
-    FieldValidationInfo,
+    ValidationInfo,
     field_validator,
 )
 
@@ -84,7 +84,7 @@ class StageData(BaseModel):
 
     @field_validator("format", mode="before")
     @classmethod
-    def validate_format(cls, value, info: FieldValidationInfo):
+    def validate_format(cls, value, info: ValidationInfo):
         # Validate the name in format string should contain any format name.
         if not (
             _searches := re.findall(
@@ -110,7 +110,7 @@ class StageData(BaseModel):
 
     @field_validator("format", mode="after")
     @classmethod
-    def validate_rule_relate_with_format(cls, value, info: FieldValidationInfo):
+    def validate_rule_relate_with_format(cls, value, info: ValidationInfo):
         # Validate a format of stage that relate with rules.
         for validator in RULE_FIX:
             if getattr(info.data.get("rules", {}), validator, None) and (
@@ -147,7 +147,7 @@ class PathData(BaseModel):
     def prepare_path_from_str(
         cls,
         v,
-        info: FieldValidationInfo,
+        info: ValidationInfo,
     ) -> pathlib.Path:
         _root: pathlib.Path = info.data["root"]
         return v if isinstance(v, pathlib.Path) else (_root / v)
