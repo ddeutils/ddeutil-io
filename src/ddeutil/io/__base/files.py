@@ -60,7 +60,7 @@ class CompressProtocol(Protocol):
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class BaseFile(abc.ABC):
+class OpenFileAbc(abc.ABC):
     @abc.abstractmethod
     def read(self, *args, **kwargs): ...
 
@@ -68,7 +68,7 @@ class BaseFile(abc.ABC):
     def write(self, *args, **kwargs): ...
 
 
-class OpenFile(BaseFile):
+class OpenFile(OpenFileAbc):
     """Open File Object"""
 
     def __init__(
@@ -159,27 +159,6 @@ class OpenFile(BaseFile):
         finally:
             _f.close()
 
-    # def read(self, memory: bool = False):
-    #     if not self._f:
-    #         self._f = self.open()
-    #     if not self.compress:
-    #         return (
-    #             self._f.read().decode(self.encoding)
-    #             if memory
-    #             else self._f.read()
-    #         )
-    #     elif self.compress in {
-    #         "gzip",
-    #         "gz",
-    #         "xz",
-    #         "bz2",
-    #     }:
-    #         if memory:
-    #             return self.compress_lib.decompress(self._f.read()).decode(
-    #                 self.encoding
-    #             )
-    #         return self._f.read()
-
     def read(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -230,18 +209,16 @@ class OpenDir:
 class Env(OpenFile):
     """Env object which mapping search engine"""
 
-    KEEP_NEWLINE: ClassVar[bool] = False
-    DEFAULT: ClassVar[str] = ""
+    keep_newline: ClassVar[bool] = False
+    default: ClassVar[str] = ""
 
     def read(self, *, update: bool = True) -> dict[str, str]:
         with self.open(mode="r") as _r:
-            print(_r.read())
             _r.seek(0)
-
             _result: dict = search_env(
                 _r.read(),
-                keep_newline=self.KEEP_NEWLINE,
-                default=self.DEFAULT,
+                keep_newline=self.keep_newline,
+                default=self.default,
             )
             if update:
                 os.environ.update(**_result)
@@ -260,10 +237,7 @@ class Yaml(OpenFile):
             - false: n, false, No, off
     """
 
-    def read(
-        self,
-        safe: bool = True,
-    ) -> dict[str, Any]:
+    def read(self, safe: bool = True) -> dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 return yaml.load(_r.read(), SafeLoader)
@@ -285,17 +259,14 @@ class YamlEnv(Yaml):
     def prepare(x: str) -> str:
         return x
 
-    def read(
-        self,
-        safe: bool = True,
-    ) -> dict[str, Any]:
+    def read(self, safe: bool = True) -> dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 _env_replace: str = search_env_replace(
                     SettingRegex.RE_YAML_COMMENT.sub("", _r.read()),
                     raise_if_default_not_exists=self.raise_if_not_default,
-                    default_value=self.default,
-                    escape_replaced=self.escape,
+                    default=self.default,
+                    escape=self.escape,
                     caller=self.prepare,
                 )
                 if _result := yaml.load(_env_replace, SafeLoader):
@@ -419,9 +390,7 @@ class Json(OpenFile):
         indent: int = 4,
     ) -> None:
         _w: IO
-        with self.open(
-            mode="w",
-        ) as _w:
+        with self.open(mode="w") as _w:
             if self.compress:
                 _w.write(json.dumps(data))
             else:
@@ -443,8 +412,8 @@ class JsonEnv(Json):
                 search_env_replace(
                     _r.read(),
                     raise_if_default_not_exists=self.raise_if_not_default,
-                    default_value=self.default,
-                    escape_replaced=self.escape,
+                    default=self.default,
+                    escape=self.escape,
                     caller=self.prepare,
                 )
             )

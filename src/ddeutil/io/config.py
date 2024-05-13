@@ -108,8 +108,7 @@ class BaseConfFile:
                 )[-order]
             except IndexError:
                 logging.warning(
-                    f"Does not load config data with order: -{order} "
-                    f"and name: {name!r}."
+                    f"Does not load config {name!r} with order: -{order}"
                 )
         return {}
 
@@ -122,25 +121,24 @@ class BaseConfFile:
     ) -> Iterator[Path]:
         """Return all files that exists in the loading path."""
         yield from filter(
-            lambda x: os.path.isfile(x),
-            PathSearch.from_dict(
-                {
-                    "root": (path or str(self.path.resolve())),
-                    "exclude_name": excluded,
-                }
-            ).pick(filename=(name or "*")),
+            lambda x: x.is_file(),
+            (
+                PathSearch(root=(path or self.path), exclude=excluded).pick(
+                    filename=(name or "*")
+                )
+            ),
         )
 
     def move(
         self,
-        path: Union[str, Path],
-        destination: Union[str, Path],
+        path: Path,
+        destination: Path,
         *,
         auto_create: bool = True,
-    ):
+    ) -> None:
         """Copy filename to destination path."""
         if auto_create:
-            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            destination.mkdir(parents=True, exist_ok=True)
         shutil.copy(self.path / path, destination)
 
 
@@ -173,6 +171,7 @@ class ConfFile(BaseConfFile, ConfABC):
     def load_stage(
         self,
         path: Union[str, Path],
+        *,
         default: Optional[Any] = None,
     ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
@@ -230,7 +229,7 @@ class ConfFile(BaseConfFile, ConfABC):
             raise err
 
     def remove_stage(self, path: str, name: str) -> None:
-        """Remove data by name from file with filename."""
+        """Remove data by name insided the staging file with filename."""
         if all_data := self.load_stage(path=path):
             all_data.pop(name, None)
             self.open_file_stg(path, compress=self.compress).write(
@@ -239,12 +238,12 @@ class ConfFile(BaseConfFile, ConfABC):
 
     def create(
         self,
-        path: Union[str, Path],
+        path: Path,
         *,
         initial_data: Optional[Any] = None,
     ) -> None:
         """Create filename in path."""
-        if not os.path.exists(path):
+        if not path.exists():
             self.save_stage(
                 path=path,
                 data=({} if initial_data is None else initial_data),
@@ -367,7 +366,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
                 "schemas",
                 (
                     f"in `create` method of {self.__class__.__name__} "
-                    f"should have value."
+                    f"was required"
                 ),
             )
         _schemas: str = ", ".join([f"{k} {v}" for k, v in schemas.items()])

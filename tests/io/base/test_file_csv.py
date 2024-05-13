@@ -29,8 +29,6 @@ class CSVTest(unittest.TestCase):
         ]
         self.csv_path: str = f"{self.root_path}/test_file.csv"
         self.csv_env_path: str = f"{self.root_path}/test_env_file.csv"
-        # with open(self.csv_path, 'w', encoding='utf-8') as f:
-        #     f.write(self.csv_str)
         fl.CSV(self.csv_path).write(self.csv_data)
 
     def test_load_csv(self):
@@ -38,9 +36,6 @@ class CSVTest(unittest.TestCase):
         self.assertListEqual(self.csv_data, self.csv_data_from_load)
 
     def tearDown(self) -> None:
-        # for path in {self.csv_path, self.csv_env_path, }:
-        for path in {
-            self.csv_path,
-        }:
+        for path in (self.csv_path,):
             if os.path.exists(path):
                 os.remove(path)

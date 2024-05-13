@@ -5,11 +5,8 @@ import shutil
 from collections.abc import Iterator
 from pathlib import Path
 from typing import (
-    Callable,
     Optional,
 )
-
-join_os: Callable = os.sep.join
 
 
 def replace_os(path: str) -> str:
@@ -27,7 +24,7 @@ def get_files(path: str, pattern: str) -> Iterator[Path]:
     yield from Path(path).glob(pattern)
 
 
-def rm(path, is_dir: bool = False) -> None:
+def rm(path: str, is_dir: bool = False) -> None:
     """param <path> could either be relative or absolute."""
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
@@ -39,8 +36,8 @@ def rm(path, is_dir: bool = False) -> None:
         )
 
 
-def touch(filename: str, times=None):
-    file_handle = open(filename, "a")
+def touch(filename: str, times=None) -> None:
+    file_handle = open(filename, mode="a")
     try:
         os.utime(filename, times)
     finally:
@@ -50,46 +47,37 @@ def touch(filename: str, times=None):
 class PathSearch:
     """Path Search object"""
 
-    @classmethod
-    def from_dict(cls, _dict: dict):
-        """Return Path Search object with dictionary"""
-        return cls(
-            root=Path(_dict["root"]),
-            exclude_folder=_dict.get("exclude_folder"),
-            exclude_name=_dict.get("exclude_name"),
-            max_level=_dict.get("max_level", -1),
-            length=_dict.get("length", 4),
-            icon=_dict.get("icon", 1),
-        )
-
     def __init__(
         self,
         root: Path,
         *,
-        exclude_name: Optional[list] = None,
-        exclude_folder: Optional[list] = None,
+        exclude: Optional[list] = None,
+        exclude_dir: Optional[list] = None,
         max_level: int = -1,
         length: int = 4,
         icon: int = 1,
     ):
         self.root: Path = root
-        self.exclude_folder: list = exclude_folder or []
-        self.exclude_name: list = exclude_name or []
+        self.exclude_dir: list = exclude_dir or []
+        self.exclude: list = exclude or []
         self.max_level: int = max_level
         self.length: int = length
         self.real_level: int = 0
-        self._icon_last: str = self.icons[icon]["last"]
-        self._icon_next: str = self.icons[icon]["next"]
-        self._icon: str = self.icons[icon]["normal"]
+
+        # Declare icon arguments
+        self._icon_last: str = self.icons()[icon]["last"]
+        self._icon_next: str = self.icons()[icon]["next"]
+        self._icon: str = self.icons()[icon]["normal"]
         self._icon_length: int = len(self._icon)
+
         assert (
             self._icon_length + 1
         ) < self.length, "a `length` argument must gather than length of icon."
 
         self.output_buf: list = [f"[{self.root.stem}]"]
-        self.output_files: list = []
+        self.files: list[Path] = []
         try:
-            self._recurse(self.root, os.listdir(self.root), "", 0)
+            self.__recurse(self.root, list(self.root.iterdir()), "", 0)
         except FileNotFoundError:
             pass
 
@@ -98,21 +86,9 @@ class PathSearch:
         """Return level of sub path from the root path."""
         return self.real_level + 1 if self.max_level == -1 else self.max_level
 
-    @property
-    def files(self) -> list:
-        """Return files which include in the root path."""
-        return self.output_files
-
-    @property
-    def icons(self) -> dict:
-        return {
-            1: {"normal": "│", "next": "├─", "last": "└─"},
-            2: {"normal": "┃", "next": "┣━", "last": "┗━"},
-        }
-
-    def _recurse(
+    def __recurse(
         self,
-        parent_path: Path,
+        path: Path,
         file_list: list,
         prefix: str,
         level: int,
@@ -121,18 +97,16 @@ class PathSearch:
         if not file_list or (self.max_level != -1 and self.max_level <= level):
             return
 
-        self.real_level = max(level, self.real_level)
-        file_list.sort(key=lambda f: os.path.isfile(parent_path / f))
+        self.real_level: int = max(level, self.real_level)
+        file_list.sort(key=lambda f: (path / f).is_file())
         for idx, sub_path in enumerate(file_list):
-            if any(
-                exclude_name in sub_path for exclude_name in self.exclude_name
-            ):
+            if any(exc == sub_path for exc in self.exclude):
                 continue
 
-            full_path: str = parent_path / sub_path
-            idc = self._switch_icon(idx, len(file_list))
+            full_path: Path = path / sub_path
+            idc: str = self.__switch_icon(idx, len(file_list))
 
-            if os.path.isdir(full_path) and sub_path not in self.exclude_folder:
+            if full_path.is_dir() and sub_path not in self.exclude_dir:
                 self.output_buf.append(f"{prefix}{idc}[{sub_path}]")
                 tmp_prefix: str = (
                     (
@@ -142,30 +116,37 @@ class PathSearch:
                     if len(file_list) > 1 and idx != len(file_list) - 1
                     else f'{prefix}{" " * self.length}'
                 )
-                self._recurse(
-                    full_path, os.listdir(full_path), tmp_prefix, level + 1
+                self.__recurse(
+                    full_path, list(full_path.iterdir()), tmp_prefix, level + 1
                 )
-            elif os.path.isfile(full_path):
+            elif full_path.is_file():
                 self.output_buf.append(f"{prefix}{idc}{sub_path}")
-                self.output_files.append(full_path)
+                self.files.append(full_path)
 
-    def pick(self, filename: str) -> list:
+    def pick(self, filename: str) -> list[Path]:
         """Return filename with match with input argument."""
         return list(
             filter(
                 lambda file: fnmatch.fnmatch(file, f"*/{filename}"),
-                self.output_files,
+                self.files,
             )
         )
 
-    def make_tree(self, newline: Optional[str] = None) -> str:
+    def tree(self, newline: Optional[str] = None) -> str:
         """Return path tree of root path."""
-        _newline: str = newline or "\n"
-        return _newline.join(self.output_buf)
+        return (newline or "\n").join(self.output_buf)
 
-    def _switch_icon(self, number_now: int, number_all: int):
+    def __switch_icon(self, number_now: int, number_all: int):
         return (
             self._icon_last
             if number_now == (number_all - 1)
             else self._icon_next
         )
+
+    @staticmethod
+    def icons() -> dict[int, dict[str, str]]:
+        return {
+            1: {"normal": "│", "next": "├─", "last": "└─"},
+            2: {"normal": "┃", "next": "┣━", "last": "┗━"},
+            3: {"normal": "│", "next": "├─", "last": "╰─"},
+        }

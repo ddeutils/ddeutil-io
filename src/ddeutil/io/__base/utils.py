@@ -4,7 +4,10 @@ from typing import (
     Optional,
 )
 
-from .__regex import SettingRegex
+try:
+    from .__regex import SettingRegex
+except ImportError:
+    from __regex import SettingRegex
 
 
 def add_newline(text: str, newline: Optional[str] = None) -> str:
@@ -16,8 +19,8 @@ def search_env_replace(
     contents: str,
     *,
     raise_if_default_not_exists: bool = False,
-    default_value: str = "N/A",
-    escape_replaced: str = "ESC",
+    default: str = "N/A",
+    escape: str = "ESC",
     caller: Callable[[str], str] = (lambda x: x),
 ) -> str:
     """Prepare content data before parse to any file loading method"""
@@ -26,25 +29,25 @@ def search_env_replace(
     replaces_esc: dict = {}
     for content in SettingRegex.RE_ENV_SEARCH.finditer(contents):
         search: str = content.group(1)
-        if not (escaped := content.group("escaped")):
-            variable: str = content.group("braced")
-            default: str = content.group("braced_default")
-            if not default and raise_if_default_not_exists:
+        if not (_escaped := content.group("escaped")):
+            var: str = content.group("braced")
+            _braced_default: str = content.group("braced_default")
+            if not _braced_default and raise_if_default_not_exists:
                 raise ValueError(
-                    f"Could not find default value for {variable} "
+                    f"Could not find default value for {var} "
                     f"in `.yaml` file"
                 )
-            elif not variable:
+            elif not var:
                 raise ValueError(
                     f"Value {search!r} in `.yaml` file has something wrong "
                     f"with regular expression"
                 )
             replaces[search] = caller(
-                os.environ.get(variable, default) or default_value
+                os.environ.get(var, _braced_default) or default
             )
-        elif "$" in escaped:
+        elif "$" in _escaped:
             span = content.span()
-            search = f"${{{escape_replaced}{escaped}}}"
+            search = f"${{{escape}{_escaped}}}"
             contents = (
                 contents[: (span[0] + shifting)]
                 + search
@@ -65,12 +68,15 @@ def search_env(
     keep_newline: bool = False,
     default: Optional[str] = None,
 ) -> dict[str, str]:
-    """Prepare content data from .env string format before load
-    to the OS environment.
+    """Prepare content data from `.env` file before load to the OS environment
+    variables.
 
-    :ref:
-        - python-dotenv
-            ref: https://github.com/theskumar/python-dotenv
+    :param contents: a string content in the `.env` file
+    :param keep_newline: a flag that filter out a newline
+    :param default: a default value that use if it does not exists
+
+    References:
+        - python-dotenv (https://github.com/theskumar/python-dotenv)
     """
     _default: str = default or ""
     env: dict[str, str] = {}
@@ -102,15 +108,34 @@ def search_env(
             value: str = SettingRegex.RE_ENV_ESCAPE.sub(r"\1", value)
 
         # Substitute variables in a value
-        env[name] = __search_var(value, env, default)
+        env[name] = __search_var(value, env, default=_default)
     return env
 
 
 def __search_var(
     value: str,
     env: dict[str, str],
+    *,
     default: Optional[str] = None,
 ) -> str:
+    """Search variable on the string content
+
+    :param value: a string value that want to search env variable.
+    :param env: a pair of env values that keep in memory dict.
+    :param default: a default value if it does not found on env vars.
+
+    Examples:
+        >>> __search_var("Test ${VAR}", {"VAR": "foo"})
+        'Test foo'
+        >>> __search_var("Test ${VAR2}", {"VAR": "foo"})
+        'Test '
+        >>> __search_var("Test ${VAR2}", {"VAR": "foo"}, default="bar")
+        'Test bar'
+        >>> import os
+        >>> os.environ["VAR2"] = "baz"
+        >>> __search_var("Test ${VAR2}", {"VAR": "foo"}, default="bar")
+        'Test baz'
+    """
     _default: str = default or ""
     for sub_content in SettingRegex.RE_DOTENV_VAR.findall(value):
         replace: str = "".join(sub_content[1:-1])
