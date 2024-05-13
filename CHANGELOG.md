@@ -2,6 +2,30 @@
 
 ## Latest Changes
 
+## 0.1.1
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: refactored testcase file from io dir. (_2024-05-13_)
+- :test_tube: tests: tried to use fixture module scope for testing config reading. (_2024-05-13_)
+- :test_tube: tests: rename and move test files of base to the same level of common module. (_2024-05-13_)
+- :construction: refactored: refactored code on files objects. (_2024-05-13_)
+- :construction: refactored: change code format for valid param name. (_2024-05-13_)
+- :construction: refactored: rewrite __base.files. (_2024-05-13_)
+- :test_tube: test: upgrade import package from updated ddeutil. (_2024-05-13_)
+- :construction: refactored: move setting file to __regex on base module. (_2024-05-13_)
+- :construction: refactored: 📦 bump pydantic from 2.3.0 to 2.7.1 (#17) (_2024-05-05_)
+- :construction: refactored: 📦 bump openpyxl from 3.0.10 to 3.1.2 (_2024-05-05_)
+- :construction: refactored: 📦 bump boto3 from 1.28.35 to 1.34.98 (_2024-05-05_)
+- :construction: refactored: 📦 bump polars from 0.18.15 to 0.20.23 (_2024-05-05_)
+- :construction: refactored: 📦 bump pandas from 2.0.3 to 2.2.2 (_2024-05-05_)
+- :construction: refactored: 📦 bump python-dotenv from 1.0.0 to 1.0.1 (_2024-05-05_)
+- :construction: refactored: 📦 bump psycopg2 from 2.9.3 to 2.9.9 (_2024-05-05_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: upgrade pre-commit hook deps. (_2024-05-05_)
+
 ## 0.1.0
 
 ### :sparkles: Features
