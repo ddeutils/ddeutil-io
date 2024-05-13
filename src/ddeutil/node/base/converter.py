@@ -21,12 +21,12 @@ from typing import (
 )
 
 from dateutil import tz
-from ddeutil.core.base import (
+from ddeutil.core.__base import (
     is_int,
     isinstance_check,
     merge_dict,
-    rsplit,
-    split,
+    must_rsplit,
+    must_split,
 )
 from ddeutil.core.dtutils import (
     next_date,
@@ -142,7 +142,7 @@ class Schemas:
         }, "the `style` should equal the only one of 'old' or 'new' value"
         _result: dict = {}
         for col, mapping in self._schemas.items():
-            _col_old, _type = rsplit(mapping["alias"], "::", maxsplit=1)
+            _col_old, _type = must_rsplit(mapping["alias"], "::", maxsplit=1)
             if style == "old" and _col_old is not None:
                 _result[_col_old]: str = _type
             else:
@@ -153,7 +153,7 @@ class Schemas:
         """Return mapping of old and new column name."""
         _result: dict = {}
         for col, mapping in self._schemas.items():
-            _col_old, _type = rsplit(mapping["alias"], "::", maxsplit=1)
+            _col_old, _type = must_rsplit(mapping["alias"], "::", maxsplit=1)
             _result[_col_old]: str = col
         return _result
 
@@ -502,7 +502,7 @@ class CronPart:
                     f"Invalid value {_value!r} in cron part {value!r}"
                 )
 
-            value_range, value_step = split(_value, "/", maxsplit=1)
+            value_range, value_step = must_split(_value, "/", maxsplit=1)
             value_range_list: list[int] = self.out_of_range(
                 self._parse_range(value_range)
             )

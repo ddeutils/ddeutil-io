@@ -21,8 +21,8 @@ from ddeutil.core import (
     concat,
     hash_all,
     merge_dict,
-    rsplit,
 )
+from ddeutil.core.__base import must_rsplit
 from ddeutil.core.dtutils import get_date
 from deepdiff import DeepDiff
 from fmtutil import (
@@ -190,7 +190,7 @@ class Register(BaseRegister):
         config: Optional[Params] = None,
         loader: Optional[type[OpenFile]] = None,
     ):
-        _domain, _name = rsplit(concat(name.split()), ":", maxsplit=1)
+        _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(
             name=_name,
             domain=_domain,
