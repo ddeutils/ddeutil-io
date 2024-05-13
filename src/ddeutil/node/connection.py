@@ -4,14 +4,12 @@
 # license information.
 # ------------------------------------------------------------------------------
 import abc
+from collections.abc import Iterator
 from pathlib import Path
 from typing import (
     Any,
-    Dict,
-    Iterator,
     NoReturn,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -41,28 +39,22 @@ class BaseConnABC(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_url(cls, *args, **kwargs) -> "BaseConnABC":
-        ...
+    def from_url(cls, *args, **kwargs) -> "BaseConnABC": ...
 
     @abc.abstractmethod
-    def list_objects(self, *args, **kwargs) -> Iterator[Any]:
-        ...
+    def list_objects(self, *args, **kwargs) -> Iterator[Any]: ...
 
     @abc.abstractmethod
-    def exists(self, *args, **kwargs) -> bool:
-        ...
+    def exists(self, *args, **kwargs) -> bool: ...
 
     @abc.abstractmethod
-    def remove(self, *args, **kwargs) -> NoReturn:
-        ...
+    def remove(self, *args, **kwargs) -> NoReturn: ...
 
     @abc.abstractmethod
-    def upload(self, *args, **kwargs) -> NoReturn:
-        ...
+    def upload(self, *args, **kwargs) -> NoReturn: ...
 
     @abc.abstractmethod
-    def download(self, *args, **kwargs) -> Any:
-        ...
+    def download(self, *args, **kwargs) -> Any: ...
 
 
 class BaseFileStorage(BaseConnABC, abc.ABC):
@@ -75,12 +67,12 @@ class BaseFileStorage(BaseConnABC, abc.ABC):
 
     fmt: str = "{protocol}://{container}/{storage}"
 
-    protocol: Tuple[str, ...] = ()
+    protocol: tuple[str, ...] = ()
 
     @classmethod
     def from_dict(
         cls,
-        data: Dict[str, Any],
+        data: dict[str, Any],
     ) -> "BaseFileStorage":
         if "endpoint" in data:
             _ep: str = data.pop("endpoint")
@@ -98,7 +90,7 @@ class BaseFileStorage(BaseConnABC, abc.ABC):
 
     @classmethod
     def from_url(
-        cls, url: Union[str, URL], *, props: Optional[Dict[str, Any]] = None
+        cls, url: Union[str, URL], *, props: Optional[dict[str, Any]] = None
     ) -> "BaseFileStorage":
         url: URL = cls._validate_url(url)
         return cls(
@@ -134,14 +126,14 @@ class BaseFileStorage(BaseConnABC, abc.ABC):
         container: str,
         storage: Optional[str] = None,
         *,
-        props: Optional[Dict[str, Any]] = None,
+        props: Optional[dict[str, Any]] = None,
     ):
         self.url: "URL" = URL.create(
             drivername=protocol,
             host=container,
             database=storage,
         )
-        self.props: Dict[str, Any] = props
+        self.props: dict[str, Any] = props
         self.validate_protocol()
 
     def __repr__(self) -> str:
@@ -163,7 +155,7 @@ class BaseFileStorage(BaseConnABC, abc.ABC):
 
 
 class LocalFileStorage(BaseFileStorage):
-    protocol: Tuple[str, ...] = (
+    protocol: tuple[str, ...] = (
         "file",
         "local",
     )
@@ -179,14 +171,11 @@ class LocalFileStorage(BaseFileStorage):
     def exists(self, path: Union[str, Path]) -> bool:
         return (Path(self.url.database) / path).exists()
 
-    def remove(self, *args, **kwargs) -> NoReturn:
-        ...
+    def remove(self, *args, **kwargs) -> NoReturn: ...
 
-    def upload(self, *args, **kwargs) -> NoReturn:
-        ...
+    def upload(self, *args, **kwargs) -> NoReturn: ...
 
-    def download(self, *args, **kwargs) -> Any:
-        ...
+    def download(self, *args, **kwargs) -> Any: ...
 
 
 class SFTPStorage(BaseFileStorage):
@@ -198,7 +187,7 @@ class SFTPStorage(BaseFileStorage):
     across insecure networks.
     """
 
-    protocol: Tuple[str, ...] = (
+    protocol: tuple[str, ...] = (
         "sftp",
         "ssh",
     )
@@ -209,7 +198,7 @@ class SFTPStorage(BaseFileStorage):
         container: str,
         storage: Optional[str] = None,
         *,
-        props: Optional[Dict[str, Any]] = None,
+        props: Optional[dict[str, Any]] = None,
     ) -> None:
         super().__init__(
             protocol=protocol,
@@ -234,36 +223,32 @@ class SFTPStorage(BaseFileStorage):
     ) -> Iterator[Path]:
         return self.sftp_client.walk(self.url.database)
 
-    def exists(self, path: str):
-        ...
+    def exists(self, path: str): ...
 
-    def remove(self, *args, **kwargs) -> NoReturn:
-        ...
+    def remove(self, *args, **kwargs) -> NoReturn: ...
 
-    def upload(self, *args, **kwargs) -> NoReturn:
-        ...
+    def upload(self, *args, **kwargs) -> NoReturn: ...
 
-    def download(self, *args, **kwargs) -> Any:
-        ...
+    def download(self, *args, **kwargs) -> Any: ...
 
 
 class FTPStorage(BaseFileStorage):
-    protocol: Tuple[str, ...] = ("ftp",)
+    protocol: tuple[str, ...] = ("ftp",)
     ...
 
 
 class S3Storage(BaseFileStorage):
-    protocol: Tuple[str, ...] = ("s3",)
+    protocol: tuple[str, ...] = ("s3",)
     ...
 
 
 class ADLSStorage(BaseFileStorage):
-    protocol: Tuple[str, ...] = ("abfs",)
+    protocol: tuple[str, ...] = ("abfs",)
     ...
 
 
 class GCSStorage(BaseFileStorage):
-    protocol: Tuple[str, ...] = ("gcs",)
+    protocol: tuple[str, ...] = ("gcs",)
     ...
 
 
@@ -278,13 +263,13 @@ class BaseDB(BaseConnABC, abc.ABC):
 
     fmt: str = "{protocol}://{username}:{password}@{host}:{port}/{database}"
 
-    protocol: Tuple[str, ...] = ()
+    protocol: tuple[str, ...] = ()
 
     query_flag: bool = False
 
     @classmethod
     def from_url(
-        cls, url: Union[str, URL], *, props: Optional[Dict[str, Any]] = None
+        cls, url: Union[str, URL], *, props: Optional[dict[str, Any]] = None
     ) -> "BaseDB":
         url: URL = cls._validate_url(url)
         return cls(
@@ -311,9 +296,9 @@ class BaseDB(BaseConnABC, abc.ABC):
         password: str,
         database: str,
         port: Optional[int] = None,
-        query: Optional[Union[Tuple[str, ...], str]] = None,
+        query: Optional[Union[tuple[str, ...], str]] = None,
         *,
-        props: Optional[Dict[str, Any]] = None,
+        props: Optional[dict[str, Any]] = None,
     ) -> None:
         self.url: "URL" = URL.create(
             drivername=protocol,
@@ -324,7 +309,7 @@ class BaseDB(BaseConnABC, abc.ABC):
             port=port,
             query=query,
         )
-        self.props: Dict[str, Any] = merge_dict(
+        self.props: dict[str, Any] = merge_dict(
             {
                 "encoding": "utf-8",
                 "echo": False,
@@ -427,7 +412,7 @@ class BaseDB(BaseConnABC, abc.ABC):
 
     def get_schema(
         self, table: str, schema: Optional[str] = None
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Return pair of table and schema."""
         if "." not in table:
             _schema: str = schema or self.default_schema
@@ -437,7 +422,7 @@ class BaseDB(BaseConnABC, abc.ABC):
 
 
 class SQLiteDB(BaseDB):
-    protocol: Tuple[str, ...] = ("sqlite",)
+    protocol: tuple[str, ...] = ("sqlite",)
 
     def columns(self, table: str) -> list:
         with self as conn:
@@ -465,43 +450,36 @@ class SQLiteDB(BaseDB):
 
 
 class PostgresDB(BaseDB):
-    protocol: Tuple[str, ...] = ("postgresql",)
+    protocol: tuple[str, ...] = ("postgresql",)
     ...
 
 
 class MSSQLServerDB(BaseDB):
-    protocol: Tuple[str, ...] = ("mssql",)
+    protocol: tuple[str, ...] = ("mssql",)
     ...
 
 
 class MySQLDB(BaseDB):
-    protocol: Tuple[str, ...] = ("mysql",)
+    protocol: tuple[str, ...] = ("mysql",)
     ...
 
 
-class BigQuery:
-    ...
+class BigQuery: ...
 
 
-class RedShift:
-    ...
+class RedShift: ...
 
 
-class SynapseAnalytic:
-    ...
+class SynapseAnalytic: ...
 
 
-class MangoDB:
-    ...
+class MangoDB: ...
 
 
-class DynamoDB:
-    ...
+class DynamoDB: ...
 
 
-class RedisDB:
-    ...
+class RedisDB: ...
 
 
-class CosmosDB:
-    ...
+class CosmosDB: ...

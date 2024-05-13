@@ -6,6 +6,7 @@
 
 import copy
 import re
+from collections.abc import Iterator
 from datetime import (
     datetime,
     timedelta,
@@ -15,11 +16,7 @@ from functools import (
     total_ordering,
 )
 from typing import (
-    Dict,
-    Iterator,
-    List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -47,8 +44,7 @@ class SchemaFeatures:
         pk: Optional = None,
         default: Optional = None,
         fk: Optional = None,
-    ):
-        ...
+    ): ...
 
 
 class Schemas:
@@ -178,20 +174,20 @@ class Statement:
     statement_ptt: str = ";"
 
     @classmethod
-    def load(cls, stm: Union[str, dict, List[str]]):
+    def load(cls, stm: Union[str, dict, list[str]]):
         """Dialect load value with not string type of value in mapping
         statement.
         """
         if isinstance(stm, str):
             stm: dict = {"common": stm}
-        elif isinstance_check(stm, List[str]):
+        elif isinstance_check(stm, list[str]):
             stm: dict = {"common": f"{cls.statement_ptt} ".join(stm)}
         elif isinstance(stm, dict):
             # Convert if does not match with type: Dict[str, str]
             ...
         return cls(stm=stm)
 
-    def __init__(self, stm: Dict[str, str], *, sensitive: bool = False):
+    def __init__(self, stm: dict[str, str], *, sensitive: bool = False):
         """Main initialize of the statement object.
 
         :structure:
@@ -246,7 +242,7 @@ class Statement:
             if not sensitive:
                 value: str = value.lower()
             stm[_] = value
-        self._st_stm: Dict[str, str] = stm
+        self._st_stm: dict[str, str] = stm
 
     def __str__(self) -> str:
         return self._st_stm
@@ -302,7 +298,7 @@ class Statement:
         return "undefined"
 
 
-WEEKDAYS: Dict[str, int] = {
+WEEKDAYS: dict[str, int] = {
     "Sun": 0,
     "Mon": 1,
     "Tue": 2,
@@ -312,7 +308,7 @@ WEEKDAYS: Dict[str, int] = {
     "Sat": 6,
 }
 
-CRON_UNITS: Tuple = (
+CRON_UNITS: tuple = (
     {
         "name": "minute",
         "range": partial(range, 0, 60),
@@ -368,7 +364,7 @@ CRON_UNITS: Tuple = (
     },
 )
 
-CRON_UNITS_AWS: Tuple = CRON_UNITS + (
+CRON_UNITS_AWS: tuple = CRON_UNITS + (
     {
         "name": "year",
         "range": partial(range, 1990, 2101),
@@ -389,22 +385,22 @@ class CronPart:
     )
 
     def __init__(
-        self, unit: dict, values: Union[str, List[int]], options: dict
+        self, unit: dict, values: Union[str, list[int]], options: dict
     ):
         self.unit: dict = unit
         self.options: dict = options
         if isinstance(values, str):
-            values: List[int] = (
+            values: list[int] = (
                 self.from_string(values) if values != "?" else []
             )
-        elif isinstance_check(values, List[int]):
-            values: List[int] = self.replace_weekday(values)
+        elif isinstance_check(values, list[int]):
+            values: list[int] = self.replace_weekday(values)
         else:
             raise TypeError(f"Invalid type of value in cron part: {values}.")
-        unique_values: List[int] = self.out_of_range(
+        unique_values: list[int] = self.out_of_range(
             sorted(dict.fromkeys(values))
         )
-        self.values: List[int] = unique_values
+        self.values: list[int] = unique_values
 
     def __str__(self) -> str:
         return self.to_string()
@@ -453,7 +449,7 @@ class CronPart:
             self.unit.get("max") - self.unit.get("min") + 1
         )
 
-    def from_string(self, value: str) -> List[int]:
+    def from_string(self, value: str) -> list[int]:
         """Parses a string as a range of positive integers. The string should
         include only `-` and `,` special strings.
 
@@ -497,7 +493,7 @@ class CronPart:
               Run at 10:15am UTC on the last Friday of each month during the years 2002 to 2005
 
         """
-        interval_list: List[List[int]] = []
+        interval_list: list[list[int]] = []
         for _value in self.replace_alternative(value.upper()).split(","):
             if _value == "?":
                 continue
@@ -507,7 +503,7 @@ class CronPart:
                 )
 
             value_range, value_step = split(_value, "/", maxsplit=1)
-            value_range_list: List[int] = self.out_of_range(
+            value_range_list: list[int] = self.out_of_range(
                 self._parse_range(value_range)
             )
 
@@ -527,14 +523,14 @@ class CronPart:
         return value
 
     def replace_weekday(
-        self, values: Union[List[int], Iterator[int]]
-    ) -> List[int]:
+        self, values: Union[list[int], Iterator[int]]
+    ) -> list[int]:
         """Replaces all 7 with 0 as Sunday can be represented by both."""
         if self.is_weekday:
             return [0 if value == 7 else value for value in values]
         return list(values)
 
-    def out_of_range(self, values: List[int]) -> List[int]:
+    def out_of_range(self, values: list[int]) -> list[int]:
         """Return an integer is a value out of range was found, otherwise None."""
         if values:
             if (first := values[0]) < self.unit["min"]:
@@ -547,14 +543,14 @@ class CronPart:
                 )
         return values
 
-    def _parse_range(self, value: str) -> List[int]:
+    def _parse_range(self, value: str) -> list[int]:
         """Parses a range string."""
         if value == "*":
             return list(self.unit["range"]())
         elif value.count("-") > 1:
             raise ValueError(f"Invalid value {value}")
         try:
-            sub_parts: List[int] = list(map(int, value.split("-")))
+            sub_parts: list[int] = list(map(int, value.split("-")))
         except ValueError as exc:
             raise ValueError(f"Invalid value {value!r} --> {exc}") from exc
 
@@ -562,12 +558,12 @@ class CronPart:
             min_value, max_value = sub_parts
             if max_value < min_value:
                 raise ValueError(f"Max range is less than min range in {value}")
-            sub_parts: List[int] = list(range(min_value, max_value + 1))
+            sub_parts: list[int] = list(range(min_value, max_value + 1))
         return self.replace_weekday(sub_parts)
 
     def _interval(
-        self, values: List[int], step: Optional[int] = None
-    ) -> List[int]:
+        self, values: list[int], step: Optional[int] = None
+    ) -> list[int]:
         """Applies an interval step to a collection of values."""
         if not step:
             return values
@@ -608,7 +604,7 @@ class CronPart:
             )
         return False
 
-    def ranges(self) -> List[Union[int, List[int]]]:
+    def ranges(self) -> list[Union[int, list[int]]]:
         """Returns the range as an array of ranges defined as arrays of positive integers."""
         multi_dim_values = []
         start_number: Optional[int] = None
@@ -646,7 +642,7 @@ class CronPart:
             )
             return f"{_hash}/{self.step}"
 
-        cron_range_strings: List[str] = []
+        cron_range_strings: list[str] = []
         for cron_range in self.ranges():
             if isinstance(cron_range, list):
                 cron_range_strings.append(
@@ -707,13 +703,13 @@ class CronJob:
 
     def __init__(
         self,
-        value: Union[List[List[int]], str],
+        value: Union[list[list[int]], str],
         *,
         option: Optional[dict] = None,
     ):
         if isinstance(value, str):
             value: list = value.strip().split()
-        elif not isinstance_check(value, List[List[int]]):
+        elif not isinstance_check(value, list[list[int]]):
             raise TypeError(
                 f"{self.__class__.__name__} cron value does not support type: {type(value)}."
             )
@@ -721,10 +717,10 @@ class CronJob:
             raise ValueError(
                 f"Invalid cron value does not have length equal {self.cron_length}: {value}."
             )
-        self._options: Dict[str, bool] = merge_dict(
+        self._options: dict[str, bool] = merge_dict(
             self.options_defaults, (option or {})
         )
-        self._parts: List[CronPart] = [
+        self._parts: list[CronPart] = [
             CronPart(unit, values=item, options=self._options)
             for item, unit in zip(value, CRON_UNITS)
         ]
@@ -752,7 +748,7 @@ class CronJob:
         )
 
     @property
-    def parts(self) -> List[CronPart]:
+    def parts(self) -> list[CronPart]:
         return self._parts
 
     @property
@@ -784,7 +780,7 @@ class CronJob:
         """Return part of day of month."""
         return self._parts[4]
 
-    def to_list(self) -> List[List[int]]:
+    def to_list(self) -> list[list[int]]:
         """Returns the cron schedule as a 2-dimensional list of integers."""
         return [part.values for part in self._parts]
 

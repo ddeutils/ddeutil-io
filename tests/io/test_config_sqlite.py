@@ -2,7 +2,6 @@ import os.path
 import pathlib
 import shutil
 import unittest
-from typing import Dict
 
 import ddeutil.io.config as conf
 import pytest
@@ -17,7 +16,7 @@ class BaseConfigSQLiteTestCase(unittest.TestCase):
         self.target_path: pathlib.Path = self.test_path / "conf_sqlite_temp"
 
     def test_base_conf_read_file(self):
-        _schemas: Dict[str, str] = {
+        _schemas: dict[str, str] = {
             "name": "varchar(256) primary key",
             "shortname": "varchar(64) not null",
             "fullname": "varchar(256) not null",

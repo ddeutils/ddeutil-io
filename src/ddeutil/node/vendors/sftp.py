@@ -1,11 +1,10 @@
 import contextlib
 from collections import deque
+from collections.abc import Iterator
 from ftplib import FTP
 from stat import S_ISDIR, S_ISREG
 from typing import (
     Any,
-    Dict,
-    Iterator,
     Optional,
 )
 
@@ -54,7 +53,7 @@ class WrapSFTPClient:
     """Wrapped SFTP Client Class"""
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]) -> "WrapSFTPClient":
+    def from_data(cls, data: dict[str, Any]) -> "WrapSFTPClient":
         ssh: SSHModel = SSHModel.model_validate(data)
         return cls(
             hostname=ssh.hostname,

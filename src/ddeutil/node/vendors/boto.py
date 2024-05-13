@@ -1,7 +1,5 @@
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
 )
 
@@ -54,7 +52,7 @@ class WrapBoto3Client:
         # Create credential
         self.cred = self.make_cred()
 
-    def make_cred(self) -> Dict[str, str]:
+    def make_cred(self) -> dict[str, str]:
         if self.role_arn is None:
             return {
                 "AccessKeyId": self.access_key_id,
@@ -72,7 +70,7 @@ class WrapBoto3Client:
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
         )
-        mfa_optional: Dict[str, str] = {}
+        mfa_optional: dict[str, str] = {}
         if self.mfa_serial:
             mfa_otp: str = str(input("Enter the MFA code: "))
             mfa_optional = (
@@ -111,7 +109,7 @@ class WrapBoto3Client:
         )
 
     def list_objects(self, bucket: str, prefix: str):
-        objs: List[Dict[str, Any]] = []
+        objs: list[dict[str, Any]] = []
         kwargs = {"Bucket": bucket, "Prefix": prefix}
         while True:
             resp = self.s3.list_objects_v2(**kwargs)

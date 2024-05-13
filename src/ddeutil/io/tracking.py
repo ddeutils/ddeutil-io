@@ -11,7 +11,6 @@ import sys
 from functools import wraps
 from typing import (
     Any,
-    List,
     Optional,
     TypeVar,
     Union,
@@ -147,7 +146,7 @@ class Message:
     """
 
     _message: str
-    _messages: List[str] = dataclasses.field(default_factory=list)
+    _messages: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def messages(self) -> str:
@@ -219,7 +218,7 @@ class ConfLogging(BaseConfLoader):
     ):
         super().__init__(endpoint, name, environ=environ)
         self._cf_logger: logging.Logger = _logger
-        self._cf_msgs: List[Optional[dict]] = []
+        self._cf_msgs: list[Optional[dict]] = []
         self._cf_parent_hash: str = str(int(get_date("datetime").timestamp()))
         self._cf_setup: dict = merge_dict(
             {"conf_name": self._cf_name}, (setup or {})
@@ -241,7 +240,7 @@ class ConfLogging(BaseConfLoader):
     def save_logging(self):
         if self.is_pulled:
             self.save(data=self._cf_msgs)
-            self._cf_msgs: List[Optional[dict]] = []
+            self._cf_msgs: list[Optional[dict]] = []
 
     def debug(self, msg):
         self._cf_logger.debug(msg)

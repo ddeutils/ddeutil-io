@@ -3,7 +3,7 @@ import shutil
 import unittest
 from textwrap import dedent
 
-import ddeutil.io.base as bfl
+import ddeutil.io.__base as bfl
 
 
 class EnvTestCase(unittest.TestCase):

@@ -15,26 +15,23 @@ import pathlib
 import shutil
 import sqlite3
 import sys
+from collections.abc import Iterator
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    Iterator,
-    List,
     NoReturn,
     Optional,
-    Type,
     Union,
 )
 
 from ddeutil.core import merge_dict
 
-from .base import (
+from .__base import (
     Json,
     OpenFile,
     YamlEnv,
 )
-from .base.pathutils import PathSearch, remove_file
+from .__base.pathutils import PathSearch, rm
 from .exceptions import ConfigArgumentError
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -52,8 +49,8 @@ class BaseConfFile:
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
-        open_fil: Optional[Type[OpenFile]] = None,
-        fil_fmt_exc: Optional[List[str]] = None,
+        open_fil: Optional[type[OpenFile]] = None,
+        fil_fmt_exc: Optional[list[str]] = None,
     ):
         self.path: pathlib.Path = (
             pathlib.Path(path) if isinstance(path, str) else path
@@ -63,15 +60,15 @@ class BaseConfFile:
             if not auto_create:
                 raise FileNotFoundError(f"Path {path} does not exists.")
             os.makedirs(self.path)
-        self.open_fil: Type[OpenFile] = open_fil or YamlEnv
-        self.fil_fmt_exc: List[str] = fil_fmt_exc or [".json", ".toml"]
+        self.open_fil: type[OpenFile] = open_fil or YamlEnv
+        self.fil_fmt_exc: list[str] = fil_fmt_exc or [".json", ".toml"]
 
     def load(
         self,
         name: str,
         *,
         order: int = 1,
-    ) -> Dict[Any, Any]:
+    ) -> dict[Any, Any]:
         """Return configuration data from name of the config.
 
         :param name: A name of config key that want to search in the path.
@@ -80,7 +77,7 @@ class BaseConfFile:
             of duplicate data.
         :type order: int (Default 1)
         """
-        rs: List[Dict[Any, Any]]
+        rs: list[dict[Any, Any]]
         if rs := [
             merge_dict({"alias": name}, data)
             for file in self.files(excluded=self.fil_fmt_exc)
@@ -177,9 +174,9 @@ class ConfFile(BaseConfFile, ConfAdapter):
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
-        open_fil: Optional[Type[OpenFile]] = None,
-        fil_fmt_exc: Optional[List[str]] = None,
-        open_fil_stg: Optional[Type[OpenFile]] = None,
+        open_fil: Optional[type[OpenFile]] = None,
+        fil_fmt_exc: Optional[list[str]] = None,
+        open_fil_stg: Optional[type[OpenFile]] = None,
     ):
         """Main initialize of config file loading object.
 
@@ -194,13 +191,13 @@ class ConfFile(BaseConfFile, ConfAdapter):
             open_fil=open_fil,
             fil_fmt_exc=fil_fmt_exc,
         )
-        self.open_fil_stg: Type[OpenFile] = open_fil_stg or Json
+        self.open_fil_stg: type[OpenFile] = open_fil_stg or Json
 
     def load_stage(
         self,
         path: Union[str, pathlib.Path],
         default: Optional[Any] = None,
-    ) -> Union[Dict[Any, Any], List[Any]]:
+    ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
         try:
             return self.open_fil_stg(
@@ -213,7 +210,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
     def save_stage(
         self,
         path: Union[str, pathlib.Path],
-        data: Union[Dict[Any, Any], List[Any]],
+        data: Union[dict[Any, Any], list[Any]],
         *,
         merge: bool = False,
     ) -> NoReturn:
@@ -248,7 +245,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
                 _merge_data: Union[dict, list] = merge_dict(all_data, data)
             self.open_fil_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
-            remove_file(path=path)
+            rm(path=path)
             if all_data:
                 self.open_fil_stg(path, compress=self.compress).write(
                     all_data,
@@ -334,8 +331,8 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
     def load_stage(
         self,
         table: str,
-        default: Optional[Dict[Any, Any]] = None,
-    ) -> Dict[Any, Any]:
+        default: Optional[dict[Any, Any]] = None,
+    ) -> dict[Any, Any]:
         """Return content data from database with table name, default empty
         dict."""
         _db, _table = table.rsplit("/", maxsplit=1)
@@ -407,7 +404,7 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
     @staticmethod
     def prepare_values(
         values: dict,
-    ) -> Dict[str, Union[str, int, float]]:
+    ) -> dict[str, Union[str, int, float]]:
         """Return prepare value with dictionary type to string
         to source system.
         """

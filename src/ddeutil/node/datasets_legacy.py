@@ -13,7 +13,7 @@ from typing import (
 import pandas as pd
 import polars as pl
 from ddeutil.core.base.merge import merge_dict
-from ddeutil.io.base.pathutils import join_path
+from ddeutil.io.__base.pathutils import join_path
 from ddeutil.node.base.converter import Schemas
 from ddeutil.node.exceptions import CatalogArgumentError
 
@@ -771,11 +771,11 @@ class PandasParquetFile(BaseCatalog):
 
 
 class PandasPickle(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 class PandasSQLite(BaseCatalog):
@@ -801,8 +801,7 @@ class PandasSQLite(BaseCatalog):
 
     def save(
         self, df: Any, conn: Optional = None, *, option: Optional = None
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class PandasPostgres(BaseCatalog):
@@ -828,32 +827,31 @@ class PandasPostgres(BaseCatalog):
 
     def save(
         self, df: Any, conn: Optional = None, *, option: Optional = None
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class PandasGoogleBigQuery(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 class PandasAzureSynapse(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 class PandasAWSRedShift(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 class PolarCSVFile(BaseCatalog):
@@ -909,24 +907,23 @@ class PolarCSVFile(BaseCatalog):
             **self.props_load(addition=option),
         )
 
-    def save(self, df: pl.DataFrame, conn: Optional = None) -> None:
-        ...
+    def save(self, df: pl.DataFrame, conn: Optional = None) -> None: ...
 
 
 class DaskCSVFile(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 class SparkCSVFile(BaseCatalog):
-    def load(self, conn: Optional = None, limit: Optional[int] = None) -> Any:
-        ...
+    def load(
+        self, conn: Optional = None, limit: Optional[int] = None
+    ) -> Any: ...
 
-    def save(self, df: Any, conn: Optional = None) -> None:
-        ...
+    def save(self, df: Any, conn: Optional = None) -> None: ...
 
 
 __all__ = {

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, get_type_hints
+from typing import Any, Optional, get_type_hints
 
 from ddeutil.core import merge_dict
 from pydantic import (
@@ -25,7 +25,7 @@ class ModifiedBaseModel(BaseModel):
         )
 
     @classmethod
-    def filter_data(cls, data) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def filter_data(cls, data) -> tuple[dict[str, Any], dict[str, Any]]:
         registered_attr = {}
         not_registered_attr = {}
         annots = get_type_hints(cls)
@@ -39,7 +39,7 @@ class ModifiedBaseModel(BaseModel):
 
 class BaseLoaderModel(ModifiedBaseModel):
     type: str
-    props: Dict[str, Any] = Field(
+    props: dict[str, Any] = Field(
         default_factory=dict,
         validate_default=True,
     )

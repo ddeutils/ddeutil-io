@@ -3,9 +3,7 @@ import urllib.parse
 from functools import cached_property
 from typing import (
     Any,
-    Dict,
     Optional,
-    Tuple,
     TypedDict,
 )
 
@@ -17,7 +15,7 @@ from ddeutil.core import (
     setdot,
 )
 from ddeutil.io import Params, Register
-from ddeutil.io.base import YamlEnv
+from ddeutil.io.__base import YamlEnv
 from ddeutil.io.utils import map_func_to_str
 from fmtutil import Datetime
 
@@ -30,7 +28,7 @@ YamlEnvQuote.prepare = staticmethod(lambda x: urllib.parse.quote_plus(str(x)))
 class LoaderData(TypedDict):
     name: str
     fullname: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
 
 class BaseLoader:
@@ -39,20 +37,20 @@ class BaseLoader:
     properties and method for type object.
     """
 
-    load_prefixes: Tuple[str, ...] = tuple("conn")
+    load_prefixes: tuple[str, ...] = tuple("conn")
 
     load_datetime_name: str = "audit_date"
 
     load_datetime_fmt: str = "%Y-%m-%d %H:%M:%S"
 
-    data_excluded: Tuple[str, ...] = (
+    data_excluded: tuple[str, ...] = (
         "version",
         "updt",
     )
 
-    option_key: Tuple[str, ...] = ("parameters",)
+    option_key: tuple[str, ...] = ("parameters",)
 
-    datetime_key: Tuple[str, ...] = ("endpoint",)
+    datetime_key: tuple[str, ...] = ("endpoint",)
 
     @classmethod
     def from_catalog(
@@ -61,7 +59,7 @@ class BaseLoader:
         config: Params,
         *,
         refresh: bool = False,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ) -> "BaseLoader":
         """Catalog load configuration
 
@@ -109,7 +107,7 @@ class BaseLoader:
         self,
         data: LoaderData,
         *,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
         config: Optional[Params] = None,
     ):
         """Main initialize base config object which get a name of configuration
@@ -121,7 +119,7 @@ class BaseLoader:
             subclass of loading use.
         """
         self.__data: LoaderData = data
-        self.__params: Dict[str, Any] = params or {}
+        self.__params: dict[str, Any] = params or {}
         self.__config = config
 
         self.name: str = data["name"]
@@ -155,10 +153,10 @@ class BaseLoader:
     #     return import_string(f"{_obj_prefix}.{_typ}")
 
     @cached_property
-    def __map_data(self) -> Dict[str, Any]:
+    def __map_data(self) -> dict[str, Any]:
         """Return configuration data without key in the excluded key set."""
-        _data: Dict[str, Any] = self.__data["data"].copy()
-        _results: Dict[str, Any] = {
+        _data: dict[str, Any] = self.__data["data"].copy()
+        _results: dict[str, Any] = {
             k: _data[k] for k in _data if k not in self.data_excluded
         }
 
@@ -189,12 +187,12 @@ class BaseLoader:
         return _results
 
     @property
-    def data(self) -> Dict[str, Any]:
+    def data(self) -> dict[str, Any]:
         """Return deep copy of configuration data."""
         return copy.deepcopy(self.__map_data)
 
     @property
-    def params(self) -> Dict[str, Any]:
+    def params(self) -> dict[str, Any]:
         """Return parameters of this loading object"""
         return self.__params
 

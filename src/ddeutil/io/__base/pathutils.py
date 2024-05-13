@@ -1,16 +1,11 @@
 import datetime
 import fnmatch
 import os
-import re
 import shutil
-from pathlib import (
-    Path,
-    PosixPath,
-)
+from collections.abc import Iterator
+from pathlib import Path
 from typing import (
-    AnyStr,
     Callable,
-    Iterator,
     Optional,
 )
 
@@ -21,57 +16,22 @@ def replace_os(path: str) -> str:
     return path.replace(os.sep, "/")
 
 
-def join_path(
-    full_path: AnyStr, full_join_path: str, abs: bool = True
-) -> AnyStr:
-    """Join path with multi pardir value if set `full_join_path`
-    be '../../<path>'.
-    """
-    _abspath: AnyStr = full_path
-    if re.search(r"^(\w+://)", _abspath) or (not abs):
-        # Return joined value with '/' string value
-        # if the full path starts with protocol prefix.
-        return "/".join([replace_os(_abspath), replace_os(full_join_path)])
-    _join_split: list = os.path.normpath(full_join_path).split(os.sep)
-    for path in _join_split:
-        _abspath: AnyStr = (
-            os.path.abspath(os.path.join(_abspath, os.pardir))
-            if path == ".."
-            else os.path.abspath(os.path.join(_abspath, path))
-        )
-    return replace_os(_abspath)
-
-
-def join_root_with(full_join_path: str, key_name: str = "APP_PATH") -> AnyStr:
-    """Join path with the root path which set in `key_name` environment
-    variable.
-    """
-    if key_value := os.getenv(key_name):
-        return join_path(key_value, full_join_path)
-    raise ValueError(
-        f"the key name: {key_name!r} of root path in environment variable "
-        f"does not exists"
-    )
-
-
-def get_modification_time(path: str):
+def get_modification_time(path: str) -> datetime.datetime:
     """Return datetime of modification of file."""
     timestamp = os.path.getmtime(path)
     return datetime.datetime.fromtimestamp(timestamp)
 
 
-def get_files(path: str, pattern: str) -> Iterator[PosixPath]:
+def get_files(path: str, pattern: str) -> Iterator[Path]:
     """Return path from glob method."""
     yield from Path(path).glob(pattern)
 
 
-def remove_file(path, is_dir: bool = False):
+def rm(path, is_dir: bool = False) -> None:
     """param <path> could either be relative or absolute."""
     if os.path.isfile(path) or os.path.islink(path):
-        # remove the file
         os.remove(path)
     elif os.path.isdir(path) and is_dir:
-        # remove dir and all contains
         shutil.rmtree(path)
     else:
         raise ValueError(
@@ -94,7 +54,7 @@ class PathSearch:
     def from_dict(cls, _dict: dict):
         """Return Path Search object with dictionary"""
         return cls(
-            root=_dict["root"],
+            root=Path(_dict["root"]),
             exclude_folder=_dict.get("exclude_folder"),
             exclude_name=_dict.get("exclude_name"),
             max_level=_dict.get("max_level", -1),
@@ -104,7 +64,7 @@ class PathSearch:
 
     def __init__(
         self,
-        root: str,
+        root: Path,
         *,
         exclude_name: Optional[list] = None,
         exclude_folder: Optional[list] = None,
@@ -112,7 +72,7 @@ class PathSearch:
         length: int = 4,
         icon: int = 1,
     ):
-        self.root: str = root
+        self.root: Path = root
         self.exclude_folder: list = exclude_folder or []
         self.exclude_name: list = exclude_name or []
         self.max_level: int = max_level
@@ -126,7 +86,7 @@ class PathSearch:
             self._icon_length + 1
         ) < self.length, "a `length` argument must gather than length of icon."
 
-        self.output_buf: list = [f"[{self.root.rsplit(os.path.sep, 1)[-1]}]"]
+        self.output_buf: list = [f"[{self.root.stem}]"]
         self.output_files: list = []
         try:
             self._recurse(self.root, os.listdir(self.root), "", 0)
@@ -151,21 +111,25 @@ class PathSearch:
         }
 
     def _recurse(
-        self, parent_path: str, file_list: list, prefix: str, level: int
+        self,
+        parent_path: Path,
+        file_list: list,
+        prefix: str,
+        level: int,
     ):
         """Path recursive method for generate buffer of tree and files."""
         if not file_list or (self.max_level != -1 and self.max_level <= level):
             return
 
         self.real_level = max(level, self.real_level)
-        file_list.sort(key=lambda f: os.path.isfile(join_path(parent_path, f)))
+        file_list.sort(key=lambda f: os.path.isfile(parent_path / f))
         for idx, sub_path in enumerate(file_list):
             if any(
                 exclude_name in sub_path for exclude_name in self.exclude_name
             ):
                 continue
 
-            full_path: str = join_path(parent_path, sub_path)
+            full_path: str = parent_path / sub_path
             idc = self._switch_icon(idx, len(file_list))
 
             if os.path.isdir(full_path) and sub_path not in self.exclude_folder:

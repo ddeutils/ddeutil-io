@@ -10,10 +10,7 @@ import pathlib
 import re
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -21,7 +18,7 @@ from ddeutil.core import merge_dict
 
 # from .base import YamlEnv
 # from .exceptions import ConfigArgumentError
-from ddeutil.io.base import YamlEnv
+from ddeutil.io.__base import YamlEnv
 from ddeutil.io.exceptions import ConfigArgumentError
 from pydantic import (
     BaseModel,
@@ -30,7 +27,7 @@ from pydantic import (
     field_validator,
 )
 
-FMT_NAMES: Tuple[str, ...] = (
+FMT_NAMES: tuple[str, ...] = (
     "naming",
     "domain",
     "environ",
@@ -40,7 +37,7 @@ FMT_NAMES: Tuple[str, ...] = (
     "extension",
 )
 
-RULE_FIX: Tuple[str, ...] = (
+RULE_FIX: tuple[str, ...] = (
     "timestamp",
     "version",
     "compress",
@@ -59,10 +56,10 @@ class RuleData(BaseModel):
         }
     """
 
-    timestamp: Optional[Dict[str, int]] = Field(default_factory=dict)
+    timestamp: Optional[dict[str, int]] = Field(default_factory=dict)
 
     version: Optional[str] = Field(default=None)
-    excluded: Optional[List[str]] = Field(default_factory=list)
+    excluded: Optional[list[str]] = Field(default_factory=list)
     compress: Optional[str] = Field(default=None)
 
 
@@ -160,7 +157,7 @@ class FlagData(BaseModel):
 
 class ValueData(BaseModel):
     datetime_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    excluded_keys: Tuple[str, ...] = Field(
+    excluded_keys: tuple[str, ...] = Field(
         default=(
             "version",
             "updt",
@@ -175,7 +172,7 @@ class EngineData(BaseModel):
 
 
 class Params(BaseModel, validate_assignment=True):
-    stages: Dict[str, StageData] = Field(default_factory=dict)
+    stages: dict[str, StageData] = Field(default_factory=dict)
     engine: EngineData = Field(default_factory=EngineData)
 
     @classmethod
@@ -185,7 +182,7 @@ class Params(BaseModel, validate_assignment=True):
 
     @field_validator("stages", mode="before")
     @classmethod
-    def order_layer(cls, value: Dict[str, Dict[Any, Any]]):
+    def order_layer(cls, value: dict[str, dict[Any, Any]]):
         for i, k in enumerate(value, start=1):
             value[k] = merge_dict(
                 value[k].copy(),
@@ -243,12 +240,7 @@ class RegisterMetaData(BaseModel, validate_assignment=True):
     name: str
     shortname: str
     fullname: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     updt: datetime.datetime
     rtdt: datetime.datetime
     author: str
-
-
-if __name__ == "__main__":
-    print((pathlib.Path(__file__).parent / "../../..").resolve())
-    print((pathlib.Path(__file__).parent / "../../.." / "").resolve())

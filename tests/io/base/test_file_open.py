@@ -3,8 +3,8 @@ import pathlib
 import shutil
 import unittest
 
-import ddeutil.io.base.files as fl
-import ddeutil.io.base.utils as utils
+import ddeutil.io.__base.files as fl
+import ddeutil.io.__base.utils as utils
 
 
 class OpenFileTestCase(unittest.TestCase):

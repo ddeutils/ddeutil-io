@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # --------------------------------------------------------------------------
-
 import re
 from re import (
     IGNORECASE,
@@ -15,14 +14,7 @@ from re import (
 
 
 class SettingRegex:
-    """Core Configuration Model
-
-    .. config argument::
-
-        - RE_SECRETS
-        - RE_FUNCTION
-
-    """
+    """Core Configuration Model"""
 
     # Normal regular expression for the secret value.
     # ---

@@ -8,8 +8,6 @@ import ast
 import copy
 import logging
 from typing import (
-    Dict,
-    List,
     Optional,
     Union,
 )
@@ -35,20 +33,16 @@ class RDBMSAction(BaseAction):
     """
 
     class SelectColumn(BaseAction.SelectColumn):
-        def action(self, stm: list, **kwargs) -> list:
-            ...
+        def action(self, stm: list, **kwargs) -> list: ...
 
     class Filter(BaseAction.Filter):
-        def action(self, stm: list, **kwargs) -> list:
-            ...
+        def action(self, stm: list, **kwargs) -> list: ...
 
     class Where(BaseAction.Filter):
-        def action(self, stm: list, **kwargs) -> list:
-            ...
+        def action(self, stm: list, **kwargs) -> list: ...
 
     class Limit(BaseAction.Limit):
-        def action(self, stm: list, **kwargs) -> list:
-            ...
+        def action(self, stm: list, **kwargs) -> list: ...
 
 
 class PandasAction(BaseAction):
@@ -112,8 +106,7 @@ class PandasAction(BaseAction):
             -   df['Discounted_Price'] = df['Cost'] - (0.1 * df['Cost'])
         """
 
-        def action(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame:
-            ...
+        def action(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame: ...
 
     class Distinct(BaseAction.Distinct):
         """Filter distinct data from the Pandas DataFrame."""
@@ -220,20 +213,20 @@ class PandasAction(BaseAction):
             )
 
     class Union(BaseAction.Union):
-        others: List[pd.DataFrame]
+        others: list[pd.DataFrame]
 
         def action(
-            self, df: pd.DataFrame, others: Optional[List[pd.DataFrame]] = None
+            self, df: pd.DataFrame, others: Optional[list[pd.DataFrame]] = None
         ) -> pd.DataFrame:
             if others is None:
-                others: List[pd.DataFrame] = self.props["others"]
+                others: list[pd.DataFrame] = self.props["others"]
             return pd.concat(([df] + others), ignore_index=True)
 
     class DataQuality(BaseAction.DataQuality):
         """Data Quality Check with Pandas DataFrame"""
 
         dq_function: str
-        columns: List[str]
+        columns: list[str]
         options: dict = {}
 
         def action(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -275,8 +268,7 @@ class PandasAction(BaseAction):
     class FromYaml(BaseAction.CallYaml):
         """Action with YAML file."""
 
-        def action(self, _input: pd.DataFrame, **kwargs) -> pd.DataFrame:
-            ...
+        def action(self, _input: pd.DataFrame, **kwargs) -> pd.DataFrame: ...
 
 
 class BaseNode:
@@ -371,7 +363,7 @@ class RDBMSNode(BaseNode):
     def runner(
         self,
         catch: bool = False,
-    ) -> Optional[Dict[str, pd.DataFrame]]:
+    ) -> Optional[dict[str, pd.DataFrame]]:
         for _task in self.transform:
             # if actions := task.get("actions"):
             #     ...
@@ -381,8 +373,7 @@ class RDBMSNode(BaseNode):
         if catch:
             return self._transform_result
 
-    def run_query(self):
-        ...
+    def run_query(self): ...
 
 
 class PandasNode(BaseNode):
@@ -393,7 +384,7 @@ class PandasNode(BaseNode):
     def runner(
         self,
         catch: bool = False,
-    ) -> Optional[Dict[str, pd.DataFrame]]:
+    ) -> Optional[dict[str, pd.DataFrame]]:
         """Runner"""
         for task in self.transform:
             if actions := task.get("actions"):
@@ -419,7 +410,7 @@ class PandasNode(BaseNode):
                 action["other"] = _other
             elif action.get("type").lower() == "union":
                 # Replace alias name of `others` parameter with DataFrame in the Union action type.
-                _others: List[pd.DataFrame] = [
+                _others: list[pd.DataFrame] = [
                     self.get_input(other) for other in action.pop("others")
                 ]
                 action["others"] = _others

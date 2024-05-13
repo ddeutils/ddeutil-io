@@ -6,7 +6,7 @@
 """
 This is then main function for open any files in local or remote space
 with the best python libraries and the best practice such as build-in
-io.open, mmap, etc.
+``io.open``, ``mmap.mmap``, etc.
 """
 import abc
 import csv
@@ -24,8 +24,6 @@ from typing import (
     Any,
     AnyStr,
     Callable,
-    Dict,
-    List,
     Literal,
     NoReturn,
     Optional,
@@ -41,7 +39,7 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-from .settings import SettingRegex
+from .__regex import SettingRegex
 from .utils import search_env, search_env_replace
 
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
@@ -54,21 +52,17 @@ DirCompressType = Literal["zip", "rar", "tar"]
 
 
 class CompressModule(ModuleType):
-    def decompress(self, *args, **kwargs) -> AnyStr:
-        ...
+    def decompress(self, *args, **kwargs) -> AnyStr: ...
 
-    def open(self, *args, **kwargs) -> IO:
-        ...
+    def open(self, *args, **kwargs) -> IO: ...
 
 
 class BaseFile(abc.ABC):
     @abc.abstractmethod
-    def read(self, *args, **kwargs):
-        ...
+    def read(self, *args, **kwargs): ...
 
     @abc.abstractmethod
-    def write(self, *args, **kwargs):
-        ...
+    def write(self, *args, **kwargs): ...
 
 
 class OpenFile(BaseFile):
@@ -88,8 +82,7 @@ class OpenFile(BaseFile):
         # Action anything after set up attributes.
         self._do_after_set_attrs()
 
-    def _do_after_set_attrs(self) -> NoReturn:
-        ...
+    def _do_after_set_attrs(self) -> NoReturn: ...
 
     @property
     def compress_lib(self) -> CompressModule:
@@ -122,14 +115,14 @@ class OpenFile(BaseFile):
         self,
         mode: Optional[str] = None,
         default: bool = True,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         if not mode:
             if default:
                 return {"mode": "r"}
             raise ValueError("The mode value does not set.")
         byte_mode: bool = "b" in mode
         if self.compress is None:
-            _mode: Dict[str, str] = {"mode": mode}
+            _mode: dict[str, str] = {"mode": mode}
             return _mode if byte_mode else {"encoding": self.encoding, **_mode}
         elif not byte_mode and self.compress in {
             "gzip",
@@ -212,8 +205,7 @@ class OpenDir:
         # Action anything after set up attributes.
         self._do_after_set_attrs()
 
-    def _do_after_set_attrs(self) -> NoReturn:
-        ...
+    def _do_after_set_attrs(self) -> NoReturn: ...
 
     def open(self, *, mode: str, **kwargs):
         if not self.compress:
@@ -259,7 +251,7 @@ class Env(OpenFile):
                 os.environ.update(**_result)
             return _result
 
-    def write(self, data: Dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> NoReturn:
         raise NotImplementedError
 
 
@@ -275,13 +267,13 @@ class Yaml(OpenFile):
     def read(
         self,
         safe: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 return yaml.load(_r.read(), SafeLoader)
         return NotImplementedError
 
-    def write(self, data: Dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> NoReturn:
         with self.open(mode="w") as _w:
             yaml.dump(data, _w, default_flow_style=False)
 
@@ -300,7 +292,7 @@ class YamlEnv(Yaml):
     def read(
         self,
         safe: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if safe:
             with self.open(mode="r") as _r:
                 _env_replace: str = search_env_replace(
@@ -315,12 +307,12 @@ class YamlEnv(Yaml):
                 return {}
         return NotImplementedError
 
-    def write(self, data: Dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> NoReturn:
         raise NotImplementedError
 
 
 class CSV(OpenFile):
-    def read(self) -> List[str]:
+    def read(self) -> list[str]:
         with self.open(mode="r") as _r:
             try:
                 dialect = csv.Sniffer().sniff(_r.read(128))
@@ -331,7 +323,7 @@ class CSV(OpenFile):
 
     def write(
         self,
-        data: Union[List[Any], Dict[Any, Any]],
+        data: Union[list[Any], dict[Any, Any]],
         *,
         mode: Optional[str] = None,
         **kwargs,
@@ -385,7 +377,7 @@ class CSVPipeDim(CSV):
 
     def write(
         self,
-        data: Union[List[Any], Dict[Any, Any]],
+        data: Union[list[Any], dict[Any, Any]],
         *,
         mode: Optional[str] = None,
         **kwargs,
@@ -417,7 +409,7 @@ class CSVPipeDim(CSV):
 
 
 class Json(OpenFile):
-    def read(self) -> Union[Dict[Any, Any], List[Any]]:
+    def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             try:
                 return json.loads(_r.read())
@@ -449,7 +441,7 @@ class JsonEnv(Json):
     def prepare(x: str) -> str:
         return x
 
-    def read(self) -> Union[Dict[Any, Any], List[Any]]:
+    def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             return json.loads(
                 search_env_replace(

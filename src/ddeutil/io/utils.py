@@ -8,19 +8,18 @@ from __future__ import annotations
 from typing import (
     Any,
     Callable,
-    Dict,
     Union,
 )
 
 from ddeutil.core import import_string, str2args
 
-from .base import SettingRegex
+from .__base import SettingRegex
 from .exceptions import ConfigArgumentError
 
 
 def map_secret(
     value: Any,
-    secrets: Dict[str, Any],
+    secrets: dict[str, Any],
 ) -> Union[Union[dict, str], Any]:
     """Map the secret value to configuration data.
 

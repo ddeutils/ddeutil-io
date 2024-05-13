@@ -10,5 +10,4 @@ class ObjectProtocol(Protocol):
     parameters: dict
 
     @classmethod
-    def from_data(cls, data: dict) -> ObjectType:
-        ...
+    def from_data(cls, data: dict) -> ObjectType: ...

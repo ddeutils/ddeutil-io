@@ -11,15 +11,11 @@ import os
 import sys
 from typing import (
     Any,
-    Dict,
-    List,
     NoReturn,
     Optional,
-    Type,
     TypedDict,
 )
 
-# import packaging.version
 from dateutil.relativedelta import relativedelta
 from ddeutil.core import (
     concat,
@@ -42,7 +38,7 @@ from fmtutil import (
     make_group,
 )
 
-from .base.pathutils import remove_file
+from .__base.pathutils import rm
 from .config import ConfFile, OpenFile
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
@@ -58,7 +54,7 @@ logger = logging.getLogger(__name__)
 # DT_FMT: str = "%Y-%m-%d %H:%M:%S"
 # ARCHIVED_FLG: bool = True
 # AUTO_UPDT_FLG: bool = True
-METADATA: Dict[Any, Any] = {}
+METADATA: dict[Any, Any] = {}
 
 
 CompressConst: ConstantType = make_const(
@@ -192,7 +188,7 @@ class Register(BaseRegister):
         stage: Optional[str] = None,
         *,
         config: Optional[Params] = None,
-        loader: Optional[Type[OpenFile]] = None,
+        loader: Optional[type[OpenFile]] = None,
     ):
         _domain, _name = rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(
@@ -205,7 +201,7 @@ class Register(BaseRegister):
 
         # Load latest version of data from data lake or data store of
         # configuration files
-        self.__data: Dict[str, Any] = self.pick(stage=self.stage)
+        self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
             _domain_stm: str = (
                 f"with domain {self.domain!r}" if self.domain else ""
@@ -306,7 +302,7 @@ class Register(BaseRegister):
             )
         return NotImplemented
 
-    def data(self, hashing: bool = False) -> Dict[str, Any]:
+    def data(self, hashing: bool = False) -> dict[str, Any]:
         """Return the data with the configuration name."""
         _data = self.__data
         if (self.stage is None) or (self.stage == "base"):
@@ -438,7 +434,7 @@ class Register(BaseRegister):
             return _vs.bump_minor()
         return _vs.bump_patch()
 
-    def fmt(self, update: Optional[Dict[str, Any]] = None):
+    def fmt(self, update: Optional[dict[str, Any]] = None):
         return self.fmt_group(
             {
                 "timestamp": self.timestamp,
@@ -449,7 +445,7 @@ class Register(BaseRegister):
 
     def compare_data(
         self,
-        target: Dict[Any, Any],
+        target: dict[Any, Any],
     ) -> int:
         """Return difference column from dictionary comparison method which use
         the `deepdiff` library.
@@ -493,11 +489,11 @@ class Register(BaseRegister):
         self,
         stage: str,
         loading: ConfFile,
-    ) -> Dict[int, StageFiles]:
+    ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
-        results: Dict[int, StageFiles] = {}
+        results: dict[int, StageFiles] = {}
         for index, file in enumerate(
-            (_f.rsplit("/", maxsplit=1)[-1] for _f in loading.files()),
+            (_f.name for _f in loading.files()),
             start=1,
         ):
             try:
@@ -533,7 +529,7 @@ class Register(BaseRegister):
         )
 
         if results := self.__stage_files(stage, loading):
-            max_data: List = sorted(
+            max_data: list = sorted(
                 results.items(),
                 key=lambda x: (x[1]["parse"],),
                 reverse=reverse,
@@ -648,7 +644,7 @@ class Register(BaseRegister):
                         _file,
                         destination=self.params.engine.paths.archive / _ac_path,
                     )
-                remove_file(loading.path / _file)
+                rm(loading.path / _file)
 
     def deploy(self, stop: Optional[str] = None) -> Register:
         """Deploy data that move from base to final stage.
@@ -694,7 +690,7 @@ class Register(BaseRegister):
                     _file,
                     destination=self.params.engine.paths.archive / _ac_path,
                 )
-            remove_file(loading.path / _file)
+            rm(loading.path / _file)
 
 
 __all__ = ("Register",)

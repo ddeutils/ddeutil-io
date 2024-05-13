@@ -1,11 +1,10 @@
 import os
 from typing import (
     Callable,
-    Dict,
     Optional,
 )
 
-from .settings import SettingRegex
+from .__regex import SettingRegex
 
 
 def add_newline(text: str, newline: Optional[str] = None) -> str:
@@ -65,7 +64,7 @@ def search_env(
     *,
     keep_newline: bool = False,
     default: Optional[str] = None,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Prepare content data from .env string format before load
     to the OS environment.
 
@@ -74,7 +73,7 @@ def search_env(
             ref: https://github.com/theskumar/python-dotenv
     """
     _default: str = default or ""
-    env: Dict[str, str] = {}
+    env: dict[str, str] = {}
     for content in SettingRegex.RE_DOTENV.finditer(contents):
         name: str = content.group("name")
 
@@ -109,7 +108,7 @@ def search_env(
 
 def __search_var(
     value: str,
-    env: Dict[str, str],
+    env: dict[str, str],
     default: Optional[str] = None,
 ) -> str:
     _default: str = default or ""

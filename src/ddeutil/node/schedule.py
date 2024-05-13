@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
     Optional,
 )
 
@@ -18,7 +17,7 @@ class BaseSchedule:
     timezone: str = "UTC"
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]) -> "BaseSchedule":
+    def from_data(cls, data: dict[str, Any]) -> "BaseSchedule":
         if (_cron := data.pop("cron", None)) is None:
             raise ScheduleArgumentError(
                 "cron", "this necessary key does not exists in data."
@@ -29,7 +28,7 @@ class BaseSchedule:
         self,
         cron: str,
         *,
-        props: Optional[Dict[str, Any]] = None,
+        props: Optional[dict[str, Any]] = None,
     ) -> None:
         self.cron: CronJob = CronJob(value=cron)
         self.properties = props or {}
@@ -45,5 +44,4 @@ class BKKSchedule(BaseSchedule):
     timezone: str = "Asia/Bangkok"
 
 
-class AWSSchedule(BaseSchedule):
-    ...
+class AWSSchedule(BaseSchedule): ...

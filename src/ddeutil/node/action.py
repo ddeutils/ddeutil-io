@@ -9,7 +9,6 @@ import logging
 from typing import (
     Any,
     Callable,
-    List,
     Optional,
 )
 
@@ -147,20 +146,17 @@ class BaseAction:
     class SelectColumn(BaseActionType):
         columns: list
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Filter(BaseActionType):
         condition: str
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class RenameColumn(BaseActionType):
         columns: dict
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class RenameAllColumn(BaseActionType):
         append: bool = False
@@ -168,112 +164,91 @@ class BaseAction:
         columns: list
         pattern: str
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class AddColumn(BaseActionType):
         columns: dict
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Distinct(BaseActionType):
         columns: list
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class DropColumn(BaseActionType):
         columns: list
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class DropDuplicate(BaseActionType):
         columns: Optional[list] = None
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class OrderBy(BaseActionType):
         columns: list
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Limit(BaseActionType):
         numbers: int
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class GroupBy(BaseActionType):
         columns: list
         aggregate: dict
         sort: bool = True
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Join(BaseActionType):
         other: Any
         on: str
         how: str
 
-        def action(self, _input: Any, other: Optional[Any] = None) -> Any:
-            ...
+        def action(self, _input: Any, other: Optional[Any] = None) -> Any: ...
 
     class Union(BaseActionType):
-        others: List[Any]
+        others: list[Any]
 
-        def action(self, _input: Any, others: Optional[Any] = None) -> Any:
-            ...
+        def action(self, _input: Any, others: Optional[Any] = None) -> Any: ...
 
     class Intersect(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Except(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Repartition(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Coalesce(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class Sequence(BaseActionType):
         sk_source: str
         sk_columns: list
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class SCD(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class NA(BaseActionType):
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
     class CallYaml:
         name: str
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
-    class NameTransformation:
-        ...
+    class NameTransformation: ...
 
-    class Collect:
-        ...
+    class Collect: ...
 
-    class Watermark:
-        ...
+    class Watermark: ...
 
     class Partition:
         condition: str
@@ -283,10 +258,9 @@ class BaseAction:
 
     class DataQuality(BaseActionType):
         dq_function: str
-        columns: List[Any]
+        columns: list[Any]
 
-        def action(self, _input: Any, **kwargs) -> Any:
-            ...
+        def action(self, _input: Any, **kwargs) -> Any: ...
 
 
 # Register the sub-action class of base-action object.

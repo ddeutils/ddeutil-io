@@ -42,8 +42,8 @@ repos:
     -   id: end-of-file-fixer
         stages: [commit]
     -   id: check-yaml
-        stages: [commit]
         args: ["--unsafe"]
+        stages: [commit]
     -   id: check-toml
         stages: [commit]
 
