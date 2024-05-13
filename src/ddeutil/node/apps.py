@@ -1,22 +1,21 @@
 import pandas as pd
-
-from src.core.loader import (
+from ddeutil.node.loader import (
     Catalog,
-    Connection,
+    Conn,
     Schedule,
 )
 
 
 def test_connection_file():
-    with Connection("demo:conn_local_data_landing").connect() as conn:
+    with Conn("demo:conn_local_data_landing").connect() as conn:
         print(conn.ls())
         print(conn.glob("*_csv*"))
         print(conn.exists("metadata.json"))
-    # with Connection('demo:conn_aws_s3_data_eng').connect() as conn:
+    # with Conn('demo:conn_aws_s3_data_eng').connect() as conn:
     #     print(conn.ls())
     #     print(conn.glob('demo*/*'))
     #     print(conn.ls('landing_data'))
-    # with Connection('demo:conn_azure_blob_de_test').connect() as conn:
+    # with Conn('demo:conn_azure_blob_de_test').connect() as conn:
     #     print(conn.ls())
     #     print(conn.ls('dummy'))
 
@@ -56,15 +55,15 @@ def test_catalog_file_pandas():
 
 def test_connection_db():
     print("demo:conn_local_sqlite_bu01", "-" * 125)
-    with Connection("demo:conn_local_sqlite_bu01").connect() as conn:
+    with Conn("demo:conn_local_sqlite_bu01").connect() as conn:
         rows = conn.execute("select 1;")
         result = rows.fetchall()
         print(result)
     print("demo:conn_pg_scgh_sandbox", "-" * 125)
-    with Connection("demo:conn_pg_scgh_sandbox").connect() as conn:
+    with Conn("demo:conn_pg_scgh_sandbox").connect() as conn:
         print(next(conn.tables()))
     print("demo:conn_pg_scgh_uat", "-" * 125)
-    with Connection("demo:conn_pg_scgh_uat").connect() as conn:
+    with Conn("demo:conn_pg_scgh_uat").connect() as conn:
         print(next(conn.tables(schema="ai")))
 
 

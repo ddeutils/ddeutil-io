@@ -31,6 +31,26 @@ from .__base.pathutils import PathSearch, rm
 from .exceptions import ConfigArgumentError
 
 
+class ConfABC(abc.ABC):
+    """Config Adapter abstract object."""
+
+    @abc.abstractmethod
+    def load_stage(self, name: str) -> dict:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def save_stage(self, name: str, data: dict, merge: bool = False) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def remove_stage(self, name: str, data_name: str) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def create(self, name: str, **kwargs) -> None:
+        raise NotImplementedError
+
+
 class BaseConfFile:
     """Base Config File object for getting data with `.yaml` format and mapping
     environment variables to the content data.
@@ -41,25 +61,22 @@ class BaseConfFile:
         path: Union[str, Path],
         *,
         compress: Optional[str] = None,
-        auto_create: bool = True,
-        open_fil: Optional[type[OpenFile]] = None,
+        open_file: Optional[type[OpenFile]] = None,
         excluded_fmt: Optional[tuple[str]] = None,
     ):
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: Optional[str] = compress
-        if not self.path.exists():
-            if not auto_create:
-                raise FileNotFoundError(f"Path {path} does not exists.")
-            self.path.mkdir(parents=True)
-        self.open_fil: type[OpenFile] = open_fil or YamlEnv
+        self.open_file: type[OpenFile] = open_file or YamlEnv
         self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
+        if not self.path.exists():
+            self.path.mkdir(parents=True)
 
     def load(
         self,
         name: str,
         *,
         order: int = 1,
-    ) -> dict[Any, Any]:
+    ) -> dict[str, Any]:
         """Return configuration data from name of the config.
 
         :param name: A name of config key that want to search in the path.
@@ -73,7 +90,7 @@ class BaseConfFile:
             {"alias": name} | data
             for file in self.files(excluded=self.excluded_fmt)
             if (
-                data := self.open_fil(path=file, compress=self.compress)
+                data := self.open_file(path=file, compress=self.compress)
                 .read()
                 .get(name)
             )
@@ -102,9 +119,9 @@ class BaseConfFile:
         name: Optional[str] = None,
         *,
         excluded: Optional[list] = None,
-    ) -> Iterator:
+    ) -> Iterator[Path]:
         """Return all files that exists in the loading path."""
-        return filter(
+        yield from filter(
             lambda x: os.path.isfile(x),
             PathSearch.from_dict(
                 {
@@ -127,36 +144,7 @@ class BaseConfFile:
         shutil.copy(self.path / path, destination)
 
 
-class ConfAdapter(abc.ABC):
-    """Config Adapter abstract object."""
-
-    @abc.abstractmethod
-    def load_stage(self, name: str) -> dict:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def save_stage(
-        self,
-        name: str,
-        data: dict,
-        merge: bool = False,
-    ) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def remove_stage(
-        self,
-        name: str,
-        data_name: str,
-    ) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def create(self, name: str, **kwargs) -> None:
-        raise NotImplementedError
-
-
-class ConfFile(BaseConfFile, ConfAdapter):
+class ConfFile(BaseConfFile, ConfABC):
     """Config File Loading Object for get data from configuration and stage."""
 
     def __init__(
@@ -164,10 +152,9 @@ class ConfFile(BaseConfFile, ConfAdapter):
         path: Union[str, Path],
         *,
         compress: Optional[str] = None,
-        auto_create: bool = True,
-        open_fil: Optional[type[OpenFile]] = None,
+        open_file: Optional[type[OpenFile]] = None,
         excluded_fmt: Optional[list[str]] = None,
-        open_fil_stg: Optional[type[OpenFile]] = None,
+        open_file_stg: Optional[type[OpenFile]] = None,
     ):
         """Main initialize of config file loading object.
 
@@ -178,11 +165,10 @@ class ConfFile(BaseConfFile, ConfAdapter):
         super().__init__(
             path,
             compress=compress,
-            auto_create=auto_create,
-            open_fil=open_fil,
+            open_file=open_file,
             excluded_fmt=excluded_fmt,
         )
-        self.open_fil_stg: type[OpenFile] = open_fil_stg or Json
+        self.open_file_stg: type[OpenFile] = open_file_stg or Json
 
     def load_stage(
         self,
@@ -191,7 +177,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
     ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
         try:
-            return self.open_fil_stg(
+            return self.open_file_stg(
                 path=path,
                 compress=self.compress,
             ).read()
@@ -210,13 +196,13 @@ class ConfFile(BaseConfFile, ConfAdapter):
         before write.
         """
         if not merge:
-            self.open_fil_stg(path, compress=self.compress).write(data)
+            self.open_file_stg(path, compress=self.compress).write(data)
             return
         elif merge and (
             "mode"
-            in inspect.getfullargspec(self.open_fil_stg.write).annotations
+            in inspect.getfullargspec(self.open_file_stg.write).annotations
         ):
-            self.open_fil_stg(path, compress=self.compress).write(
+            self.open_file_stg(path, compress=self.compress).write(
                 **{
                     "data": data,
                     "mode": "a",
@@ -234,11 +220,11 @@ class ConfFile(BaseConfFile, ConfAdapter):
                     _merge_data.extend(data)
             else:
                 _merge_data: dict = all_data | data
-            self.open_fil_stg(path, compress=self.compress).write(_merge_data)
+            self.open_file_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
             rm(path=path)
             if all_data:
-                self.open_fil_stg(path, compress=self.compress).write(
+                self.open_file_stg(path, compress=self.compress).write(
                     all_data,
                 )
             raise err
@@ -247,7 +233,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
         """Remove data by name from file with filename."""
         if all_data := self.load_stage(path=path):
             all_data.pop(name, None)
-            self.open_fil_stg(path, compress=self.compress).write(
+            self.open_file_stg(path, compress=self.compress).write(
                 all_data,
             )
 
@@ -316,7 +302,7 @@ class BaseConfSQLite:
         return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
 
-class ConfSQLite(BaseConfSQLite, ConfAdapter):
+class ConfSQLite(BaseConfSQLite, ConfABC):
     def load_stage(
         self,
         table: str,
@@ -418,7 +404,7 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
 
 
 __all__ = (
-    "ConfAdapter",
+    "ConfABC",
     "ConfFile",
     "ConfSQLite",
     "OpenFile",

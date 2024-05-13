@@ -34,18 +34,6 @@ dynamic = ["version"]
 Homepage = "https://github.com/korawica/ddeutil-io/"
 "Source Code" = "https://github.com/korawica/ddeutil-io/"
 
-[project.optional-dependencies]
-dev = [
-    "clishelf",
-    "python-dotenv==1.0.1",
-]
-s3 = [
-    "boto3>=1.28.49",
-]
-sftp = [
-    "sshtunnel==0.4.0",
-]
-
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"

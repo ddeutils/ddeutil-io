@@ -398,13 +398,13 @@ class Register(BaseRegister):
         if (stage is None) or (stage == "base"):
             return ConfFile(
                 path=(self.params.engine.paths.conf / self.domain),
-                open_fil=self.loader,
+                open_file=self.loader,
             ).load(name=self.name, order=order)
 
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
-            open_fil=self.loader,
+            open_file=self.loader,
         )
 
         if results := self.__stage_files(stage, loading):
@@ -429,7 +429,7 @@ class Register(BaseRegister):
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
-            open_fil=self.loader,
+            open_file=self.loader,
         )
         if (
             self.compare_data(
@@ -490,7 +490,7 @@ class Register(BaseRegister):
         loading = ConfFile(
             path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
-            open_fil=self.loader,
+            open_file=self.loader,
         )
         results: dict = self.__stage_files(_stage, loading)
         max_file: FormatterGroup = max(
@@ -555,7 +555,7 @@ class Register(BaseRegister):
         ), "The remove method can not process on the 'base' stage."
         loading = ConfFile(
             path=self.params.engine.paths.data / _stage,
-            open_fil=self.loader,
+            open_file=self.loader,
         )
 
         # Remove all files from the stage.

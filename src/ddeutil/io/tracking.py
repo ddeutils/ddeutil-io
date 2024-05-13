@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from ddeutil.core import merge_dict
 from ddeutil.core.dtutils import get_date
 
-from .config import ConfAdapter, ConfFile, ConfSQLite
+from .config import ConfABC, ConfFile, ConfSQLite
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class BaseConfLoader:
             self._cf_filename: str = (
                 f"{self.conf_prefix}{_environ}.{self.conf_file_extension}"
             )
-            self.loading: ConfAdapter = ConfFile(path=self._cf_loader_endpoint)
+            self.loading: ConfABC = ConfFile(path=self._cf_loader_endpoint)
             self.loading.create(
                 name=self._cf_filename,
                 initial_data=self.conf_file_initial,
@@ -81,7 +81,7 @@ class BaseConfLoader:
             self._cf_filename: str = (
                 f"{self.conf_prefix}{_environ}.db/tbl_{self.conf_prefix}"
             )
-            self.loading: ConfAdapter = ConfSQLite(self._cf_loader_endpoint)
+            self.loading: ConfABC = ConfSQLite(self._cf_loader_endpoint)
             self.loading.create(
                 name=self._cf_filename, schemas=self.conf_sqlite_schema
             )

@@ -1,5 +1,5 @@
 from .config import (
-    ConfAdapter,
+    ConfABC,
     ConfFile,
     ConfSQLite,
 )

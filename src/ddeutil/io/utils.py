@@ -20,7 +20,7 @@ from .exceptions import ConfigArgumentError
 def map_secret(
     value: Any,
     secrets: dict[str, Any],
-) -> Union[Union[dict, str], Any]:
+) -> Union[dict, str, Any]:
     """Map the secret value to configuration data.
 
     :param value:
@@ -46,7 +46,7 @@ def map_secret(
     return value
 
 
-def map_function(value: Any) -> Union[Union[dict, str], Any]:
+def map_function(value: Any) -> Union[dict, str, Any]:
     """Map the function result to configuration data."""
     if isinstance(value, dict):
         return {k: map_function(value[k]) for k in value}
