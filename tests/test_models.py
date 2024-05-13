@@ -20,7 +20,7 @@ def test_model_path_data():
     } == p.model_dump()
 
 
-def test_model_path_data_with_root(self):
+def test_model_path_data_with_root():
     p = md.PathData.model_validate(
         {
             "root": "./src/",
