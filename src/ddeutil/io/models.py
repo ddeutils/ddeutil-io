@@ -14,10 +14,6 @@ from typing import (
     Union,
 )
 
-from ddeutil.core import merge_dict
-
-# from .base import YamlEnv
-# from .exceptions import ConfigArgumentError
 from ddeutil.io.__base import YamlEnv
 from ddeutil.io.exceptions import ConfigArgumentError
 from pydantic import (
@@ -80,7 +76,6 @@ class StageData(BaseModel):
     layer: int = Field(default=0)
 
     @field_validator("format", mode="before")
-    @classmethod
     def validate_format(cls, value, info: ValidationInfo):
         # Validate the name in format string should contain any format name.
         if not (
@@ -106,7 +101,6 @@ class StageData(BaseModel):
         return value
 
     @field_validator("format", mode="after")
-    @classmethod
     def validate_rule_relate_with_format(cls, value, info: ValidationInfo):
         # Validate a format of stage that relate with rules.
         for validator in RULE_FIX:
@@ -133,14 +127,12 @@ class PathData(BaseModel):
     archive: pathlib.Path = Field(default=".archive", validate_default=True)
 
     @field_validator("root", mode="before")
-    @classmethod
     def prepare_root(cls, v):
         if isinstance(v, str):
             return pathlib.Path(v)
         return v
 
     @field_validator("data", "conf", "archive", mode="before")
-    @classmethod
     def prepare_path_from_str(
         cls,
         v,
@@ -181,16 +173,9 @@ class Params(BaseModel, validate_assignment=True):
         return cls.model_validate(YamlEnv(path).read())
 
     @field_validator("stages", mode="before")
-    @classmethod
     def order_layer(cls, value: dict[str, dict[Any, Any]]):
         for i, k in enumerate(value, start=1):
-            value[k] = merge_dict(
-                value[k].copy(),
-                {
-                    "layer": i,
-                    "alias": k,
-                },
-            )
+            value[k] = value[k].copy() | {"layer": i, "alias": k}
         return value
 
     @property

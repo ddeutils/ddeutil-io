@@ -183,10 +183,10 @@ class OpenFileMemoryTestCase(unittest.TestCase):
             path=f"{self.root_path}/test_common_mem_file.text",
             encoding="utf-8",
         )
-        with opf.mem_open(mode="w") as f:
+        with opf.mopen(mode="w") as f:
             f.write("Write data with common file in normal mode on memory")
 
-        with opf.mem_open(mode="r") as f:
+        with opf.mopen(mode="r") as f:
             rs = f.read()
 
         self.assertEqual(
@@ -199,10 +199,10 @@ class OpenFileMemoryTestCase(unittest.TestCase):
             encoding="utf-8",
             compress="gzip",
         )
-        with opf.mem_open(mode="w") as f:
+        with opf.mopen(mode="w") as f:
             f.write("Write data with common file in gzip mode on memory")
 
-        with opf.mem_open(mode="r") as f:
+        with opf.mopen(mode="r") as f:
             rs = opf.compress_lib.decompress(f.read())
 
         self.assertEqual(
@@ -215,10 +215,10 @@ class OpenFileMemoryTestCase(unittest.TestCase):
             encoding="utf-8",
             compress="xz",
         )
-        with opf.mem_open(mode="w") as f:
+        with opf.mopen(mode="w") as f:
             f.write("Write data with common file in xz mode on memory")
 
-        with opf.mem_open(mode="r") as f:
+        with opf.mopen(mode="r") as f:
             rs = opf.compress_lib.decompress(f.read())
 
         self.assertEqual(
@@ -231,10 +231,10 @@ class OpenFileMemoryTestCase(unittest.TestCase):
             encoding="utf-8",
             compress="bz2",
         )
-        with opf.mem_open(mode="w") as f:
+        with opf.mopen(mode="w") as f:
             f.write("Write data with common file in bz2 mode on memory")
 
-        with opf.mem_open(mode="r") as f:
+        with opf.mopen(mode="r") as f:
             rs = opf.compress_lib.decompress(f.read())
 
         self.assertEqual(

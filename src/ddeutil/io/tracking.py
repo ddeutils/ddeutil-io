@@ -70,9 +70,7 @@ class BaseConfLoader:
             self._cf_filename: str = (
                 f"{self.conf_prefix}{_environ}.{self.conf_file_extension}"
             )
-            self.loading: ConfAdapter = ConfFile(
-                path=self._cf_loader_endpoint, _type=self.conf_file_extension
-            )
+            self.loading: ConfAdapter = ConfFile(path=self._cf_loader_endpoint)
             self.loading.create(
                 name=self._cf_filename,
                 initial_data=self.conf_file_initial,

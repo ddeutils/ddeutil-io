@@ -11,20 +11,16 @@ import inspect
 import json
 import logging
 import os
-import pathlib
 import shutil
 import sqlite3
-import sys
 from collections.abc import Iterator
 from datetime import datetime
+from pathlib import Path
 from typing import (
     Any,
-    NoReturn,
     Optional,
     Union,
 )
-
-from ddeutil.core import merge_dict
 
 from .__base import (
     Json,
@@ -34,9 +30,6 @@ from .__base import (
 from .__base.pathutils import PathSearch, rm
 from .exceptions import ConfigArgumentError
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 
 class BaseConfFile:
     """Base Config File object for getting data with `.yaml` format and mapping
@@ -45,23 +38,21 @@ class BaseConfFile:
 
     def __init__(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
         open_fil: Optional[type[OpenFile]] = None,
-        fil_fmt_exc: Optional[list[str]] = None,
+        excluded_fmt: Optional[tuple[str]] = None,
     ):
-        self.path: pathlib.Path = (
-            pathlib.Path(path) if isinstance(path, str) else path
-        )
-        self.compress = compress
-        if not os.path.exists(self.path):
+        self.path: Path = Path(path) if isinstance(path, str) else path
+        self.compress: Optional[str] = compress
+        if not self.path.exists():
             if not auto_create:
                 raise FileNotFoundError(f"Path {path} does not exists.")
-            os.makedirs(self.path)
+            self.path.mkdir(parents=True)
         self.open_fil: type[OpenFile] = open_fil or YamlEnv
-        self.fil_fmt_exc: list[str] = fil_fmt_exc or [".json", ".toml"]
+        self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
 
     def load(
         self,
@@ -79,8 +70,8 @@ class BaseConfFile:
         """
         rs: list[dict[Any, Any]]
         if rs := [
-            merge_dict({"alias": name}, data)
-            for file in self.files(excluded=self.fil_fmt_exc)
+            {"alias": name} | data
+            for file in self.files(excluded=self.excluded_fmt)
             if (
                 data := self.open_fil(path=file, compress=self.compress)
                 .read()
@@ -125,8 +116,8 @@ class BaseConfFile:
 
     def move(
         self,
-        path: Union[str, pathlib.Path],
-        destination: Union[str, pathlib.Path],
+        path: Union[str, Path],
+        destination: Union[str, Path],
         *,
         auto_create: bool = True,
     ):
@@ -149,7 +140,7 @@ class ConfAdapter(abc.ABC):
         name: str,
         data: dict,
         merge: bool = False,
-    ) -> NoReturn:
+    ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -157,11 +148,11 @@ class ConfAdapter(abc.ABC):
         self,
         name: str,
         data_name: str,
-    ) -> NoReturn:
+    ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create(self, name: str, **kwargs) -> NoReturn:
+    def create(self, name: str, **kwargs) -> None:
         raise NotImplementedError
 
 
@@ -170,18 +161,18 @@ class ConfFile(BaseConfFile, ConfAdapter):
 
     def __init__(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         *,
         compress: Optional[str] = None,
         auto_create: bool = True,
         open_fil: Optional[type[OpenFile]] = None,
-        fil_fmt_exc: Optional[list[str]] = None,
+        excluded_fmt: Optional[list[str]] = None,
         open_fil_stg: Optional[type[OpenFile]] = None,
     ):
         """Main initialize of config file loading object.
 
         :param path: A path of files to action.
-        :type path: Union[str, pathlib.Path]
+        :type path: Union[str, Path]
         :param compress: Optional[str] : A compress type of action file.
         """
         super().__init__(
@@ -189,13 +180,13 @@ class ConfFile(BaseConfFile, ConfAdapter):
             compress=compress,
             auto_create=auto_create,
             open_fil=open_fil,
-            fil_fmt_exc=fil_fmt_exc,
+            excluded_fmt=excluded_fmt,
         )
         self.open_fil_stg: type[OpenFile] = open_fil_stg or Json
 
     def load_stage(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         default: Optional[Any] = None,
     ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
@@ -209,11 +200,11 @@ class ConfFile(BaseConfFile, ConfAdapter):
 
     def save_stage(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         data: Union[dict[Any, Any], list[Any]],
         *,
         merge: bool = False,
-    ) -> NoReturn:
+    ) -> None:
         """Write content data to file with filename. If merge is true, it will
         load current data from file and merge the data content together
         before write.
@@ -242,7 +233,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
                 else:
                     _merge_data.extend(data)
             else:
-                _merge_data: Union[dict, list] = merge_dict(all_data, data)
+                _merge_data: dict = all_data | data
             self.open_fil_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
             rm(path=path)
@@ -252,7 +243,7 @@ class ConfFile(BaseConfFile, ConfAdapter):
                 )
             raise err
 
-    def remove_stage(self, path: str, name: str) -> NoReturn:
+    def remove_stage(self, path: str, name: str) -> None:
         """Remove data by name from file with filename."""
         if all_data := self.load_stage(path=path):
             all_data.pop(name, None)
@@ -262,10 +253,10 @@ class ConfFile(BaseConfFile, ConfAdapter):
 
     def create(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         *,
         initial_data: Optional[Any] = None,
-    ) -> NoReturn:
+    ) -> None:
         """Create filename in path."""
         if not os.path.exists(path):
             self.save_stage(
@@ -281,13 +272,11 @@ class BaseConfSQLite:
 
     def __init__(
         self,
-        path: Union[str, pathlib.Path],
+        path: Union[str, Path],
         *,
         auto_create: bool = True,
     ):
-        self.path: pathlib.Path = (
-            pathlib.Path(path) if isinstance(path, str) else path
-        )
+        self.path: Path = Path(path) if isinstance(path, str) else path
         if not os.path.exists(self.path):
             if not auto_create:
                 raise FileNotFoundError(f"Path {path} does not exists.")
@@ -301,7 +290,7 @@ class BaseConfSQLite:
         try:
             yield _conn
         except sqlite3.Error as err:
-            logger.error(err)
+            logging.error(err)
             raise ConfigArgumentError(
                 "syntax", f"SQLite syntax error {err}"
             ) from err
@@ -348,7 +337,7 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
         table: str,
         data: dict,
         merge: bool = False,
-    ) -> NoReturn:
+    ) -> None:
         """Write content data to database with table name. If merge is true, it
         will update or insert the data content.
         """
@@ -373,7 +362,7 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
         self,
         table: str,
         data_name: str,
-    ) -> NoReturn:
+    ) -> None:
         """Remove data by name from table in database with table name."""
         _db, _table = table.rsplit("/", maxsplit=1)
         with self.connect(_db) as conn:
@@ -385,7 +374,7 @@ class ConfSQLite(BaseConfSQLite, ConfAdapter):
         self,
         table: str,
         schemas: Optional[dict] = None,
-    ) -> NoReturn:
+    ) -> None:
         """Create table in database."""
         if not schemas:
             raise ConfigArgumentError(

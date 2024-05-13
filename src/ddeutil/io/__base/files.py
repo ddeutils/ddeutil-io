@@ -8,6 +8,8 @@ This is then main function for open any files in local or remote space
 with the best python libraries and the best practice such as build-in
 ``io.open``, ``mmap.mmap``, etc.
 """
+from __future__ import annotations
+
 import abc
 import csv
 import io
@@ -18,20 +20,20 @@ import os
 import pickle
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType
 from typing import (
     IO,
     Any,
     AnyStr,
     Callable,
+    ClassVar,
     Literal,
-    NoReturn,
     Optional,
+    Protocol,
     Union,
     get_args,
 )
 
-# TODO: import msgpack
+# NOTE: import msgpack
 import yaml
 
 try:
@@ -44,14 +46,15 @@ from .utils import search_env, search_env_replace
 
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 
-# TODO: add more compress type such as
-#  - h5,hdf5(h5py)
-#  - fits(astropy)
-#  - rar(...)
-DirCompressType = Literal["zip", "rar", "tar"]
+# NOTE:
+#   add more compress type such as
+#       - h5,hdf5(h5py)
+#       - fits(astropy)
+#       - rar(...)
+DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
 
-class CompressModule(ModuleType):
+class CompressProtocol(Protocol):
     def decompress(self, *args, **kwargs) -> AnyStr: ...
 
     def open(self, *args, **kwargs) -> IO: ...
@@ -75,33 +78,35 @@ class OpenFile(BaseFile):
         encoding: Optional[str] = None,
         compress: Optional[FileCompressType] = None,
     ):
-        self.path = path
-        self.encoding = encoding or "utf-8"
-        self.compress = compress
+        self.path: Path = Path(path) if isinstance(path, str) else path
+        self.encoding: str = encoding or "utf-8"
+        self.compress: Optional[FileCompressType] = compress
 
         # Action anything after set up attributes.
-        self._do_after_set_attrs()
+        self.after_set_attrs()
 
-    def _do_after_set_attrs(self) -> NoReturn: ...
+    def after_set_attrs(self) -> None: ...
 
     @property
-    def compress_lib(self) -> CompressModule:
+    def compress_lib(self) -> CompressProtocol:
         """Return Compress package"""
         if not self.compress:
             return io
-        elif self.compress in {"gzip", "gz"}:
+        elif self.compress in ("gzip", "gz"):
             import gzip
 
             return gzip
-        elif self.compress in {"bz2"}:
+        elif self.compress in ("bz2",):
             import bz2
 
             return bz2
-        elif self.compress in {"xz"}:
+        elif self.compress in ("xz",):
             import lzma as xz
 
             return xz
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"Compress {self.compress} does not implement yet"
+        )
 
     @property
     def decompress(self) -> Callable:
@@ -124,20 +129,11 @@ class OpenFile(BaseFile):
         if self.compress is None:
             _mode: dict[str, str] = {"mode": mode}
             return _mode if byte_mode else {"encoding": self.encoding, **_mode}
-        elif not byte_mode and self.compress in {
-            "gzip",
-            "gz",
-            "xz",
-            "bz2",
-        }:
-            # Add `t` in open file mode for force with text mode.
+        elif not byte_mode and self.compress in ("gzip", "gz", "xz", "bz2"):
+            # NOTE:
+            #   Add `t` in open file mode for force with text mode.
             return {"mode": f"{mode}t", "encoding": self.encoding}
-        elif byte_mode and self.compress in {
-            "gzip",
-            "gz",
-            "xz",
-            "bz2",
-        }:
+        elif byte_mode and self.compress in ("gzip", "gz", "xz", "bz2"):
             return {"mode": mode}
 
     def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
@@ -148,7 +144,7 @@ class OpenFile(BaseFile):
         )
 
     @contextmanager
-    def mem_open(self, *, mode: Optional[str] = None) -> IO:
+    def mopen(self, *, mode: Optional[str] = None) -> IO:
         _mode: str = mode or "r"
         _f: IO = self.open(mode=mode)
         _access = mmap.ACCESS_READ if ("r" in _mode) else mmap.ACCESS_WRITE
@@ -203,9 +199,9 @@ class OpenDir:
         self.path = path
         self.compress = compress
         # Action anything after set up attributes.
-        self._do_after_set_attrs()
+        self.after_set_attrs()
 
-    def _do_after_set_attrs(self) -> NoReturn: ...
+    def after_set_attrs(self) -> None: ...
 
     def open(self, *, mode: str, **kwargs):
         if not self.compress:
@@ -234,10 +230,10 @@ class OpenDir:
 class Env(OpenFile):
     """Env object which mapping search engine"""
 
-    KEEP_NEWLINE: bool = False
-    DEFAULT: str = ""
+    KEEP_NEWLINE: ClassVar[bool] = False
+    DEFAULT: ClassVar[str] = ""
 
-    def read(self, *, update: bool = True) -> dict:
+    def read(self, *, update: bool = True) -> dict[str, str]:
         with self.open(mode="r") as _r:
             print(_r.read())
             _r.seek(0)
@@ -251,7 +247,7 @@ class Env(OpenFile):
                 os.environ.update(**_result)
             return _result
 
-    def write(self, data: dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> None:
         raise NotImplementedError
 
 
@@ -273,7 +269,7 @@ class Yaml(OpenFile):
                 return yaml.load(_r.read(), SafeLoader)
         return NotImplementedError
 
-    def write(self, data: dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> None:
         with self.open(mode="w") as _w:
             yaml.dump(data, _w, default_flow_style=False)
 
@@ -281,9 +277,9 @@ class Yaml(OpenFile):
 class YamlEnv(Yaml):
     """Yaml object which mapping search environment variable."""
 
-    raise_if_not_default: bool = False
-    default: str = "N/A"
-    escape: str = "ESC"
+    raise_if_not_default: ClassVar[bool] = False
+    default: ClassVar[str] = "N/A"
+    escape: ClassVar[str] = "ESC"
 
     @staticmethod
     def prepare(x: str) -> str:
@@ -307,7 +303,7 @@ class YamlEnv(Yaml):
                 return {}
         return NotImplementedError
 
-    def write(self, data: dict[str, Any]) -> NoReturn:
+    def write(self, data: dict[str, Any]) -> None:
         raise NotImplementedError
 
 
@@ -327,12 +323,12 @@ class CSV(OpenFile):
         *,
         mode: Optional[str] = None,
         **kwargs,
-    ) -> NoReturn:
+    ) -> None:
         mode = mode or "w"
-        assert mode in {
+        assert mode in (
             "a",
             "w",
-        }, "save mode must contain only value `a` nor `w`."
+        ), "save mode must contain only value `a` nor `w`."
         with self.open(mode=mode, newline="") as _w:
             _has_data: bool = True
             if isinstance(data, dict):
@@ -361,7 +357,7 @@ class CSV(OpenFile):
 
 
 class CSVPipeDim(CSV):
-    def _do_after_set_attrs(self) -> NoReturn:
+    def after_set_attrs(self) -> None:
         csv.register_dialect(
             "pipe_delimiter", delimiter="|", quoting=csv.QUOTE_ALL
         )
@@ -381,7 +377,7 @@ class CSVPipeDim(CSV):
         *,
         mode: Optional[str] = None,
         **kwargs,
-    ) -> NoReturn:
+    ) -> None:
         mode = mode or "w"
         assert mode in {
             "a",
@@ -421,7 +417,7 @@ class Json(OpenFile):
         data,
         *,
         indent: int = 4,
-    ) -> NoReturn:
+    ) -> None:
         _w: IO
         with self.open(
             mode="w",
@@ -453,7 +449,7 @@ class JsonEnv(Json):
                 )
             )
 
-    def write(self, data, *, indent: int = 4) -> NoReturn:
+    def write(self, data, *, indent: int = 4) -> None:
         raise NotImplementedError
 
 

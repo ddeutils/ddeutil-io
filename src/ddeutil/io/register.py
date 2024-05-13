@@ -6,12 +6,9 @@
 from __future__ import annotations
 
 import datetime
-import logging
 import os
-import sys
 from typing import (
     Any,
-    NoReturn,
     Optional,
     TypedDict,
 )
@@ -43,17 +40,6 @@ from .config import ConfFile, OpenFile
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# PCK_PATH: pathlib.Path = pathlib.Path(__file__).parent / "../../.."
-# EXC_KEYS: Tuple[str, ...] = (
-#     "version",
-#     "updt",
-# )
-# DT_FMT: str = "%Y-%m-%d %H:%M:%S"
-# ARCHIVED_FLG: bool = True
-# AUTO_UPDT_FLG: bool = True
 METADATA: dict[Any, Any] = {}
 
 
@@ -213,27 +199,12 @@ class Register(BaseRegister):
 
         # TODO: Implement meta object
         self.meta = METADATA
-        # Generate data for all conditions of the Register object
-        # self.__meta: ConfLoader = ConfMetadata(
-        #     params.engine.path.metadata,
-        #     name=self.name,
-        #     environ=self.env.name,
-        # )
-        # self.__log: ConfLoader = ConfLogging(
-        #     params.engine.path.logging,
-        #     name=self.name,
-        #     _logger=logger,
-        #     environ=self.env.name,
-        # )
 
         # Compare data from current stage and latest version in metadata.
         self.changed: int = self.compare_data(
             target=self.meta.get(self.stage, {})
         )
 
-        # if params.engine.path.stage_archive:
-        #     self._cf_archive: bool = True
-        #
         # Update metadata if the configuration data does not exist, or
         # it has any changes.
         if not self.params.engine.flags.auto_update:
@@ -243,39 +214,11 @@ class Register(BaseRegister):
                 f"Configuration data with stage: {self.stage!r} does not "
                 f"exists in metadata ..."
             )
-        #     self.__log.p_debug(
-        #         "The Process will automate update this data to metadata ..."
-        #     )
-        #     self.meta_update(
-        #         config_data={
-        #             self.stage: merge_dict(
-        #                 {
-        #                     "updt": f"{self.updt:{self.DT_FMT}}",
-        #                     "version": f"v{str(self.version())}",
-        #                 },
-        #                 self.data_hash,
-        #             )
-        #         }
-        #     )
         elif self.changed > 0:
             print(
                 f"Should update metadata because diff level is {self.changed}."
             )
             _version_stm: str = f"v{str(self.version((self.stage != 'base')))}"
-        #     self.meta_update(
-        #         config_data={
-        #             self.stage: merge_dict(
-        #                 self.data_hash,
-        #                 {
-        #                     "updt": f"{self.timestamp:{self.DT_FMT}}",
-        #                     "version": _version_stm,
-        #                 },
-        #             )
-        #         }
-        #     )
-
-        # Save logging.
-        # self.__log.save_logging()
 
     def __hash__(self):
         return hash(
@@ -323,70 +266,6 @@ class Register(BaseRegister):
             else _data
         )
 
-    # @property
-    # def meta(self) -> RegisterMetaData:
-    #     _meta: Dict[str, Any] = self.__meta.load()
-    #     if not _meta:
-    #         self.__log.p_debug(
-    #             (
-    #                 f"Metadata does not exists for {self.fullname!r} in stage: "
-    #                 f"{self.stage!r}, so the process will return default data."
-    #             ),
-    #             force=True,
-    #         )
-    #     _data: dict = _meta.pop("data", {})
-    #     return RegisterMetaData.model_validate(
-    #         merge_dict(
-    #             {
-    #                 "name": self.name,
-    #                 "shortname": self.shortname,
-    #                 "fullname": self.fullname,
-    #                 "data": _data,
-    #                 "updt": f"{self.updt:{self.DT_FMT}}",
-    #                 "rtdt": f"{self.updt:{self.DT_FMT}}",
-    #                 "author": self.config.author,
-    #             },
-    #             _meta,
-    #         )
-    #     )
-
-    # def meta_update(
-    #         self,
-    #         data: Optional[dict] = None,
-    #         config_data: Optional[dict] = None,
-    # ) -> None:
-    #     """Update data to metadata table or file with optional new data and new
-    #     config data.
-    #
-    #     :param data: Optional[dict]
-    #
-    #     :param config_data: Optional[dict]
-    #     """
-    #     _meta: RegisterMetaData = self.meta
-    #     data: dict = merge_dict(
-    #         {
-    #             "updt": f"{self.updt:{self.DT_FMT}}",
-    #             "author": self.config.author,
-    #         },
-    #         (data or {}),
-    #     )
-    #     if config_data:
-    #         data: dict = merge_dict(
-    #             data,
-    #             {
-    #                 "data": merge_dict(
-    #                     _meta.data,
-    #                     config_data,
-    #                 ),
-    #             },
-    #         )
-    #     return self.__meta.save(
-    #         data=merge_dict(
-    #             _meta.model_dump(),
-    #             data,
-    #         ),
-    #     )
-
     @property
     def params(self) -> Params:
         if self.config is None:
@@ -397,7 +276,7 @@ class Register(BaseRegister):
         return self.config
 
     @params.setter
-    def params(self, config: Params) -> NoReturn:
+    def params(self, config: Params) -> None:
         self.config = config
 
     @property
