@@ -1,104 +1,82 @@
-import os.path
-import pathlib
 import shutil
-import unittest
+from pathlib import Path
 
 import ddeutil.io.config as conf
 import pytest
 
 
-@pytest.mark.usefixtures("test_path_to_cls")
-class BaseConfigFileTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.demo_path: pathlib.Path = (
-            self.test_path / "examples" / "conf" / "demo"
-        )
-        self.target_path: pathlib.Path = self.test_path / "conf_file_temp"
-
-    def test_base_conf_read_file(self):
-        bcf = conf.BaseConfFile(self.demo_path)
-
-        self.assertDictEqual(
-            {
-                "alias": "conn_local_file",
-                "endpoint": "file:///N%2FA/tests/examples/dummy",
-                "type": "connection.LocalFileStorage",
-            },
-            bcf.load(name="conn_local_file"),
-        )
-
-        bcf.move(
-            "demo_01_connections.yaml",
-            destination=self.target_path / "demo_01_connections.yaml",
-        )
-
-        bcf_temp = conf.BaseConfFile(self.target_path)
-        self.assertDictEqual(
-            {
-                "alias": "conn_local_file",
-                "endpoint": "file:///N%2FA/tests/examples/dummy",
-                "type": "connection.LocalFileStorage",
-            },
-            bcf_temp.load(name="conn_local_file"),
-        )
-
-        self.assertTrue(
-            os.path.exists(self.target_path / "demo_01_connections.yaml")
-        )
-
-        if os.path.exists(self.target_path):
-            shutil.rmtree(self.target_path)
+@pytest.fixture(scope="module")
+def target_path(test_path) -> Path:
+    return test_path / "conf_file_temp"
 
 
-@pytest.mark.usefixtures("test_path_to_cls")
-class ConfigFileTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.demo_path: pathlib.Path = (
-            self.test_path / "examples" / "conf" / "demo"
-        )
-        self.target_path: pathlib.Path = self.test_path / "conf_file_temp"
+@pytest.fixture(scope="module")
+def demo_path(test_path) -> Path:
+    return test_path / "examples" / "conf" / "demo"
 
-    def test_base_conf_read_file(self):
-        cf = conf.ConfFile(self.demo_path)
-        cf.move(
-            path="demo_01_connections.yaml",
-            destination=self.target_path / "demo_01_connections.yaml",
-        )
 
-        _stage_path = self.target_path / "demo_01_connections_stage.json"
+def test_base_conf_read_file(demo_path, target_path):
+    bcf = conf.BaseConfFile(demo_path)
 
-        cf.create(path=_stage_path)
-        self.assertTrue(os.path.exists(_stage_path))
-        cf.save_stage(path=_stage_path, data=cf.load("conn_local_file"))
+    assert {
+        "alias": "conn_local_file",
+        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "type": "connection.LocalFileStorage",
+    } == bcf.load(name="conn_local_file")
 
-        self.assertDictEqual(
-            {
-                "alias": "conn_local_file",
-                "endpoint": "file:///N%2FA/tests/examples/dummy",
-                "type": "connection.LocalFileStorage",
-            },
-            cf.load_stage(path=_stage_path),
-        )
+    bcf.move(
+        "demo_01_connections.yaml",
+        destination=target_path / "demo_01_connections.yaml",
+    )
 
-        cf.save_stage(
-            path=_stage_path,
-            data={"temp_additional": cf.load("conn_local_file")},
-            merge=True,
-        )
+    bcf_temp = conf.BaseConfFile(target_path)
+    assert {
+        "alias": "conn_local_file",
+        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "type": "connection.LocalFileStorage",
+    } == bcf_temp.load(name="conn_local_file")
 
-        cf.remove_stage(
-            path=_stage_path,
-            name="temp_additional",
-        )
+    assert (target_path / "demo_01_connections.yaml").exists()
 
-        self.assertDictEqual(
-            {
-                "alias": "conn_local_file",
-                "endpoint": "file:///N%2FA/tests/examples/dummy",
-                "type": "connection.LocalFileStorage",
-            },
-            cf.load_stage(path=_stage_path),
-        )
+    if target_path.exists():
+        shutil.rmtree(target_path)
 
-        if os.path.exists(self.target_path):
-            shutil.rmtree(self.target_path)
+
+def test_conf_read_file(demo_path, target_path):
+    cf = conf.ConfFile(demo_path)
+    cf.move(
+        path="demo_01_connections.yaml",
+        destination=target_path / "demo_01_connections.yaml",
+    )
+
+    _stage_path = target_path / "demo_01_connections_stage.json"
+
+    cf.create(path=_stage_path)
+    assert _stage_path.exists()
+    cf.save_stage(path=_stage_path, data=cf.load("conn_local_file"))
+
+    assert {
+        "alias": "conn_local_file",
+        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "type": "connection.LocalFileStorage",
+    } == cf.load_stage(path=_stage_path)
+
+    cf.save_stage(
+        path=_stage_path,
+        data={"temp_additional": cf.load("conn_local_file")},
+        merge=True,
+    )
+
+    cf.remove_stage(
+        path=_stage_path,
+        name="temp_additional",
+    )
+
+    assert {
+        "alias": "conn_local_file",
+        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "type": "connection.LocalFileStorage",
+    } == cf.load_stage(path=_stage_path)
+
+    if target_path.exists():
+        shutil.rmtree(target_path)

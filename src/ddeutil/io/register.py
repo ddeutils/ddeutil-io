@@ -177,12 +177,9 @@ class Register(BaseRegister):
         loader: Optional[type[OpenFile]] = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
-        super().__init__(
-            name=_name,
-            domain=_domain,
-        )
+        super().__init__(name=_name, domain=_domain)
+        self.stage: str = stage or "base"
         self.config = config
-        self.stage = stage or "base"
         self.loader = loader
 
         # Load latest version of data from data lake or data store of
