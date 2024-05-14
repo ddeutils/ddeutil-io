@@ -13,7 +13,7 @@ from typing import (
 
 from ddeutil.core import import_string, str2args
 
-from .__base import SettingRegex
+from .__base import RegexConf
 from .exceptions import ConfigArgumentError
 
 
@@ -32,7 +32,7 @@ def map_secret(
         return type(value)([map_secret(i, secrets) for i in value])
     elif not isinstance(value, str):
         return value
-    for search in SettingRegex.RE_SECRETS.finditer(value):
+    for search in RegexConf.RE_SECRETS.finditer(value):
         searches: dict = search.groupdict()
         if "." in (br := searches["braced"]):
             raise ConfigArgumentError(
@@ -54,7 +54,7 @@ def map_function(value: Any) -> Union[dict, str, Any]:
         return type(value)([map_function(i) for i in value])
     elif not isinstance(value, str):
         return value
-    for search in SettingRegex.RE_FUNCTION.finditer(value):
+    for search in RegexConf.RE_FUNCTION.finditer(value):
         searches: dict = search.groupdict()
         if not callable(_fn := import_string(searches["function"])):
             raise ConfigArgumentError(

@@ -35,8 +35,8 @@ from fmtutil import (
     make_group,
 )
 
-from .__base.pathutils import rm
-from .config import ConfFile, FileSystem
+from .__base import rm
+from .config import ConfFile, Fl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 
@@ -174,7 +174,7 @@ class Register(BaseRegister):
         stage: Optional[str] = None,
         *,
         config: Optional[Params] = None,
-        loader: Optional[type[FileSystem]] = None,
+        loader: Optional[type[Fl]] = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(name=_name, domain=_domain)

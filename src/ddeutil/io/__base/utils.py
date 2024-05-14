@@ -5,12 +5,13 @@ from typing import (
 )
 
 try:
-    from .__regex import SettingRegex
+    from .__regex import RegexConf
 except ImportError:
-    from __regex import SettingRegex
+    from __regex import RegexConf
 
 
 def add_newline(text: str, newline: Optional[str] = None) -> str:
+    """Add newline to a text value."""
     nl: str = newline or "\n"
     return f"{text}{nl}" if not text.endswith(nl) else text
 
@@ -23,11 +24,19 @@ def search_env_replace(
     escape: str = "ESC",
     caller: Callable[[str], str] = (lambda x: x),
 ) -> str:
-    """Prepare content data before parse to any file loading method"""
+    """Prepare content data before parse to any file parsing object.
+
+    :param contents:
+    :param raise_if_default_not_exists:
+    :param default: a default value.
+    :param escape: a escape value that use for initial replace when found escape
+        char on searching.
+    :param caller: a prepare function.
+    """
     shifting: int = 0
     replaces: dict = {}
     replaces_esc: dict = {}
-    for content in SettingRegex.RE_ENV_SEARCH.finditer(contents):
+    for content in RegexConf.RE_ENV_SEARCH.finditer(contents):
         search: str = content.group(1)
         if not (_escaped := content.group("escaped")):
             var: str = content.group("braced")
@@ -80,7 +89,7 @@ def search_env(
     """
     _default: str = default or ""
     env: dict[str, str] = {}
-    for content in SettingRegex.RE_DOTENV.finditer(contents):
+    for content in RegexConf.RE_DOTENV.finditer(contents):
         name: str = content.group("name")
 
         # Remove leading/trailing whitespace
@@ -95,7 +104,7 @@ def search_env(
         quoted: Optional[str] = None
 
         # Remove surrounding quotes
-        if m2 := SettingRegex.RE_ENV_VALUE_QUOTED.match(value):
+        if m2 := RegexConf.RE_ENV_VALUE_QUOTED.match(value):
             quoted: str = m2.group("quoted")
             value: str = m2.group("value")
 
@@ -105,7 +114,7 @@ def search_env(
         elif quoted == '"':
             # Unescape all chars except $ so variables
             # can be escaped properly
-            value: str = SettingRegex.RE_ENV_ESCAPE.sub(r"\1", value)
+            value: str = RegexConf.RE_ENV_ESCAPE.sub(r"\1", value)
 
         # Substitute variables in a value
         env[name] = __search_var(value, env, default=_default)
@@ -137,7 +146,7 @@ def __search_var(
         'Test baz'
     """
     _default: str = default or ""
-    for sub_content in SettingRegex.RE_DOTENV_VAR.findall(value):
+    for sub_content in RegexConf.RE_DOTENV_VAR.findall(value):
         replace: str = "".join(sub_content[1:-1])
         if sub_content[0] != "\\":
             # Replace it with the value from the environment

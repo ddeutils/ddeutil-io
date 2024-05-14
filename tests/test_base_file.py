@@ -23,7 +23,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.encoding = "utf-8"
 
     def test_open_file_common(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=pathlib.Path(f"{self.root_path}/test_common_file.text"),
             encoding="utf-8",
         )
@@ -36,7 +36,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual("Write data with common file in normal mode", rs)
 
     def test_open_file_common_append(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=pathlib.Path(f"{self.root_path}/test_common_file_append.text"),
             encoding="utf-8",
         )
@@ -62,7 +62,7 @@ class OpenFileTestCase(unittest.TestCase):
         )
 
     def test_open_file_common_gzip(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=pathlib.Path(f"{self.root_path}/test_common_file.gz.text"),
             encoding="utf-8",
             compress="gzip",
@@ -76,7 +76,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual("Write data with common file in gzip mode", rs)
 
     def test_open_file_common_xz(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_file.xz.text",
             encoding="utf-8",
             compress="xz",
@@ -90,7 +90,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual("Write data with common file in xz mode", rs)
 
     def test_open_file_common_bz2(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_file.bz2.text",
             encoding="utf-8",
             compress="bz2",
@@ -104,7 +104,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual("Write data with common file in bz2 mode", rs)
 
     def test_open_file_binary(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_binary_file.text",
             encoding="utf-8",
         )
@@ -117,7 +117,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual(b"Write data with binary file in normal mode", rs)
 
     def test_open_file_binary_gzip(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_binary_file.gz.text",
             encoding="utf-8",
             compress="gzip",
@@ -131,7 +131,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual(b"Write data with binary file in gzip mode", rs)
 
     def test_open_file_binary_xz(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_binary_file.xz.text",
             encoding="utf-8",
             compress="xz",
@@ -145,7 +145,7 @@ class OpenFileTestCase(unittest.TestCase):
         self.assertEqual(b"Write data with binary file in xz mode", rs)
 
     def test_open_file_binary_bz2(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_binary_file.bz2.text",
             encoding="utf-8",
             compress="bz2",
@@ -179,7 +179,7 @@ class OpenFileMemoryTestCase(unittest.TestCase):
         self.encoding = "utf-8"
 
     def test_open_file_mem_common(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_mem_file.text",
             encoding="utf-8",
         )
@@ -194,7 +194,7 @@ class OpenFileMemoryTestCase(unittest.TestCase):
         )
 
     def test_open_file_mem_common_gzip(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_mem_file.gz.text",
             encoding="utf-8",
             compress="gzip",
@@ -210,7 +210,7 @@ class OpenFileMemoryTestCase(unittest.TestCase):
         )
 
     def test_open_file_mem_common_xz(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_mem_file.xz.text",
             encoding="utf-8",
             compress="xz",
@@ -226,7 +226,7 @@ class OpenFileMemoryTestCase(unittest.TestCase):
         )
 
     def test_open_file_mem_common_bz2(self):
-        opf = fl.FileSystem(
+        opf = fl.Fl(
             path=f"{self.root_path}/test_common_mem_file.bz2.text",
             encoding="utf-8",
             compress="bz2",

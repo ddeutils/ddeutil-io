@@ -7,6 +7,12 @@
 This is then main function for open any files in local or remote space
 with the best python libraries and the best practice such as build-in
 ``io.open``, ``mmap.mmap``, etc.
+
+NOTE:
+    - Add more compress type such as
+        - h5,hdf5(h5py)
+        - fits(astropy)
+        - rar(...)
 """
 from __future__ import annotations
 
@@ -42,21 +48,19 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-from .__regex import SettingRegex
+from .__regex import RegexConf
 from .utils import search_env, search_env_replace
 
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
-
-# NOTE:
-#   add more compress type such as
-#       - h5,hdf5(h5py)
-#       - fits(astropy)
-#       - rar(...)
 DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
 
 def compress_lib(compress: str) -> CompressProtocol:
-    """Return Compress module that use to unpack data from the compressed file."""
+    """Return Compress module that use to unpack data from the compressed file.
+
+    Note:
+        Now, it support for "gzip", "gz", "xz", "bz2"]
+    """
     if not compress:
         return io
     elif compress in ("gzip", "gz"):
@@ -80,7 +84,7 @@ class CompressProtocol(Protocol):
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class FileSystemAbc(abc.ABC):
+class FlAbc(abc.ABC):
     @abc.abstractmethod
     def read(self, *args, **kwargs): ...
 
@@ -88,15 +92,12 @@ class FileSystemAbc(abc.ABC):
     def write(self, *args, **kwargs): ...
 
 
-class FileSystem(FileSystemAbc):
+class Fl:
     """Open File Object that use to open any simple or compression file from
     local file system.
 
     Examples:
-        >>> with FileSystem(
-        ...     './dwh/conf/params.gz.txt',
-        ...     compress='gzip',
-        ... ).open() as f:
+        >>> with Fl('./dwh/conf/params.gz.txt', compress='gzip').open() as f:
         ...     data = f.readline()
     """
 
@@ -171,20 +172,16 @@ class FileSystem(FileSystemAbc):
         _access = mmap.ACCESS_READ if ("r" in mode) else mmap.ACCESS_WRITE
         try:
             yield mmap.mmap(file.fileno(), length=0, access=_access)
-        except ValueError:
+        except ValueError as err:
+            if str(err) != "cannot mmap an empty file":
+                raise err
             yield file
             logging.error("Does not open file with memory mode")
         finally:
             file.close()
 
-    def read(self, *args, **kwargs):
-        raise NotImplementedError
 
-    def write(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-class OpenDir:
+class Dir:
     """Open File Object"""
 
     def __init__(
@@ -193,7 +190,7 @@ class OpenDir:
         *,
         compress: Optional[DirCompressType] = None,
     ):
-        self.path = path
+        self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress = compress
         # Action anything after set up attributes.
         self.after_set_attrs()
@@ -224,7 +221,7 @@ class OpenDir:
         return NotImplementedError
 
 
-class Env(FileSystem):
+class Env(Fl, FlAbc):
     """Env object which mapping search engine"""
 
     keep_newline: ClassVar[bool] = False
@@ -246,7 +243,7 @@ class Env(FileSystem):
         raise NotImplementedError
 
 
-class Yaml(FileSystem):
+class Yaml(Fl, FlAbc):
     """Yaml File Object
 
     .. noted::
@@ -281,7 +278,7 @@ class YamlEnv(Yaml):
         if safe:
             with self.open(mode="r") as _r:
                 _env_replace: str = search_env_replace(
-                    SettingRegex.RE_YAML_COMMENT.sub("", _r.read()),
+                    RegexConf.RE_YAML_COMMENT.sub("", _r.read()),
                     raise_if_default_not_exists=self.raise_if_not_default,
                     default=self.default,
                     escape=self.escape,
@@ -296,7 +293,7 @@ class YamlEnv(Yaml):
         raise NotImplementedError
 
 
-class CSV(FileSystem):
+class CSV(Fl, FlAbc):
     def read(self) -> list[str]:
         with self.open(mode="r") as _r:
             try:
@@ -393,7 +390,7 @@ class CSVPipeDim(CSV):
                 writer.writerows(data)
 
 
-class Json(FileSystem):
+class Json(Fl, FlAbc):
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             try:
@@ -440,7 +437,7 @@ class JsonEnv(Json):
         raise NotImplementedError
 
 
-class Pickle(FileSystem):
+class Pickle(Fl, FlAbc):
     def read(self):
         with self.open(mode="rb") as _r:
             return pickle.loads(_r.read())
@@ -450,7 +447,7 @@ class Pickle(FileSystem):
             pickle.dump(data, _w)
 
 
-class Marshal(FileSystem):
+class Marshal(Fl, FlAbc):
     def read(self):
         with self.open(mode="rb") as _r:
             return marshal.loads(_r.read())
@@ -461,7 +458,7 @@ class Marshal(FileSystem):
 
 
 __all__ = (
-    "FileSystem",
+    "Fl",
     "Env",
     "Json",
     "JsonEnv",

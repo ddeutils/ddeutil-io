@@ -13,7 +13,7 @@ from re import (
 )
 
 
-class SettingRegex:
+class RegexConf:
     """Core Configuration Model"""
 
     # Normal regular expression for the secret value.

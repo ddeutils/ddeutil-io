@@ -90,6 +90,7 @@ check_untyped_defs = true
 
 [tool.black]
 line-length = 80
+preview = true
 target-version = ['py39']
 exclude = """
 /(

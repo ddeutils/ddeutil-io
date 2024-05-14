@@ -37,7 +37,7 @@ class OpenDirTestCase(unittest.TestCase):
     def test_open_dir_common_zip(self):
         data_dir = pathlib.Path(self.data_path)
 
-        opd = fl.OpenDir(
+        opd = fl.Dir(
             path=pathlib.Path(f"{self.root_path}/test_common_dir.zip"),
             compress="zip",
         )
@@ -48,7 +48,7 @@ class OpenDirTestCase(unittest.TestCase):
     def test_open_dir_common_tar(self):
         data_dir = pathlib.Path(self.data_path)
 
-        opd = fl.OpenDir(
+        opd = fl.Dir(
             path=pathlib.Path(f"{self.root_path}/test_common_dir.tar.gz"),
             compress="tar",
         )
