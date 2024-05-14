@@ -38,7 +38,7 @@ def param_config(test_path, root_path) -> Params:
 def test_register_init(param_config):
     register = rgt.Register(
         name="demo:conn_local_file",
-        config=param_config,
+        params=param_config,
     )
 
     assert "base" == register.stage
@@ -68,7 +68,7 @@ def test_register_init(param_config):
 
     rgt.Register.reset(
         name="demo:conn_local_file",
-        config=param_config,
+        params=param_config,
     )
 
 

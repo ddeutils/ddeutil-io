@@ -47,7 +47,7 @@ class EnvTestCase(unittest.TestCase):
         with open(env_path, mode="w", encoding="utf-8") as f:
             f.write(self.env_str)
 
-        data = bfl.Env(path=env_path).read(update=False)
+        data = bfl.EnvFl(path=env_path).read(update=False)
 
         self.assertDictEqual(self.env_data, data)
 

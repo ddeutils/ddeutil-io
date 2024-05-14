@@ -29,10 +29,10 @@ class CSVTest(unittest.TestCase):
         ]
         self.csv_path: str = f"{self.root_path}/test_file.csv"
         self.csv_env_path: str = f"{self.root_path}/test_env_file.csv"
-        fl.CSV(self.csv_path).write(self.csv_data)
+        fl.CsvFl(self.csv_path).write(self.csv_data)
 
     def test_load_csv(self):
-        self.csv_data_from_load = fl.CSV(self.csv_path).read()
+        self.csv_data_from_load = fl.CsvFl(self.csv_path).read()
         self.assertListEqual(self.csv_data, self.csv_data_from_load)
 
     def tearDown(self) -> None:

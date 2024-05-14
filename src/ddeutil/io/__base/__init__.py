@@ -10,16 +10,16 @@ from typing import (
 
 from .__regex import RegexConf
 from .files import (
-    CSV,
-    CSVPipeDim,
-    Env,
+    CsvFl,
+    CsvPipeFl,
+    EnvFl,
     Fl,
-    Json,
-    JsonEnv,
-    Marshal,
-    Pickle,
-    Yaml,
-    YamlEnv,
+    JsonEnvFl,
+    JsonFl,
+    MarshalFl,
+    PickleFl,
+    YamlEnvFl,
+    YamlFl,
 )
 from .utils import (
     add_newline,
@@ -28,7 +28,7 @@ from .utils import (
 
 
 def rm(path: str, is_dir: bool = False) -> None:
-    """Remove file."""
+    """Remove file or dir from a input path."""
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
     elif os.path.isdir(path) and is_dir:

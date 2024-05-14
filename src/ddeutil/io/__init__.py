@@ -1,6 +1,6 @@
 from .config import (
     ConfABC,
-    ConfFile,
+    ConfFl,
     ConfSQLite,
 )
 from .exceptions import (

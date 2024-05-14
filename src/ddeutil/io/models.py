@@ -5,23 +5,23 @@
 # ------------------------------------------------------------------------------
 from __future__ import annotations
 
-import datetime
-import pathlib
 import re
+from datetime import datetime
+from pathlib import Path
 from typing import (
     Any,
     Optional,
     Union,
 )
 
-from ddeutil.io.__base import YamlEnv
+from ddeutil.io.__base import YamlEnvFl
 from ddeutil.io.exceptions import ConfigArgumentError
 from pydantic import (
     BaseModel,
     Field,
     ValidationInfo,
-    field_validator,
 )
+from pydantic.functional_validators import field_validator
 
 FMT_NAMES: tuple[str, ...] = (
     "naming",
@@ -53,7 +53,6 @@ class RuleData(BaseModel):
     """
 
     timestamp: Optional[dict[str, int]] = Field(default_factory=dict)
-
     version: Optional[str] = Field(default=None)
     excluded: Optional[list[str]] = Field(default_factory=list)
     compress: Optional[str] = Field(default=None)
@@ -121,15 +120,15 @@ class StageData(BaseModel):
 
 
 class PathData(BaseModel):
-    root: Union[str, pathlib.Path] = Field(default_factory=pathlib.Path)
-    data: pathlib.Path = Field(default="data", validate_default=True)
-    conf: pathlib.Path = Field(default="conf", validate_default=True)
-    archive: pathlib.Path = Field(default=".archive", validate_default=True)
+    root: Union[str, Path] = Field(default_factory=Path)
+    data: Path = Field(default="data", validate_default=True)
+    conf: Path = Field(default="conf", validate_default=True)
+    archive: Path = Field(default=".archive", validate_default=True)
 
     @field_validator("root", mode="before")
     def prepare_root(cls, v):
         if isinstance(v, str):
-            return pathlib.Path(v)
+            return Path(v)
         return v
 
     @field_validator("data", "conf", "archive", mode="before")
@@ -137,9 +136,9 @@ class PathData(BaseModel):
         cls,
         v,
         info: ValidationInfo,
-    ) -> pathlib.Path:
-        _root: pathlib.Path = info.data["root"]
-        return v if isinstance(v, pathlib.Path) else (_root / v)
+    ) -> Path:
+        _root: Path = info.data["root"]
+        return v if isinstance(v, Path) else (_root / v)
 
 
 class FlagData(BaseModel):
@@ -168,9 +167,9 @@ class Params(BaseModel, validate_assignment=True):
     engine: EngineData = Field(default_factory=EngineData)
 
     @classmethod
-    def from_file(cls, path: Union[str, pathlib.Path]):
+    def from_file(cls, path: Union[str, Path]):
         cls._origin_path = path
-        return cls.model_validate(YamlEnv(path).read())
+        return cls.model_validate(YamlEnvFl(path).read())
 
     @field_validator("stages", mode="before")
     def order_layer(cls, value: dict[str, dict[Any, Any]]):
@@ -226,6 +225,6 @@ class RegisterMetaData(BaseModel, validate_assignment=True):
     shortname: str
     fullname: str
     data: dict[str, Any]
-    updt: datetime.datetime
-    rtdt: datetime.datetime
+    updt: datetime
+    rtdt: datetime
     author: str

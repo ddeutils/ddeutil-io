@@ -180,6 +180,12 @@ class Fl:
         finally:
             file.close()
 
+    def read(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def write(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class Dir:
     """Open File Object"""
@@ -221,7 +227,7 @@ class Dir:
         return NotImplementedError
 
 
-class Env(Fl, FlAbc):
+class EnvFl(Fl, FlAbc):
     """Env object which mapping search engine"""
 
     keep_newline: ClassVar[bool] = False
@@ -243,7 +249,7 @@ class Env(Fl, FlAbc):
         raise NotImplementedError
 
 
-class Yaml(Fl, FlAbc):
+class YamlFl(Fl, FlAbc):
     """Yaml File Object
 
     .. noted::
@@ -263,7 +269,7 @@ class Yaml(Fl, FlAbc):
             yaml.dump(data, _w, default_flow_style=False)
 
 
-class YamlEnv(Yaml):
+class YamlEnvFl(YamlFl):
     """Yaml object which mapping search environment variable."""
 
     raise_if_not_default: ClassVar[bool] = False
@@ -293,7 +299,7 @@ class YamlEnv(Yaml):
         raise NotImplementedError
 
 
-class CSV(Fl, FlAbc):
+class CsvFl(Fl, FlAbc):
     def read(self) -> list[str]:
         with self.open(mode="r") as _r:
             try:
@@ -342,7 +348,7 @@ class CSV(Fl, FlAbc):
                 return False
 
 
-class CSVPipeDim(CSV):
+class CsvPipeFl(CsvFl):
     def after_set_attrs(self) -> None:
         csv.register_dialect(
             "pipe_delimiter", delimiter="|", quoting=csv.QUOTE_ALL
@@ -390,7 +396,7 @@ class CSVPipeDim(CSV):
                 writer.writerows(data)
 
 
-class Json(Fl, FlAbc):
+class JsonFl(Fl, FlAbc):
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             try:
@@ -412,7 +418,7 @@ class Json(Fl, FlAbc):
                 json.dump(data, _w, indent=indent)
 
 
-class JsonEnv(Json):
+class JsonEnvFl(JsonFl):
     raise_if_not_default: bool = False
     default: str = "N/A"
     escape: str = "ESC"
@@ -437,7 +443,7 @@ class JsonEnv(Json):
         raise NotImplementedError
 
 
-class Pickle(Fl, FlAbc):
+class PickleFl(Fl, FlAbc):
     def read(self):
         with self.open(mode="rb") as _r:
             return pickle.loads(_r.read())
@@ -447,7 +453,7 @@ class Pickle(Fl, FlAbc):
             pickle.dump(data, _w)
 
 
-class Marshal(Fl, FlAbc):
+class MarshalFl(Fl, FlAbc):
     def read(self):
         with self.open(mode="rb") as _r:
             return marshal.loads(_r.read())
@@ -459,13 +465,13 @@ class Marshal(Fl, FlAbc):
 
 __all__ = (
     "Fl",
-    "Env",
-    "Json",
-    "JsonEnv",
-    "Yaml",
-    "YamlEnv",
-    "CSV",
-    "CSVPipeDim",
-    "Marshal",
-    "Pickle",
+    "EnvFl",
+    "JsonFl",
+    "JsonEnvFl",
+    "YamlFl",
+    "YamlEnvFl",
+    "CsvFl",
+    "CsvPipeFl",
+    "MarshalFl",
+    "PickleFl",
 )

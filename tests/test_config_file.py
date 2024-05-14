@@ -10,13 +10,8 @@ def target_path(test_path) -> Path:
     return test_path / "conf_file_temp"
 
 
-@pytest.fixture(scope="module")
-def demo_path(test_path) -> Path:
-    return test_path / "examples" / "conf" / "demo"
-
-
 def test_base_conf_read_file(demo_path, target_path):
-    bcf = conf.BaseConfFile(demo_path)
+    bcf = conf.BaseConfFl(demo_path)
 
     assert {
         "alias": "conn_local_file",
@@ -29,7 +24,7 @@ def test_base_conf_read_file(demo_path, target_path):
         destination=target_path / "demo_01_connections.yaml",
     )
 
-    bcf_temp = conf.BaseConfFile(target_path)
+    bcf_temp = conf.BaseConfFl(target_path)
     assert {
         "alias": "conn_local_file",
         "endpoint": "file:///N%2FA/tests/examples/dummy",
@@ -43,7 +38,7 @@ def test_base_conf_read_file(demo_path, target_path):
 
 
 def test_conf_read_file(demo_path, target_path):
-    cf = conf.ConfFile(demo_path)
+    cf = conf.ConfFl(demo_path)
     cf.move(
         path="demo_01_connections.yaml",
         destination=target_path / "demo_01_connections.yaml",

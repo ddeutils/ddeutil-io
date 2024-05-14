@@ -40,7 +40,7 @@ class YamlFileTestCase(unittest.TestCase):
     def test_write_yaml_file_with_safe_mode(self):
         yaml_path: str = f"{self.root_path}/test_write_file.yaml"
 
-        fl.Yaml(path=yaml_path).write(self.yaml_data)
+        fl.YamlFl(path=yaml_path).write(self.yaml_data)
 
         self.assertTrue(os.path.exists(yaml_path))
 
@@ -52,7 +52,7 @@ class YamlFileTestCase(unittest.TestCase):
         with open(yaml_path, mode="w", encoding="utf-8") as f:
             yaml.dump(yaml.safe_load(self.yaml_str), f)
 
-        data = fl.Yaml(path=yaml_path).read()
+        data = fl.YamlFl(path=yaml_path).read()
         self.assertDictEqual(self.yaml_data, data)
 
         os.remove(yaml_path)
@@ -101,7 +101,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
 
         os.environ["DEMO_ENV_VALUE"] = "demo"
 
-        data = fl.YamlEnv(path=yaml_path).read()
+        data = fl.YamlEnvFl(path=yaml_path).read()
         self.assertDictEqual(self.yaml_data, data)
 
         os.remove(yaml_path)
@@ -114,7 +114,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
 
         os.environ["DEMO_ENV_VALUE"] = "demo"
 
-        yml_loader = fl.YamlEnv(path=yaml_path)
+        yml_loader = fl.YamlEnvFl(path=yaml_path)
         yml_loader.prepare = lambda x: f"{x}!!"
         data = yml_loader.read()
         self.assertDictEqual(
@@ -145,7 +145,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
 
         import urllib.parse
 
-        yml_loader = fl.YamlEnv
+        yml_loader = fl.YamlEnvFl
         yml_loader.prepare = staticmethod(
             lambda x: urllib.parse.quote_plus(str(x))
         )

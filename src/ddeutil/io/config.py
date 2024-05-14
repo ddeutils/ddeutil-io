@@ -24,9 +24,9 @@ from typing import (
 
 from .__base import (
     Fl,
-    Json,
+    JsonFl,
     PathSearch,
-    YamlEnv,
+    YamlEnvFl,
     rm,
 )
 from .exceptions import ConfigArgumentError
@@ -52,7 +52,7 @@ class ConfABC(abc.ABC):
         raise NotImplementedError
 
 
-class BaseConfFile:
+class BaseConfFl:
     """Base Config File object for getting data with `.yaml` format and mapping
     environment variables to the content data.
     """
@@ -67,7 +67,7 @@ class BaseConfFile:
     ):
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: Optional[str] = compress
-        self.open_file: type[Fl] = open_file or YamlEnv
+        self.open_file: type[Fl] = open_file or YamlEnvFl
         self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
         if not self.path.exists():
             self.path.mkdir(parents=True)
@@ -143,7 +143,7 @@ class BaseConfFile:
         shutil.copy(self.path / path, destination)
 
 
-class ConfFile(BaseConfFile, ConfABC):
+class ConfFl(BaseConfFl, ConfABC):
     """Config File Loading Object for get data from configuration and stage."""
 
     def __init__(
@@ -167,7 +167,7 @@ class ConfFile(BaseConfFile, ConfABC):
             open_file=open_file,
             excluded_fmt=excluded_fmt,
         )
-        self.open_file_stg: type[Fl] = open_file_stg or Json
+        self.open_file_stg: type[Fl] = open_file_stg or JsonFl
 
     def load_stage(
         self,
@@ -405,7 +405,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
 
 __all__ = (
     "ConfABC",
-    "ConfFile",
+    "ConfFl",
     "ConfSQLite",
     "Fl",
 )

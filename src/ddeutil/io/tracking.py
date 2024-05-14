@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-import sys
 from functools import wraps
 from typing import (
     Any,
@@ -20,11 +19,7 @@ from urllib.parse import urlparse
 from ddeutil.core import merge_dict
 from ddeutil.core.dtutils import get_date
 
-from .config import ConfABC, ConfFile, ConfSQLite
-
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
+from .config import ConfABC, ConfFl, ConfSQLite
 
 ConfLoader = TypeVar("ConfLoader", bound="BaseConfLoader")
 
@@ -70,7 +65,7 @@ class BaseConfLoader:
             self._cf_filename: str = (
                 f"{self.conf_prefix}{_environ}.{self.conf_file_extension}"
             )
-            self.loading: ConfABC = ConfFile(path=self._cf_loader_endpoint)
+            self.loading: ConfABC = ConfFl(path=self._cf_loader_endpoint)
             self.loading.create(
                 name=self._cf_filename,
                 initial_data=self.conf_file_initial,
@@ -331,12 +326,11 @@ def test_logging_file():
     _log = ConfLogging(
         "file://D:/korawica/Work/dev02_miniproj/GITHUB/dde-object-defined/data/logs",
         "conn_local_file",
-        _logger=logger,
+        _logger=logging,
         auto_save=False,
     )
     _log.p_info("test log data from info level", force=True)
     _log.p_debug("test log data from debug level1")
-    logger.setLevel(logging.INFO)
     _log.p_debug("test log data from debug level2")
     print(_log.is_pulled)
 

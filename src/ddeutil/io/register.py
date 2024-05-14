@@ -5,8 +5,9 @@
 # ------------------------------------------------------------------------------
 from __future__ import annotations
 
-import datetime
+import logging
 import os
+from datetime import datetime
 from typing import (
     Any,
     Optional,
@@ -36,11 +37,16 @@ from fmtutil import (
 )
 
 from .__base import rm
-from .config import ConfFile, Fl
+from .config import ConfFl, Fl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 
-METADATA: dict[Any, Any] = {}
+METADATA: dict[str, Any] = {}
+
+
+class StageFiles(TypedDict):
+    parse: FormatterGroup
+    file: str
 
 
 CompressConst: ConstantType = make_const(
@@ -72,22 +78,18 @@ class BaseRegister:
     def __init__(
         self,
         name: str,
+        *,
         domain: Optional[str] = None,
-    ):
-        self.name = name
-        self.domain: str = domain or ""
-        self.updt: datetime.datetime = get_date("datetime")
-
-        if domain:
-            self.domain = (
-                domain.replace(os.sep, "/").rstrip("/").lstrip("/").lower()
-            )
-        if any(sep in self.name for sep in {",", "."}):
-            # Raise if name of configuration contain comma (`,`)
-            # or dot (`.`) characters.
+    ) -> None:
+        self.name: str = name
+        self.updt: datetime = get_date("datetime")
+        self.domain: str = (
+            domain.replace(os.sep, "/").strip("/").lower() if domain else ""
+        )
+        if any(sep in self.name for sep in (",", ".")):
             raise ConfigArgumentError(
                 "name",
-                "the name of config should not contain comma or dot characters",
+                "Config name should not contain `,` or `.` char",
             )
 
     @property
@@ -121,11 +123,6 @@ class BaseRegister:
         )
 
 
-class StageFiles(TypedDict):
-    parse: FormatterGroup
-    file: str
-
-
 class Register(BaseRegister):
     """Register Object that contain configuration loading methods and metadata
     management. This object work with stage input argument, that set all
@@ -136,7 +133,7 @@ class Register(BaseRegister):
     def reset(
         cls,
         name: str,
-        config: Params,
+        params: Params,
     ) -> Register:
         """Reset all configuration data files that exists in any stage but
         does not do anything in the base stage. This method will use when the
@@ -144,78 +141,69 @@ class Register(BaseRegister):
         name was changed and that config data does not reset,
         the configuration files of this data will exist in any moved stage.
 
-        :param name: str : The fullname of configuration.
-        :param config:
-        :type config: Params
+        :param name: The fullname of configuration.
+        :type name: str
+        :param params:
+        :type params: Params
         """
-
-        # Delete all config file from any stage.
-        for stage in config.stages:
+        for stage in params.stages:
             try:
-                cls(
-                    name,
-                    stage=stage,
-                    config=config,
-                ).remove()
+                cls(name, stage=stage, params=params).remove()
             except ConfigNotFound:
                 continue
-
-        # # Delete data form metadata.
-        # ConfMetadata(
-        #     params.engine.path.metadata,
-        #     name=_name,
-        #     environ=Env(config=params).name,
-        # ).remove()
-        return cls(name, config=config)
+        return cls(name, params=params)
 
     def __init__(
         self,
         name: str,
         stage: Optional[str] = None,
         *,
-        config: Optional[Params] = None,
+        params: Optional[Params] = None,
         loader: Optional[type[Fl]] = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(name=_name, domain=_domain)
+        if not params:
+            raise NotImplementedError(
+                "This register instance can not do any actions because config "
+                "param does not set."
+            )
         self.stage: str = stage or "base"
-        self.config = config
-        self.loader = loader
+        self.loader: Optional[type[Fl]] = loader
+        self.params: Optional[Params] = params
 
         # Load latest version of data from data lake or data store of
         # configuration files
         self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
-            _domain_stm: str = (
-                f"with domain {self.domain!r}" if self.domain else ""
-            )
             raise ConfigNotFound(
-                f"Configuration {self.name!r} {_domain_stm} "
-                f"does not found in the {self.stage!r} data lake or data store."
+                f"Config {self.name!r} "
+                f"{f'in domain {self.domain!r} ' if self.domain else ' '}"
+                f"does not exist in stage {self.stage!r}."
             )
 
-        # TODO: Implement meta object
-        self.meta = METADATA
+        self.meta: dict[str, Any] = METADATA
 
-        # Compare data from current stage and latest version in metadata.
+        # NOTE:
+        #   Compare data from current stage and latest version in metadata.
         self.changed: int = self.compare_data(
             target=self.meta.get(self.stage, {})
         )
 
-        # Update metadata if the configuration data does not exist, or
-        # it has any changes.
+        # NOTE:
+        #   Update metadata if the configuration data does not exist, or
+        #   it has any changes.
         if not self.params.engine.flags.auto_update:
-            print("Skip update metadata table/file ...")
+            logging.info("Skip update metadata table/file ...")
         elif self.changed == 99:
-            print(
+            logging.info(
                 f"Configuration data with stage: {self.stage!r} does not "
                 f"exists in metadata ..."
             )
         elif self.changed > 0:
-            print(
+            logging.info(
                 f"Should update metadata because diff level is {self.changed}."
             )
-            _version_stm: str = f"v{str(self.version((self.stage != 'base')))}"
 
     def __hash__(self):
         return hash(
@@ -228,10 +216,10 @@ class Register(BaseRegister):
         return f"({self.fullname}, {self.stage})"
 
     def __repr__(self) -> str:
-        _params: list = [f"name={self.fullname!r}"]
-        if self.stage != "base":
-            _params.append(f"stage={self.stage!r}")
-        return f"<{self.__class__.__name__}({', '.join(_params)})>"
+        return (
+            f"<{self.__class__.__name__}(name={self.fullname!r}"
+            f"{f'stage={self.stage!r}' if self.stage != 'base' else ''})>"
+        )
 
     def __eq__(self, other: Register) -> bool:
         if isinstance(other, self.__class__):
@@ -245,15 +233,12 @@ class Register(BaseRegister):
     def data(self, hashing: bool = False) -> dict[str, Any]:
         """Return the data with the configuration name."""
         _data = self.__data
-        if (self.stage is None) or (self.stage == "base"):
-            _data = merge_dict(
-                {
-                    k: v
-                    for k, v in (self.meta.get(self.stage, {}).items())
-                    if k in self.params.engine.values.excluded_keys
-                },
-                self.__data,
-            )
+        if not self.stage or (self.stage == "base"):
+            _data = {
+                k: v
+                for k, v in (self.meta.get(self.stage, {}).items())
+                if k in self.params.engine.values.excluded_keys
+            } | self.__data
         return (
             hash_all(
                 _data,
@@ -264,20 +249,7 @@ class Register(BaseRegister):
         )
 
     @property
-    def params(self) -> Params:
-        if self.config is None:
-            raise NotImplementedError(
-                "This register instance can not do any actions because config "
-                "param does not set."
-            )
-        return self.config
-
-    @params.setter
-    def params(self, config: Params) -> None:
-        self.config = config
-
-    @property
-    def timestamp(self) -> datetime.datetime:
+    def timestamp(self) -> datetime:
         """Return the current timestamp value of config data. If timestamp value
         does not exist. this property will return timestamp of initialize.
 
@@ -286,7 +258,7 @@ class Register(BaseRegister):
         if self.changed > 0:
             return self.updt
         elif _dt := self.data().get("updt"):
-            return datetime.datetime.strptime(
+            return datetime.strptime(
                 _dt,
                 self.params.engine.values.datetime_fmt,
             )
@@ -310,7 +282,7 @@ class Register(BaseRegister):
             return _vs.bump_minor()
         return _vs.bump_patch()
 
-    def fmt(self, update: Optional[dict[str, Any]] = None):
+    def fmt(self, update: Optional[dict[str, Any]] = None) -> FormatterGroup:
         return self.fmt_group(
             {
                 "timestamp": self.timestamp,
@@ -364,7 +336,7 @@ class Register(BaseRegister):
     def __stage_files(
         self,
         stage: str,
-        loading: ConfFile,
+        loading: ConfFl,
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
         results: dict[int, StageFiles] = {}
@@ -390,15 +362,15 @@ class Register(BaseRegister):
         *,
         order: Optional[int] = 1,
         reverse: bool = False,
-    ):
+    ) -> dict[str, Any]:
         # Load data from source
         if (stage is None) or (stage == "base"):
-            return ConfFile(
+            return ConfFl(
                 path=(self.params.engine.paths.conf / self.domain),
                 open_file=self.loader,
             ).load(name=self.name, order=order)
 
-        loading = ConfFile(
+        loading = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -423,7 +395,7 @@ class Register(BaseRegister):
         retention: bool = True,
     ) -> Register:
         """"""
-        loading = ConfFile(
+        loading = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -474,7 +446,7 @@ class Register(BaseRegister):
         return self.__class__(
             name=self.fullname,
             stage=stage,
-            config=self.params,
+            params=self.params,
         )
 
     def purge(self, stage: Optional[str] = None) -> None:
@@ -484,7 +456,7 @@ class Register(BaseRegister):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        loading = ConfFile(
+        loading = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
@@ -544,13 +516,13 @@ class Register(BaseRegister):
         """Remove config file from the stage storage.
 
         :param stage:
-        :type stage: Optional[str]
+        :type stage: Optional[str]ConfFl
         """
         _stage: str = stage or self.stage
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading = ConfFile(
+        loading = ConfFl(
             path=self.params.engine.paths.data / _stage,
             open_file=self.loader,
         )
