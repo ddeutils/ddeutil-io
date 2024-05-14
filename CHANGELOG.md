@@ -2,6 +2,27 @@
 
 ## Latest Changes
 
+## 0.1.2
+
+### :sparkles: Features
+
+- :dart: feat: remove config param fron register args. (_2024-05-14_)
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: migrate unittest to pytest with assert. (_2024-05-14_)
+- :art: style: rename file system name to Fl and dir opener to Dir. (_2024-05-14_)
+- :construction: refactored: change file system object name. (_2024-05-14_)
+- :test_tube: tests: reformat model test case. (_2024-05-13_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file that rename config file obj. (_2024-05-14_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: remove self from test case that use on uniitest. (_2024-05-13_)
+
 ## 0.1.1
 
 ### :black_nib: Code Changes
