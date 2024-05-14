@@ -33,9 +33,9 @@ The **Config Object** is the file system handler object.
 
 ```python
 from pathlib import Path
-from ddeutil.io.config import ConfFile
+from ddeutil.io.config import ConfFl
 
-config: ConfFile = ConfFile(path=Path(), compress="gzip")
+config: ConfFl = ConfFl(path=Path('./file.gz.yaml'), compress="gzip")
 ```
 
 ### Register
@@ -56,6 +56,7 @@ registry: Register = Register(
         },
     }),
 )
+registry.move(stage="raw")
 ```
 
 ### Link
