@@ -36,7 +36,7 @@ from fmtutil import (
 )
 
 from .__base.pathutils import rm
-from .config import ConfFile, OpenFile
+from .config import ConfFile, FileSystem
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 
@@ -174,7 +174,7 @@ class Register(BaseRegister):
         stage: Optional[str] = None,
         *,
         config: Optional[Params] = None,
-        loader: Optional[type[OpenFile]] = None,
+        loader: Optional[type[FileSystem]] = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(name=_name, domain=_domain)

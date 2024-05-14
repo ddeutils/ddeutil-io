@@ -14,6 +14,7 @@ import abc
 import csv
 import io
 import json
+import logging
 import marshal
 import mmap
 import os
@@ -54,13 +55,32 @@ FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
 
+def compress_lib(compress: str) -> CompressProtocol:
+    """Return Compress module that use to unpack data from the compressed file."""
+    if not compress:
+        return io
+    elif compress in ("gzip", "gz"):
+        import gzip
+
+        return gzip
+    elif compress in ("bz2",):
+        import bz2
+
+        return bz2
+    elif compress in ("xz",):
+        import lzma as xz
+
+        return xz
+    raise NotImplementedError(f"Compress {compress} does not implement yet")
+
+
 class CompressProtocol(Protocol):
     def decompress(self, *args, **kwargs) -> AnyStr: ...
 
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class OpenFileAbc(abc.ABC):
+class FileSystemAbc(abc.ABC):
     @abc.abstractmethod
     def read(self, *args, **kwargs): ...
 
@@ -68,8 +88,17 @@ class OpenFileAbc(abc.ABC):
     def write(self, *args, **kwargs): ...
 
 
-class OpenFile(OpenFileAbc):
-    """Open File Object"""
+class FileSystem(FileSystemAbc):
+    """Open File Object that use to open any simple or compression file from
+    local file system.
+
+    Examples:
+        >>> with FileSystem(
+        ...     './dwh/conf/params.gz.txt',
+        ...     compress='gzip',
+        ... ).open() as f:
+        ...     data = f.readline()
+    """
 
     def __init__(
         self,
@@ -87,31 +116,13 @@ class OpenFile(OpenFileAbc):
 
     def after_set_attrs(self) -> None: ...
 
-    @property
-    def compress_lib(self) -> CompressProtocol:
-        """Return Compress package"""
-        if not self.compress:
-            return io
-        elif self.compress in ("gzip", "gz"):
-            import gzip
-
-            return gzip
-        elif self.compress in ("bz2",):
-            import bz2
-
-            return bz2
-        elif self.compress in ("xz",):
-            import lzma as xz
-
-            return xz
-        raise NotImplementedError(
-            f"Compress {self.compress} does not implement yet"
-        )
+    def __call__(self, *args, **kwargs) -> IO:
+        return self.open(*args, **kwargs)
 
     @property
-    def decompress(self) -> Callable:
+    def decompress(self) -> Callable[[...], AnyStr]:
         if self.compress and self.compress in get_args(FileCompressType):
-            return self.compress_lib.decompress
+            return compress_lib(self.compress).decompress
         raise NotImplementedError(
             "Does not implement decompress method for None compress value."
         )
@@ -119,8 +130,18 @@ class OpenFile(OpenFileAbc):
     def convert_mode(
         self,
         mode: Optional[str] = None,
+        *,
         default: bool = True,
     ) -> dict[str, str]:
+        """Convert mode before passing to the main standard lib.
+
+        :param mode: a reading or writing mode for the open method.
+        :param default: a default flag for return reading mode if a mode does
+            not set.
+        :type default: bool(=True)
+
+        :return: A mapping of mode and other input parameters for standard libs.
+        """
         if not mode:
             if default:
                 return {"mode": "r"}
@@ -135,29 +156,26 @@ class OpenFile(OpenFileAbc):
             return {"mode": f"{mode}t", "encoding": self.encoding}
         elif byte_mode and self.compress in ("gzip", "gz", "xz", "bz2"):
             return {"mode": mode}
+        return {"mode": mode}
 
     def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
-        return self.compress_lib.open(
+        return compress_lib(self.compress).open(
             self.path,
-            **self.convert_mode(mode),
-            **kwargs,
+            **(self.convert_mode(mode) | kwargs),
         )
 
     @contextmanager
     def mopen(self, *, mode: Optional[str] = None) -> IO:
-        _mode: str = mode or "r"
-        _f: IO = self.open(mode=mode)
-        _access = mmap.ACCESS_READ if ("r" in _mode) else mmap.ACCESS_WRITE
+        mode: str = mode or "r"
+        file: IO = self.open(mode=mode)
+        _access = mmap.ACCESS_READ if ("r" in mode) else mmap.ACCESS_WRITE
         try:
-            yield mmap.mmap(
-                _f.fileno(),
-                length=0,
-                access=_access,
-            )
+            yield mmap.mmap(file.fileno(), length=0, access=_access)
         except ValueError:
-            yield _f
+            yield file
+            logging.error("Does not open file with memory mode")
         finally:
-            _f.close()
+            file.close()
 
     def read(self, *args, **kwargs):
         raise NotImplementedError
@@ -206,7 +224,7 @@ class OpenDir:
         return NotImplementedError
 
 
-class Env(OpenFile):
+class Env(FileSystem):
     """Env object which mapping search engine"""
 
     keep_newline: ClassVar[bool] = False
@@ -228,7 +246,7 @@ class Env(OpenFile):
         raise NotImplementedError
 
 
-class Yaml(OpenFile):
+class Yaml(FileSystem):
     """Yaml File Object
 
     .. noted::
@@ -278,7 +296,7 @@ class YamlEnv(Yaml):
         raise NotImplementedError
 
 
-class CSV(OpenFile):
+class CSV(FileSystem):
     def read(self) -> list[str]:
         with self.open(mode="r") as _r:
             try:
@@ -375,7 +393,7 @@ class CSVPipeDim(CSV):
                 writer.writerows(data)
 
 
-class Json(OpenFile):
+class Json(FileSystem):
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             try:
@@ -422,7 +440,7 @@ class JsonEnv(Json):
         raise NotImplementedError
 
 
-class Pickle(OpenFile):
+class Pickle(FileSystem):
     def read(self):
         with self.open(mode="rb") as _r:
             return pickle.loads(_r.read())
@@ -432,7 +450,7 @@ class Pickle(OpenFile):
             pickle.dump(data, _w)
 
 
-class Marshal(OpenFile):
+class Marshal(FileSystem):
     def read(self):
         with self.open(mode="rb") as _r:
             return marshal.loads(_r.read())
@@ -443,7 +461,7 @@ class Marshal(OpenFile):
 
 
 __all__ = (
-    "OpenFile",
+    "FileSystem",
     "Env",
     "Json",
     "JsonEnv",

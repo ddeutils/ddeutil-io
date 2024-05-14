@@ -23,8 +23,8 @@ from typing import (
 )
 
 from .__base import (
+    FileSystem,
     Json,
-    OpenFile,
     YamlEnv,
 )
 from .__base.pathutils import PathSearch, rm
@@ -61,12 +61,12 @@ class BaseConfFile:
         path: Union[str, Path],
         *,
         compress: Optional[str] = None,
-        open_file: Optional[type[OpenFile]] = None,
+        open_file: Optional[type[FileSystem]] = None,
         excluded_fmt: Optional[tuple[str]] = None,
     ):
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: Optional[str] = compress
-        self.open_file: type[OpenFile] = open_file or YamlEnv
+        self.open_file: type[FileSystem] = open_file or YamlEnv
         self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
         if not self.path.exists():
             self.path.mkdir(parents=True)
@@ -150,9 +150,9 @@ class ConfFile(BaseConfFile, ConfABC):
         path: Union[str, Path],
         *,
         compress: Optional[str] = None,
-        open_file: Optional[type[OpenFile]] = None,
+        open_file: Optional[type[FileSystem]] = None,
         excluded_fmt: Optional[list[str]] = None,
-        open_file_stg: Optional[type[OpenFile]] = None,
+        open_file_stg: Optional[type[FileSystem]] = None,
     ):
         """Main initialize of config file loading object.
 
@@ -166,7 +166,7 @@ class ConfFile(BaseConfFile, ConfABC):
             open_file=open_file,
             excluded_fmt=excluded_fmt,
         )
-        self.open_file_stg: type[OpenFile] = open_file_stg or Json
+        self.open_file_stg: type[FileSystem] = open_file_stg or Json
 
     def load_stage(
         self,
@@ -406,5 +406,5 @@ __all__ = (
     "ConfABC",
     "ConfFile",
     "ConfSQLite",
-    "OpenFile",
+    "FileSystem",
 )
