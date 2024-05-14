@@ -11,3 +11,8 @@ def test_path() -> Path:
 @pytest.fixture(scope="session")
 def demo_path(test_path) -> Path:
     return test_path / "examples" / "conf" / "demo"
+
+
+@pytest.fixture(scope="session")
+def root_path(test_path) -> Path:
+    return test_path.parent

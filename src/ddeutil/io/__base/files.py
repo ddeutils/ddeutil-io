@@ -273,7 +273,7 @@ class YamlEnvFl(YamlFl):
     """Yaml object which mapping search environment variable."""
 
     raise_if_not_default: ClassVar[bool] = False
-    default: ClassVar[str] = "N/A"
+    default: ClassVar[str] = "null"
     escape: ClassVar[str] = "ESC"
 
     @staticmethod

@@ -21,12 +21,7 @@ def test_model_path_data():
 
 
 def test_model_path_data_with_root():
-    p = md.PathData.model_validate(
-        {
-            "root": "./src/",
-        }
-    )
-
+    p = md.PathData.model_validate({"root": "./src/"})
     assert {
         "data": pathlib.Path("./src/data"),
         "conf": pathlib.Path("./src/conf"),
@@ -116,8 +111,8 @@ def test_model_params():
         },
         "engine": {
             "values": {
-                "datetime_fmt": "%Y-%m-%d %H:%M:%S",
-                "excluded_keys": ("version", "updt"),
+                "dt_fmt": "%Y-%m-%d %H:%M:%S",
+                "excluded": ("version", "updt"),
             },
             "flags": {
                 "archive": False,

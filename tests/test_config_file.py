@@ -15,7 +15,7 @@ def test_base_conf_read_file(demo_path, target_path):
 
     assert {
         "alias": "conn_local_file",
-        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
     } == bcf.load(name="conn_local_file")
 
@@ -27,7 +27,7 @@ def test_base_conf_read_file(demo_path, target_path):
     bcf_temp = conf.BaseConfFl(target_path)
     assert {
         "alias": "conn_local_file",
-        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
     } == bcf_temp.load(name="conn_local_file")
 
@@ -52,7 +52,7 @@ def test_conf_read_file(demo_path, target_path):
 
     assert {
         "alias": "conn_local_file",
-        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
     } == cf.load_stage(path=_stage_path)
 
@@ -69,7 +69,7 @@ def test_conf_read_file(demo_path, target_path):
 
     assert {
         "alias": "conn_local_file",
-        "endpoint": "file:///N%2FA/tests/examples/dummy",
+        "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
     } == cf.load_stage(path=_stage_path)
 

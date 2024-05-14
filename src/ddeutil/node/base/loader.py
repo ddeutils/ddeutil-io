@@ -15,13 +15,13 @@ from ddeutil.core import (
     setdot,
 )
 from ddeutil.io import Params, Register
-from ddeutil.io.__base import YamlEnv
+from ddeutil.io.__base import YamlEnvFl
 from ddeutil.io.utils import map_func_to_str
 from fmtutil import Datetime
 
 from ..exceptions import ConfigArgumentError, ConfigNotFound
 
-YamlEnvQuote = YamlEnv
+YamlEnvQuote = YamlEnvFl
 YamlEnvQuote.prepare = staticmethod(lambda x: urllib.parse.quote_plus(str(x)))
 
 
@@ -75,7 +75,7 @@ class BaseLoader:
         if refresh:
             _regis: Register = Register(
                 name=name,
-                config=config,
+                params=config,
                 loader=YamlEnvQuote,
             ).deploy(stop=config.stage_final)
         else:
@@ -83,13 +83,13 @@ class BaseLoader:
                 _regis: Register = Register(
                     name=name,
                     stage=config.stage_final,
-                    config=config,
+                    params=config,
                     loader=YamlEnvQuote,
                 )
             except ConfigNotFound:
                 _regis: Register = Register(
                     name=name,
-                    config=config,
+                    params=config,
                     loader=YamlEnvQuote,
                 ).deploy(stop=config.stage_final)
 
@@ -139,18 +139,6 @@ class BaseLoader:
                     f"{self.load_prefixes!r}."
                 ),
             )
-
-    # @cached_property
-    # def type(self) -> ObjectType:
-    #     """Return object type which implement in `config_object` key."""
-    #     if (_typ := self._ld_regis["data"].get("type")) is None:
-    #         logger.warning(
-    #             f"the 'type' value: {_typ} does not exists in config data."
-    #         )
-    #         # TODO: add default type from prefix name.
-    #         raise ValueError
-    #     _obj_prefix: str = params.engine.path.object
-    #     return import_string(f"{_obj_prefix}.{_typ}")
 
     @cached_property
     def __map_data(self) -> dict[str, Any]:
@@ -216,8 +204,7 @@ class BaseLoader:
     @cached_property
     def type(self):
         """Return object type which implement in `config_object` key."""
-        if (_typ := self.data.get("type")) is None:
-            # TODO: add default type from prefix name.
+        if not (_typ := self.data.get("type")):
             raise ValueError(
                 f"the 'type' value: {_typ} does not exists in config data."
             )

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
 from pathlib import Path
 from typing import (
     Any,
@@ -14,14 +13,15 @@ from typing import (
     Union,
 )
 
-from ddeutil.io.__base import YamlEnvFl
-from ddeutil.io.exceptions import ConfigArgumentError
 from pydantic import (
     BaseModel,
     Field,
     ValidationInfo,
 )
 from pydantic.functional_validators import field_validator
+
+from .__base import YamlEnvFl
+from .exceptions import ConfigArgumentError
 
 FMT_NAMES: tuple[str, ...] = (
     "naming",
@@ -120,25 +120,18 @@ class StageData(BaseModel):
 
 
 class PathData(BaseModel):
-    root: Union[str, Path] = Field(default_factory=Path)
+    root: Path = Field(default_factory=Path)
     data: Path = Field(default="data", validate_default=True)
     conf: Path = Field(default="conf", validate_default=True)
     archive: Path = Field(default=".archive", validate_default=True)
 
     @field_validator("root", mode="before")
-    def prepare_root(cls, v):
-        if isinstance(v, str):
-            return Path(v)
-        return v
+    def prepare_root(cls, v: Union[str, Path]) -> Path:
+        return Path(v) if isinstance(v, str) else v
 
     @field_validator("data", "conf", "archive", mode="before")
-    def prepare_path_from_str(
-        cls,
-        v,
-        info: ValidationInfo,
-    ) -> Path:
-        _root: Path = info.data["root"]
-        return v if isinstance(v, Path) else (_root / v)
+    def prepare_path_from_str(cls, v, info: ValidationInfo) -> Path:
+        return v if isinstance(v, Path) else (info.data["root"] / v)
 
 
 class FlagData(BaseModel):
@@ -147,8 +140,8 @@ class FlagData(BaseModel):
 
 
 class ValueData(BaseModel):
-    datetime_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    excluded_keys: tuple[str, ...] = Field(
+    dt_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
+    excluded: tuple[str, ...] = Field(
         default=(
             "version",
             "updt",
@@ -185,7 +178,7 @@ class Params(BaseModel, validate_assignment=True):
     def stage_first(self) -> str:
         return min(self.stages.items(), key=lambda i: i[1].layer)[0]
 
-    def get_stage(self, name: str):
+    def get_stage(self, name: str) -> StageData:
         if name == "base":
             return StageData.model_validate(
                 {
@@ -208,23 +201,3 @@ class Params(BaseModel, validate_assignment=True):
         _origin_path = path or self._origin_path
         self.__dict__.update(self.from_file(path=_origin_path).__dict__)
         return self
-
-
-def gt(self: StageData, other: StageData):
-    return self.layer > other.layer
-
-
-class RegisterConfData(BaseModel):
-    author: str = Field(default="unknown")
-    auto_update: bool = Field(default=True)
-    force_exists: bool = Field(default=False)
-
-
-class RegisterMetaData(BaseModel, validate_assignment=True):
-    name: str
-    shortname: str
-    fullname: str
-    data: dict[str, Any]
-    updt: datetime
-    rtdt: datetime
-    author: str

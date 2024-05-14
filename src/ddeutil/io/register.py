@@ -209,7 +209,7 @@ class Register(BaseRegister):
         return hash(
             self.fullname
             + self.stage
-            + f"{self.timestamp:{self.params.engine.values.datetime_fmt}}"
+            + f"{self.timestamp:{self.params.engine.values.dt_fmt}}"
         )
 
     def __str__(self) -> str:
@@ -237,13 +237,10 @@ class Register(BaseRegister):
             _data = {
                 k: v
                 for k, v in (self.meta.get(self.stage, {}).items())
-                if k in self.params.engine.values.excluded_keys
+                if k in self.params.engine.values.excluded
             } | self.__data
         return (
-            hash_all(
-                _data,
-                exclude=set(self.params.engine.values.excluded_keys),
-            )
+            hash_all(_data, exclude=set(self.params.engine.values.excluded))
             if hashing
             else _data
         )
@@ -260,7 +257,7 @@ class Register(BaseRegister):
         elif _dt := self.data().get("updt"):
             return datetime.strptime(
                 _dt,
-                self.params.engine.values.datetime_fmt,
+                self.params.engine.values.dt_fmt,
             )
         return self.updt
 
@@ -309,8 +306,7 @@ class Register(BaseRegister):
             target,
             ignore_order=True,
             exclude_paths={
-                f"root[{key!r}]"
-                for key in self.params.engine.values.excluded_keys
+                f"root[{key!r}]" for key in self.params.engine.values.excluded
             },
         )
         if any(
@@ -363,7 +359,6 @@ class Register(BaseRegister):
         order: Optional[int] = 1,
         reverse: bool = False,
     ) -> dict[str, Any]:
-        # Load data from source
         if (stage is None) or (stage == "base"):
             return ConfFl(
                 path=(self.params.engine.paths.conf / self.domain),
@@ -394,8 +389,8 @@ class Register(BaseRegister):
         force: bool = False,
         retention: bool = True,
     ) -> Register:
-        """"""
-        loading = ConfFl(
+        """Move file to the target stage."""
+        loading: ConfFl = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -404,7 +399,7 @@ class Register(BaseRegister):
             self.compare_data(
                 hash_all(
                     self.pick(stage=stage),
-                    exclude=set(self.params.engine.values.excluded_keys),
+                    exclude=set(self.params.engine.values.excluded),
                 )
             )
             > 0
@@ -413,13 +408,12 @@ class Register(BaseRegister):
             _filename: str = self.fmt().format(
                 f"{self.params.get_stage(name=stage).format}.json",
             )
-            if os.path.exists(loading.path / _filename):
+            if (loading.path / _filename).exists():
                 # TODO: generate serial number if file exists
-                print(
-                    f"file {_filename!r} already exists in the "
-                    f"{stage!r} stage.",
+                logging.warning(
+                    f"File {_filename!r} already exists in {stage!r} stage."
                 )
-            _dt_fmt: str = self.params.engine.values.datetime_fmt
+            _dt_fmt: str = self.params.engine.values.dt_fmt
             loading.save_stage(
                 path=(loading.path / _filename),
                 data=merge_dict(
@@ -430,14 +424,15 @@ class Register(BaseRegister):
                     },
                 ),
             )
-            # Retention process after move data to the stage successful
+            # NOTE:
+            #   Retention process after move data to the stage successful
             if retention:
                 self.purge(stage=stage)
         else:
-            print(
-                f"Config {self.name!r} can not move {self.stage!r} -> "
-                f"{stage!r} because config data does not any change or "
-                f"does not force moving."
+            logging.warning(
+                f"Config {self.name!r} cannot move {self.stage!r} -> "
+                f"{stage!r} cause the data does not has any change or "
+                f"force moving flag does not set."
             )
         return self.switch(stage=stage)
 
@@ -469,14 +464,9 @@ class Register(BaseRegister):
 
         upper_bound: Optional[FormatterGroup] = None
         if _rtt_ts := _rules.timestamp:
-            _metric: Optional[str] = _rules.timestamp_metric
             upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**_rtt_ts)}
             )
-        # elif _rtt_value := _rules.version:
-        #     upper_bound = max_file.adjust(
-        #         {'version': _rtt_value}
-        #     )
 
         if upper_bound is not None:
             for _, data in filter(
@@ -515,8 +505,8 @@ class Register(BaseRegister):
     def remove(self, stage: Optional[str] = None) -> None:
         """Remove config file from the stage storage.
 
-        :param stage:
-        :type stage: Optional[str]ConfFl
+        :param stage: a stage value that want to remove.
+        :type stage: Optional[str]
         """
         _stage: str = stage or self.stage
         assert (

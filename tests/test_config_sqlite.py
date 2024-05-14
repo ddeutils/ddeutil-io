@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def target_path(test_path) -> Path:
+def sqlite_path(test_path) -> Path:
     return test_path / "conf_sqlite_temp"
 
 
@@ -15,7 +15,7 @@ def demo_path(test_path) -> Path:
     return test_path / "examples" / "conf" / "demo"
 
 
-def test_base_conf_read_file(demo_path, target_path):
+def test_base_conf_read_file(demo_path, sqlite_path):
     _schemas: dict[str, str] = {
         "name": "varchar(256) primary key",
         "shortname": "varchar(64) not null",
@@ -26,10 +26,10 @@ def test_base_conf_read_file(demo_path, target_path):
         "author": "varchar(512) not null",
     }
 
-    bc_sql = conf.ConfSQLite(target_path)
+    bc_sql = conf.ConfSQLite(sqlite_path)
     bc_sql.create(table="demo.db/temp_table", schemas=_schemas)
 
-    assert (target_path / "demo.db").exists()
+    assert (sqlite_path / "demo.db").exists()
 
     _data = {
         "conn_local_data_landing": {
@@ -46,5 +46,5 @@ def test_base_conf_read_file(demo_path, target_path):
     bc_sql.save_stage(table="demo.db/temp_table", data=_data)
 
     assert _data == bc_sql.load_stage(table="demo.db/temp_table")
-    if target_path.exists():
-        shutil.rmtree(target_path)
+    if sqlite_path.exists():
+        shutil.rmtree(sqlite_path)

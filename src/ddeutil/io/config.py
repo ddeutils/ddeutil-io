@@ -197,6 +197,7 @@ class ConfFl(BaseConfFl, ConfABC):
         """
         if not merge:
             self.open_file_stg(path, compress=self.compress).write(data)
+            print(f"Start writing data to {path}")
             return
         elif merge and (
             "mode"

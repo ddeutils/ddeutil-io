@@ -1,56 +1,45 @@
-import os
 import shutil
-import unittest
+from collections.abc import Generator
+from pathlib import Path
 from textwrap import dedent
 
 import ddeutil.io.__base as bfl
+import pytest
 
 
-class EnvTestCase(unittest.TestCase):
-    root_path: str
+@pytest.fixture(scope="module")
+def env_path(test_path) -> Generator[Path, None, None]:
+    this_path: Path = test_path / "env"
+    this_path.mkdir(parents=True, exist_ok=True)
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        _root_path: str = os.path.dirname(os.path.abspath(__file__)).replace(
-            os.sep, "/"
+    yield this_path
+
+    shutil.rmtree(this_path)
+
+
+def test_env(env_path):
+    env_path: Path = env_path / ".env"
+
+    with open(env_path, mode="w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+    TEST=This is common value test
+    # Comment this line ...
+    COMMENT_TEST='This is common value test'  # This is inline comment
+    QUOTE='single quote'
+    DOUBLE_QUOTE="double quote"
+    PASSING=${DOUBLE_QUOTE}
+    UN_PASSING='${DOUBLE_QUOTE}'
+    """
+            ).strip()
         )
-        os.makedirs(f"{_root_path}/env", exist_ok=True)
 
-        cls.root_path: str = f"{_root_path}/env"
-
-    def setUp(self) -> None:
-        self.maxDiff = None
-        self.env_str = dedent(
-            """
-        TEST=This is common value test
-        # Comment this line ...
-        COMMENT_TEST='This is common value test'  # This is inline comment
-        QUOTE='single quote'
-        DOUBLE_QUOTE="double quote"
-        PASSING=${DOUBLE_QUOTE}
-        UN_PASSING='${DOUBLE_QUOTE}'
-        """
-        ).strip()
-
-        self.env_data = {
-            "TEST": "This is common value test",
-            "COMMENT_TEST": "This is common value test",
-            "QUOTE": "single quote",
-            "DOUBLE_QUOTE": "double quote",
-            "PASSING": "double quote",
-            "UN_PASSING": "${DOUBLE_QUOTE}",
-        }
-
-    def test_env(self):
-        env_path: str = f"{self.root_path}/.env"
-
-        with open(env_path, mode="w", encoding="utf-8") as f:
-            f.write(self.env_str)
-
-        data = bfl.EnvFl(path=env_path).read(update=False)
-
-        self.assertDictEqual(self.env_data, data)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        shutil.rmtree(cls.root_path)
+    assert {
+        "TEST": "This is common value test",
+        "COMMENT_TEST": "This is common value test",
+        "QUOTE": "single quote",
+        "DOUBLE_QUOTE": "double quote",
+        "PASSING": "double quote",
+        "UN_PASSING": "${DOUBLE_QUOTE}",
+    } == bfl.EnvFl(path=env_path).read(update=False)
