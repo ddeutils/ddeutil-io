@@ -2,6 +2,12 @@
 
 ## Latest Changes
 
+## 0.1.4
+
+### :postbox: Dependencies
+
+- :pushpin: deps: remove un-use deps from pyproject. (_2024-05-15_)
+
 ## 0.1.3
 
 ### :black_nib: Code Changes
