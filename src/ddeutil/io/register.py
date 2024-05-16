@@ -36,8 +36,8 @@ from fmtutil import (
     make_group,
 )
 
-from .__base import rm
-from .config import ConfFl, Fl
+from .__base import Fl, rm
+from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .models import Params
 

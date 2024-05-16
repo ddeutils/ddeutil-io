@@ -10,12 +10,12 @@ import contextlib
 import inspect
 import json
 import logging
-import os
 import shutil
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from datetime import datetime
 from pathlib import Path
+from sqlite3 import Connection
 from typing import (
     Any,
     Optional,
@@ -30,6 +30,9 @@ from .__base import (
     rm,
 )
 from .exceptions import ConfigArgumentError
+
+DEFAULT_OPEN_FILE: type[Fl] = YamlEnvFl
+DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
 
 
 class ConfABC(abc.ABC):
@@ -64,10 +67,10 @@ class BaseConfFl:
         compress: Optional[str] = None,
         open_file: Optional[type[Fl]] = None,
         excluded_fmt: Optional[tuple[str]] = None,
-    ):
+    ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: Optional[str] = compress
-        self.open_file: type[Fl] = open_file or YamlEnvFl
+        self.open_file: type[Fl] = open_file or DEFAULT_OPEN_FILE
         self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
         if not self.path.exists():
             self.path.mkdir(parents=True)
@@ -167,7 +170,7 @@ class ConfFl(BaseConfFl, ConfABC):
             open_file=open_file,
             excluded_fmt=excluded_fmt,
         )
-        self.open_file_stg: type[Fl] = open_file_stg or JsonFl
+        self.open_file_stg: type[Fl] = open_file_stg or DEFAULT_OPEN_FILE_STG
 
     def load_stage(
         self,
@@ -260,19 +263,15 @@ class BaseConfSQLite:
     def __init__(
         self,
         path: Union[str, Path],
-        *,
-        auto_create: bool = True,
-    ):
+    ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
-        if not os.path.exists(self.path):
-            if not auto_create:
-                raise FileNotFoundError(f"Path {path} does not exists.")
-            os.makedirs(self.path, exist_ok=True)
+        if not self.path.exists():
+            self.path.mkdir(parents=True)
 
     @contextlib.contextmanager
-    def connect(self, database: str):
+    def connect(self, database: str) -> Generator[Connection, None, None]:
         """Return SQLite Connection context."""
-        _conn = sqlite3.connect(self.path / database, timeout=3)
+        _conn: Connection = sqlite3.connect(self.path / database, timeout=3)
         _conn.row_factory = self.dict_factory
         try:
             yield _conn
@@ -285,7 +284,7 @@ class BaseConfSQLite:
         _conn.close()
 
     @staticmethod
-    def dict_factory(cursor, row):
+    def dict_factory(cursor, row) -> dict[str, Any]:
         """Result of dictionary factory.
 
         :note:
@@ -304,6 +303,8 @@ class BaseConfSQLite:
 
 
 class ConfSQLite(BaseConfSQLite, ConfABC):
+    """Config SQLite Loading Object for get data from configuration and stage."""
+
     def load_stage(
         self,
         table: str,
@@ -354,13 +355,12 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
         _db, _table = table.rsplit("/", maxsplit=1)
         with self.connect(_db) as conn:
             cur = conn.cursor()
-            query: str = f"delete from {_table} where name = '{data_name}';"
-            cur.execute(query)
+            cur.execute(f"delete from {_table} where name = '{data_name}';")
 
     def create(
         self,
         table: str,
-        schemas: Optional[dict] = None,
+        schemas: Optional[dict[str, str]] = None,
     ) -> None:
         """Create table in database."""
         if not schemas:
@@ -379,34 +379,33 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
 
     @staticmethod
     def prepare_values(
-        values: dict,
+        values: dict[str, Union[str, int, float]],
     ) -> dict[str, Union[str, int, float]]:
         """Return prepare value with dictionary type to string
         to source system.
         """
-        results: dict = values.copy()
+        rs: dict[str, Union[str, int, float]] = values.copy()
         for _ in values:
             if isinstance(values[_], dict):
-                results[_] = json.dumps(values[_])
-        return results
+                rs[_] = json.dumps(values[_])
+        return rs
 
     @staticmethod
     def convert_type(
-        data: dict,
+        data: dict[str, Union[str, int, float]],
         key: Optional[str] = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Return converted value from string to dictionary
         from source system.
         """
         _key: str = key or "data"
-        _results: dict = data.copy()
-        _results[_key] = json.loads(data[_key])
-        return _results
+        rs: dict[str, Any] = data.copy()
+        rs[_key] = json.loads(data[_key])
+        return rs
 
 
 __all__ = (
     "ConfABC",
     "ConfFl",
     "ConfSQLite",
-    "Fl",
 )

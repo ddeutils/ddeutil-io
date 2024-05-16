@@ -1,4 +1,5 @@
 import shutil
+from collections.abc import Generator
 from pathlib import Path
 
 import ddeutil.io.config as conf
@@ -6,11 +7,16 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def sqlite_path(test_path) -> Path:
-    return test_path / "conf_sqlite_temp"
+def sqlite_path(test_path) -> Generator[Path, None, None]:
+    sqlite_path: Path = test_path / "conf_sqlite_temp"
+
+    yield sqlite_path
+
+    if sqlite_path.exists():
+        shutil.rmtree(sqlite_path)
 
 
-def test_base_conf_read_file(sqlite_path):
+def test_base_conf_read_file(sqlite_path: Path):
     _schemas: dict[str, str] = {
         "name": "varchar(256) primary key",
         "shortname": "varchar(64) not null",
@@ -39,7 +45,4 @@ def test_base_conf_read_file(sqlite_path):
     }
 
     bc_sql.save_stage(table="demo.db/temp_table", data=_data)
-
     assert _data == bc_sql.load_stage(table="demo.db/temp_table")
-    if sqlite_path.exists():
-        shutil.rmtree(sqlite_path)
