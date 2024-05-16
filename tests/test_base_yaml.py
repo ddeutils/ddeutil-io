@@ -1,61 +1,88 @@
 import os
+import shutil
 import unittest
 import warnings
+from collections.abc import Generator
+from pathlib import Path
 from textwrap import dedent
+from typing import Any
 
 import ddeutil.io.__base.files as fl
+import pytest
 import yaml
 
 
-class YamlFileTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.root_path: str = os.path.dirname(os.path.abspath(__file__)).replace(
-            os.sep, "/"
-        )
+@pytest.fixture(scope="module")
+def target_path(test_path) -> Generator[Path, None, None]:
+    target_path: Path = test_path / "base_file_yaml"
+    target_path.mkdir(parents=True, exist_ok=True)
 
-    def setUp(self) -> None:
-        warnings.simplefilter("ignore", category=ResourceWarning)
-        self.yaml_str: str = dedent(
-            """
-        main_key:
-            sub_key:
-                string: 'test ${DEMO_ENV_VALUE} value'
-                int: 0.001
-                bool: false
-                list: ['i1', 'i2', 'i3']
+    yield target_path
+
+    shutil.rmtree(target_path)
+
+
+@pytest.fixture(scope="module")
+def yaml_str_safe() -> str:
+    return dedent(
         """
-        ).strip()
-        self.yaml_data: dict = {
-            "main_key": {
-                "sub_key": {
-                    "string": "test ${DEMO_ENV_VALUE} value",
-                    "int": 0.001,
-                    "bool": False,
-                    "list": ["i1", "i2", "i3"],
-                }
+    main_key:
+        sub_key:
+            string: 'test ${DEMO_ENV_VALUE} value'
+            int: 0.001
+            bool: false
+            list: ['i1', 'i2', 'i3']
+            str2bool: on
+    """
+    ).strip()
+
+
+@pytest.fixture(scope="module")
+def yaml_data_safe() -> dict[str, Any]:
+    return {
+        "main_key": {
+            "sub_key": {
+                "string": "test ${DEMO_ENV_VALUE} value",
+                "int": 0.001,
+                "bool": False,
+                "list": ["i1", "i2", "i3"],
+                "str2bool": True,
             }
         }
+    }
 
-    def test_write_yaml_file_with_safe_mode(self):
-        yaml_path: str = f"{self.root_path}/test_write_file.yaml"
 
-        fl.YamlFl(path=yaml_path).write(self.yaml_data)
+def test_write_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
+    yaml_path: Path = target_path / "test_write_file.yaml"
+    fl.YamlFl(path=yaml_path).write(yaml_data_safe)
+    assert yaml_path.exists()
 
-        self.assertTrue(os.path.exists(yaml_path))
 
-        os.remove(yaml_path)
+def test_read_yaml_resolve_file(target_path, yaml_str_safe, yaml_data_safe):
+    yaml_path: Path = target_path / "test_read_file_resolve.yaml"
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        f.write(yaml_str_safe)
 
-    def test_read_yaml_file_with_safe_mode(self):
-        yaml_path: str = f"{self.root_path}/test_read_file.yaml"
+    data = fl.YamlFlResolve(path=yaml_path).read(safe=False)
+    assert "on" == data["main_key"]["sub_key"]["str2bool"]
 
-        with open(yaml_path, mode="w", encoding="utf-8") as f:
-            yaml.dump(yaml.safe_load(self.yaml_str), f)
 
-        data = fl.YamlFl(path=yaml_path).read()
-        self.assertDictEqual(self.yaml_data, data)
+def test_read_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
+    yaml_path: Path = target_path / "test_read_file_safe.yaml"
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(yaml.safe_load(yaml_str_safe), f)
 
-        os.remove(yaml_path)
+    data = fl.YamlFl(path=yaml_path).read()
+    assert yaml_data_safe == data
+
+
+def test_read_yaml_file(target_path, yaml_str_safe, yaml_data_safe):
+    yaml_path: Path = target_path / "test_read_file.yaml"
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        f.write(yaml_str_safe)
+
+    data = fl.YamlFl(path=yaml_path).read(safe=False)
+    assert yaml_data_safe == data
 
 
 class YamlEnvFileTestCase(unittest.TestCase):

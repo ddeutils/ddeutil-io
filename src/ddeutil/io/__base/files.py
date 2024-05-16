@@ -45,8 +45,9 @@ import yaml
 
 try:
     from yaml import CSafeLoader as SafeLoader
+    from yaml import CUnsafeLoader as UnsafeLoader
 except ImportError:
-    from yaml import SafeLoader
+    from yaml import SafeLoader, UnsafeLoader
 
 from .__regex import RegexConf
 from .utils import search_env, search_env_replace
@@ -259,14 +260,63 @@ class YamlFl(Fl, FlAbc):
     """
 
     def read(self, safe: bool = True) -> dict[str, Any]:
-        if safe:
-            with self.open(mode="r") as _r:
-                return yaml.load(_r.read(), SafeLoader)
-        return NotImplementedError
+        with self.open(mode="r") as _r:
+            return yaml.load(_r.read(), (SafeLoader if safe else UnsafeLoader))
 
     def write(self, data: dict[str, Any]) -> None:
         with self.open(mode="w") as _w:
             yaml.dump(data, _w, default_flow_style=False)
+
+
+class YamlFlResolve(YamlFl):
+
+    def read(self, safe: bool = True) -> dict[str, Any]:
+        """Reading Yaml data with does not convert boolean value.
+        Note:
+            Handle top level yaml property ``on``
+            docs: https://github.com/yaml/pyyaml/issues/696
+
+            import re
+            from yaml.resolver import Resolver
+
+            # zap the Resolver class' internal dispatch table
+            Resolver.yaml_implicit_resolvers = {}
+
+            # NOTE: Current Resolver
+            Resolver.add_implicit_resolver(
+                    'tag:yaml.org,2002:bool',
+                    re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+                                |true|True|TRUE|false|False|FALSE
+                                |on|On|ON|off|Off|OFF)$''', re.X),
+                    list('yYnNtTfFoO'))
+
+            # NOTE: The 1.2 bool impl Resolver:
+            Resolver.add_implicit_resolver(
+                    'tag:yaml.org,2002:bool',
+                    re.compile(r'^(?:true|false)$', re.X),
+                    list('tf'))
+        """
+        from yaml.resolver import Resolver
+
+        revert = Resolver.yaml_implicit_resolvers.copy()
+
+        for ch in "OoYyNn":
+            if len(Resolver.yaml_implicit_resolvers[ch]) == 1:
+                del Resolver.yaml_implicit_resolvers[ch]
+            else:
+                Resolver.yaml_implicit_resolvers[ch] = [
+                    x
+                    for x in Resolver.yaml_implicit_resolvers[ch]
+                    if x[0] != "tag:yaml.org,2002:bool"
+                ]
+
+        with self.open(mode="r") as _r:
+            rs: dict[str, Any] = yaml.load(
+                _r.read(), (SafeLoader if safe else UnsafeLoader)
+            )
+            # NOTE: revert resolver when want to use safe load.
+            Resolver.yaml_implicit_resolvers = revert
+            return rs
 
 
 class YamlEnvFl(YamlFl):
@@ -274,26 +324,27 @@ class YamlEnvFl(YamlFl):
 
     raise_if_not_default: ClassVar[bool] = False
     default: ClassVar[str] = "null"
-    escape: ClassVar[str] = "ESC"
+    escape: ClassVar[str] = "<ESCAPE>"
 
     @staticmethod
     def prepare(x: str) -> str:
         return x
 
     def read(self, safe: bool = True) -> dict[str, Any]:
-        if safe:
-            with self.open(mode="r") as _r:
-                _env_replace: str = search_env_replace(
-                    RegexConf.RE_YAML_COMMENT.sub("", _r.read()),
-                    raise_if_default_not_exists=self.raise_if_not_default,
-                    default=self.default,
-                    escape=self.escape,
-                    caller=self.prepare,
-                )
-                if _result := yaml.load(_env_replace, SafeLoader):
-                    return _result
-                return {}
-        return NotImplementedError
+        with self.open(mode="r") as _r:
+            _env_replace: str = search_env_replace(
+                RegexConf.RE_YAML_COMMENT.sub("", _r.read()),
+                raise_if_default_not_exists=self.raise_if_not_default,
+                default=self.default,
+                escape=self.escape,
+                caller=self.prepare,
+            )
+            if _result := yaml.load(
+                _env_replace,
+                (SafeLoader if safe else UnsafeLoader),
+            ):
+                return _result
+            return {}
 
     def write(self, data: dict[str, Any]) -> None:
         raise NotImplementedError
