@@ -520,6 +520,7 @@ __all__ = (
     "JsonFl",
     "JsonEnvFl",
     "YamlFl",
+    "YamlFlResolve",
     "YamlEnvFl",
     "CsvFl",
     "CsvPipeFl",
