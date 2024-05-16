@@ -121,9 +121,9 @@ class StageData(BaseModel):
 
 class PathData(BaseModel):
     root: Path = Field(default_factory=Path)
-    data: Path = Field(default="data", validate_default=True)
-    conf: Path = Field(default="conf", validate_default=True)
-    archive: Path = Field(default=".archive", validate_default=True)
+    data: Path = Field(default=None, validate_default=True)
+    conf: Path = Field(default=None, validate_default=True)
+    archive: Path = Field(default=None, validate_default=True)
 
     @field_validator("root", mode="before")
     def prepare_root(cls, v: Union[str, Path]) -> Path:
@@ -131,7 +131,11 @@ class PathData(BaseModel):
 
     @field_validator("data", "conf", "archive", mode="before")
     def prepare_path_from_str(cls, v, info: ValidationInfo) -> Path:
-        return v if isinstance(v, Path) else (info.data["root"] / v)
+        if v is not None:
+            return Path(v) if isinstance(v, str) else v
+        if info.field_name == "archive":
+            return info.data["root"] / ".archive"
+        return info.data["root"] / info.field_name
 
 
 class FlagData(BaseModel):

@@ -212,9 +212,9 @@ class Register(BaseRegister):
 
         # TODO: Remove this line when develop metadata feature in the next
         #   release.
-        METADATA.pop(self.fullname)
+        METADATA.pop(self.fullname, None)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(
             self.fullname
             + self.stage
@@ -463,15 +463,15 @@ class Register(BaseRegister):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        loading = ConfFl(
+        loading: ConfFl = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
-        results: dict = self.__stage_files(_stage, loading)
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, loading)
         max_file: FormatterGroup = max(
-            results.items(),
+            rs.items(),
             key=lambda x: (x[1]["parse"],),
         )[1]["parse"]
 
@@ -484,7 +484,7 @@ class Register(BaseRegister):
         if upper_bound is not None:
             for _, data in filter(
                 lambda x: x[1]["parse"] < upper_bound,
-                results.items(),
+                rs.items(),
             ):
                 _file: str = data["file"]
                 if self.params.engine.flags.archive:
@@ -525,13 +525,14 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading = ConfFl(
+        loading: ConfFl = ConfFl(
             path=self.params.engine.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
 
         # Remove all files from the stage.
+        data: StageFiles
         for _, data in self.__stage_files(_stage, loading).items():
             _file: str = data["file"]
             if self.params.engine.flags.archive:

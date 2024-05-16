@@ -1,32 +1,41 @@
-import pathlib
+from pathlib import Path
 
 import ddeutil.io.models as md
+
+
+def test_model_path_default(test_path):
+    p = md.PathData.model_validate(
+        {
+            "root": test_path,
+        }
+    )
+    print(p)
 
 
 def test_model_path_data():
     p = md.PathData.model_validate(
         {
-            "data": pathlib.Path("."),
-            "conf": pathlib.Path("."),
-            "archive": pathlib.Path("."),
+            "data": Path("."),
+            "conf": Path("."),
+            "archive": Path("."),
         }
     )
 
     assert {
-        "data": pathlib.Path("."),
-        "conf": pathlib.Path("."),
-        "archive": pathlib.Path("."),
-        "root": pathlib.Path("."),
+        "data": Path("."),
+        "conf": Path("."),
+        "archive": Path("."),
+        "root": Path("."),
     } == p.model_dump()
 
 
 def test_model_path_data_with_root():
     p = md.PathData.model_validate({"root": "./src/"})
     assert {
-        "data": pathlib.Path("./src/data"),
-        "conf": pathlib.Path("./src/conf"),
-        "archive": pathlib.Path("./src/.archive"),
-        "root": pathlib.Path("./src/"),
+        "data": Path("./src/data"),
+        "conf": Path("./src/conf"),
+        "archive": Path("./src/.archive"),
+        "root": Path("./src/"),
     } == p.model_dump()
 
 
@@ -119,10 +128,10 @@ def test_model_params():
                 "auto_update": False,
             },
             "paths": {
-                "archive": pathlib.Path(".archive"),
-                "conf": pathlib.Path("conf"),
-                "data": pathlib.Path("data"),
-                "root": pathlib.Path("."),
+                "archive": Path(".archive"),
+                "conf": Path("conf"),
+                "data": Path("data"),
+                "root": Path("."),
             },
         },
     } == params.model_dump()
