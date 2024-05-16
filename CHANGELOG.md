@@ -2,6 +2,23 @@
 
 ## Latest Changes
 
+## 0.1.5
+
+### :sparkles: Features
+
+- :dart: feat: add unsafe load on yaml file loader. (_2024-05-16_)
+- :dart: feat: add dynamic staging loader. (_2024-05-16_)
+- :dart: feat: add dynamic staging loader. (_2024-05-16_)
+
+### :black_nib: Code Changes
+
+- :construction: refactored: add type hint on sqlite conf. (_2024-05-16_)
+- :test_tube: tests: remove example files on tests. (_2024-05-16_)
+
+### :package: Build & Workflow
+
+- :toolbox: build: remove default run on test workflow. (_2024-05-15_)
+
 ## 0.1.4
 
 ### :postbox: Dependencies
