@@ -1,22 +1,39 @@
+import shutil
+from collections.abc import Generator
 from pathlib import Path
 
 import ddeutil.io.register as rgt
 import pytest
+import yaml
 from ddeutil.io.models import Params
 
 
 @pytest.fixture(scope="module")
-def target_path(test_path) -> Path:
-    return test_path / "conf_file_temp"
+def target_path(test_path) -> Generator[Path, None, None]:
+    tgt_path: Path = test_path / "register_temp"
+    tgt_path.mkdir(exist_ok=True)
+    (tgt_path / "conf/demo").mkdir(parents=True)
+    with open(tgt_path / "conf/demo/test_01_conn.yaml", mode="w") as f:
+        yaml.dump(
+            {
+                "conn_local_file": {
+                    "type": "connection.LocalFileStorage",
+                    "endpoint": "file:///${APP_PATH}/tests/examples/dummy",
+                }
+            },
+            f,
+        )
+    yield tgt_path
+    shutil.rmtree(tgt_path)
 
 
 @pytest.fixture(scope="module")
-def params(test_path, root_path) -> Params:
+def params(target_path, root_path) -> Params:
     return Params.model_validate(
         {
             "engine": {
                 "paths": {
-                    "conf": test_path / "examples/conf",
+                    "conf": target_path / "conf",
                     "data": root_path / "data",
                     "archive": root_path / "/data/.archive",
                 },

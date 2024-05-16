@@ -10,12 +10,7 @@ def sqlite_path(test_path) -> Path:
     return test_path / "conf_sqlite_temp"
 
 
-@pytest.fixture(scope="module")
-def demo_path(test_path) -> Path:
-    return test_path / "examples" / "conf" / "demo"
-
-
-def test_base_conf_read_file(demo_path, sqlite_path):
+def test_base_conf_read_file(sqlite_path):
     _schemas: dict[str, str] = {
         "name": "varchar(256) primary key",
         "shortname": "varchar(64) not null",

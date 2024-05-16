@@ -139,7 +139,7 @@ class BaseConfFl:
     ) -> None:
         """Copy filename to destination path."""
         if auto_create:
-            destination.mkdir(parents=True, exist_ok=True)
+            destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(self.path / path, destination)
 
 
