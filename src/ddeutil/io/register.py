@@ -160,6 +160,7 @@ class Register(BaseRegister):
         *,
         params: Optional[Params] = None,
         loader: Optional[type[Fl]] = None,
+        loader_stg: Optional[type[Fl]] = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(name=_name, domain=_domain)
@@ -170,6 +171,7 @@ class Register(BaseRegister):
             )
         self.stage: str = stage or "base"
         self.loader: Optional[type[Fl]] = loader
+        self.loader_stg: Optional[type[Fl]] = loader_stg
         self.params: Optional[Params] = params
 
         # Load latest version of data from data lake or data store of
@@ -182,7 +184,7 @@ class Register(BaseRegister):
                 f"does not exist in stage {self.stage!r}."
             )
 
-        self.meta: dict[str, Any] = METADATA
+        self.meta: dict[str, Any] = METADATA.get(self.fullname, {})
 
         # NOTE:
         #   Compare data from current stage and latest version in metadata.
@@ -194,16 +196,23 @@ class Register(BaseRegister):
         #   Update metadata if the configuration data does not exist, or
         #   it has any changes.
         if not self.params.engine.flags.auto_update:
-            logging.info("Skip update metadata table/file ...")
+            logging.info("Skip update metadata ...")
         elif self.changed == 99:
             logging.info(
                 f"Configuration data with stage: {self.stage!r} does not "
                 f"exists in metadata ..."
             )
+            # TODO: Create metadata for caching value before compare data next
+            #   time. (It can be table on database or sqlite file.
+            # METADATA.update({"self.fullname": self.__data})
         elif self.changed > 0:
             logging.info(
                 f"Should update metadata because diff level is {self.changed}."
             )
+
+        # TODO: Remove this line when develop metadata feature in the next
+        #   release.
+        METADATA.pop(self.fullname)
 
     def __hash__(self):
         return hash(
@@ -363,12 +372,14 @@ class Register(BaseRegister):
             return ConfFl(
                 path=(self.params.engine.paths.conf / self.domain),
                 open_file=self.loader,
+                open_file_stg=self.loader_stg,
             ).load(name=self.name, order=order)
 
         loading = ConfFl(
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
+            open_file_stg=self.loader_stg,
         )
 
         if results := self.__stage_files(stage, loading):
@@ -394,6 +405,7 @@ class Register(BaseRegister):
             path=self.params.engine.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
+            open_file_stg=self.loader_stg,
         )
         if (
             self.compare_data(
@@ -455,6 +467,7 @@ class Register(BaseRegister):
             path=self.params.engine.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
+            open_file_stg=self.loader_stg,
         )
         results: dict = self.__stage_files(_stage, loading)
         max_file: FormatterGroup = max(
@@ -515,6 +528,7 @@ class Register(BaseRegister):
         loading = ConfFl(
             path=self.params.engine.paths.data / _stage,
             open_file=self.loader,
+            open_file_stg=self.loader_stg,
         )
 
         # Remove all files from the stage.
