@@ -16,11 +16,7 @@ from collections.abc import Generator, Iterator
 from datetime import datetime
 from pathlib import Path
 from sqlite3 import Connection
-from typing import (
-    Any,
-    Optional,
-    Union,
-)
+from typing import Any, Union
 
 from .__base import (
     Fl,
@@ -33,6 +29,7 @@ from .exceptions import ConfigArgumentError
 
 DEFAULT_OPEN_FILE: type[Fl] = YamlEnvFl
 DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
+DEFAULT_EXCLUDED_FMT: tuple[str, ...] = (".json", ".toml")
 
 
 class ConfABC(abc.ABC):
@@ -64,30 +61,25 @@ class BaseConfFl:
         self,
         path: Union[str, Path],
         *,
-        compress: Optional[str] = None,
-        open_file: Optional[type[Fl]] = None,
-        excluded_fmt: Optional[tuple[str]] = None,
+        compress: str | None = None,
+        open_file: type[Fl] | None = None,
+        excluded_fmt: tuple[str, ...] | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
-        self.compress: Optional[str] = compress
+        self.compress: str | None = compress
         self.open_file: type[Fl] = open_file or DEFAULT_OPEN_FILE
-        self.excluded_fmt: tuple[str] = excluded_fmt or (".json", ".toml")
+        self.excluded_fmt: tuple[str] = excluded_fmt or DEFAULT_EXCLUDED_FMT
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
-    def load(
-        self,
-        name: str,
-        *,
-        order: int = 1,
-    ) -> dict[str, Any]:
+    def load(self, name: str, *, order: int = 1) -> dict[str, Any]:
         """Return configuration data from name of the config.
 
         :param name: A name of config key that want to search in the path.
         :type name: str
         :param order: An order number that want to get from ordered list
             of duplicate data.
-        :type order: int (Default 1)
+        :type order: int(=1)
         """
         rs: list[dict[Any, Any]]
         if rs := [
@@ -118,10 +110,10 @@ class BaseConfFl:
 
     def files(
         self,
-        path: Optional[str] = None,
-        name: Optional[str] = None,
+        path: str | None = None,
+        name: str | None = None,
         *,
-        excluded: Optional[list] = None,
+        excluded: list[str] | None = None,
     ) -> Iterator[Path]:
         """Return all files that exists in the loading path."""
         yield from filter(
@@ -133,37 +125,31 @@ class BaseConfFl:
             ),
         )
 
-    def move(
-        self,
-        path: Path,
-        destination: Path,
-        *,
-        auto_create: bool = True,
-    ) -> None:
+    def move(self, path: Path, dest: Path) -> None:
         """Copy filename to destination path."""
-        if auto_create:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(self.path / path, destination)
+        if not dest.parent.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(self.path / path, dest)
 
 
 class ConfFl(BaseConfFl, ConfABC):
-    """Config File Loading Object for get data from configuration and stage."""
+    """Config File Loading Object for get data from configuration and stage.
+
+    :param path: A path of files to action.
+    :type path: str | Path
+    :param compress: str | None : A compress type of action file.
+    """
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         *,
-        compress: Optional[str] = None,
-        open_file: Optional[type[Fl]] = None,
-        excluded_fmt: Optional[list[str]] = None,
-        open_file_stg: Optional[type[Fl]] = None,
+        compress: str | None = None,
+        open_file: type[Fl] | None = None,
+        excluded_fmt: list[str] | None = None,
+        open_file_stg: type[Fl] | None = None,
     ):
-        """Main initialize of config file loading object.
-
-        :param path: A path of files to action.
-        :type path: Union[str, Path]
-        :param compress: Optional[str] : A compress type of action file.
-        """
+        """Main initialize of config file loading object."""
         super().__init__(
             path,
             compress=compress,
@@ -174,9 +160,9 @@ class ConfFl(BaseConfFl, ConfABC):
 
     def load_stage(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         *,
-        default: Optional[Any] = None,
+        default: Any = None,
     ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
         try:
@@ -189,7 +175,7 @@ class ConfFl(BaseConfFl, ConfABC):
 
     def save_stage(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         data: Union[dict[Any, Any], list[Any]],
         *,
         merge: bool = False,
@@ -245,7 +231,7 @@ class ConfFl(BaseConfFl, ConfABC):
         self,
         path: Path,
         *,
-        initial_data: Optional[Any] = None,
+        initial_data: Any = None,
     ) -> None:
         """Create filename in path."""
         if not path.exists():
@@ -303,12 +289,14 @@ class BaseConfSQLite:
 
 
 class ConfSQLite(BaseConfSQLite, ConfABC):
-    """Config SQLite Loading Object for get data from configuration and stage."""
+    """Config SQLite Loading Object for get data from configuration and save
+    stage data to the one table.
+    """
 
     def load_stage(
         self,
         table: str,
-        default: Optional[dict[Any, Any]] = None,
+        default: dict[Any, Any] | None = None,
     ) -> dict[Any, Any]:
         """Return content data from database with table name, default empty
         dict."""
@@ -360,7 +348,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
     def create(
         self,
         table: str,
-        schemas: Optional[dict[str, str]] = None,
+        schemas: dict[str, str] | None = None,
     ) -> None:
         """Create table in database."""
         if not schemas:
@@ -393,7 +381,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
     @staticmethod
     def convert_type(
         data: dict[str, Union[str, int, float]],
-        key: Optional[str] = None,
+        key: str | None = None,
     ) -> dict[str, Any]:
         """Return converted value from string to dictionary
         from source system.

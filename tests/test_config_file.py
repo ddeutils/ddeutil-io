@@ -36,7 +36,7 @@ def test_base_conf_read_file(target_path):
 
     bcf.move(
         "test_01_conn.yaml",
-        destination=target_path / "connections/test_01_conn.yaml",
+        dest=target_path / "connections/test_01_conn.yaml",
     )
 
     bcf_temp = conf.BaseConfFl(target_path)
@@ -53,7 +53,7 @@ def test_conf_read_file(target_path):
     cf = conf.ConfFl(target_path)
     cf.move(
         path="test_01_conn.yaml",
-        destination=target_path / "connections/test_01_conn.yaml",
+        dest=target_path / "connections/test_01_conn.yaml",
     )
 
     _stage_path: Path = target_path / "connections/test_01_conn_stage.json"

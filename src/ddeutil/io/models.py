@@ -13,11 +13,7 @@ from typing import (
     Union,
 )
 
-from pydantic import (
-    BaseModel,
-    Field,
-    ValidationInfo,
-)
+from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
 
 from .__base import YamlEnvFl

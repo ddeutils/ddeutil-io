@@ -156,11 +156,11 @@ class Register(BaseRegister):
     def __init__(
         self,
         name: str,
-        stage: Optional[str] = None,
+        stage: str | None = None,
         *,
-        params: Optional[Params] = None,
-        loader: Optional[type[Fl]] = None,
-        loader_stg: Optional[type[Fl]] = None,
+        params: Params | None = None,
+        loader: type[Fl] | None = None,
+        loader_stg: type[Fl] | None = None,
     ):
         _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
         super().__init__(name=_name, domain=_domain)
@@ -493,7 +493,7 @@ class Register(BaseRegister):
                     )
                     loading.move(
                         _file,
-                        destination=self.params.engine.paths.archive / _ac_path,
+                        dest=self.params.engine.paths.archive / _ac_path,
                     )
                 rm(loading.path / _file)
 
@@ -541,7 +541,7 @@ class Register(BaseRegister):
                 )
                 loading.move(
                     _file,
-                    destination=self.params.engine.paths.archive / _ac_path,
+                    dest=self.params.engine.paths.archive / _ac_path,
                 )
             rm(loading.path / _file)
 

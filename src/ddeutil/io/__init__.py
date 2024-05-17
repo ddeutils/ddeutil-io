@@ -41,3 +41,8 @@ from .models import (
     ValueData,
 )
 from .register import Register
+from .utils import (
+    map_func,
+    map_importer,
+    map_secret,
+)

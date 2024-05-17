@@ -5,26 +5,34 @@
 # ------------------------------------------------------------------------------
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Callable,
-    Union,
-)
+from typing import Callable, TypeVar
 
 from ddeutil.core import import_string, str2args
 
-from .__base import RegexConf
-from .exceptions import ConfigArgumentError
+try:
+    from .__base import RegexConf
+    from .exceptions import ConfigArgumentError
+except ImportError:
+    from __base import RegexConf
+    from exceptions import ConfigArgumentError
 
 
-def map_secret(
-    value: Any,
-    secrets: dict[str, Any],
-) -> Union[dict, str, Any]:
-    """Map the secret value to configuration data.
+T = TypeVar("T")
 
-    :param value:
-    :param secrets:
+
+def map_secret(value: T, secrets: dict[str, str]) -> T:
+    """Map the secret value to a any input data.
+
+    :param value: A data that want to map secrets
+    :param secrets: A mapping of secrets
+    :type secrets: dict[str, str]
+
+    Examples:
+        >>> map_secret(
+        ...     "Value include secrets: s3://@secrets{foo}",
+        ...     secrets={"foo": "bar"},
+        ... )
+        'Value include secrets: s3://bar'
     """
     if isinstance(value, dict):
         return {k: map_secret(value[k], secrets) for k in value}
@@ -36,7 +44,7 @@ def map_secret(
         searches: dict = search.groupdict()
         if "." in (br := searches["braced"]):
             raise ConfigArgumentError(
-                "secrets",
+                "@secrets",
                 f", value {br!r},  should not contain dot ('.') in get value.",
             )
         value: str = value.replace(
@@ -46,12 +54,21 @@ def map_secret(
     return value
 
 
-def map_function(value: Any) -> Union[dict, str, Any]:
-    """Map the function result to configuration data."""
+def map_importer(value: T) -> T:
+    """Map the function result to configuration data.
+
+    :param value: A data that want to map imported function with arguments.
+
+    Examples:
+        >>> map_importer(
+        ...     "Test @function{ddeutil.io.__base.add_newline:'a',newline='|'}"
+        ... )
+        'Test a|'
+    """
     if isinstance(value, dict):
-        return {k: map_function(value[k]) for k in value}
+        return {k: map_importer(value[k]) for k in value}
     elif isinstance(value, (list, tuple)):
-        return type(value)([map_function(i) for i in value])
+        return type(value)([map_importer(i) for i in value])
     elif not isinstance(value, str):
         return value
     for search in RegexConf.RE_FUNCTION.finditer(value):
@@ -66,12 +83,17 @@ def map_function(value: Any) -> Union[dict, str, Any]:
     return value
 
 
-def map_func_to_str(value: Any, fn: Callable[[str], str]) -> Any:
-    """Map any function from input argument to configuration data."""
+def map_func(value: T, fn: Callable[[str], str]) -> T:
+    """Map any function from input argument to configuration data.
+
+    Examples:
+        >>> map_func({"foo": "bar"}, lambda x: x + "!")
+        {'foo': 'bar!'}
+    """
     if isinstance(value, dict):
-        return {k: map_func_to_str(value[k], fn) for k in value}
+        return {k: map_func(value[k], fn) for k in value}
     elif isinstance(value, (list, tuple)):
-        return type(value)([map_func_to_str(i, fn) for i in value])
+        return type(value)([map_func(i, fn) for i in value])
     elif not isinstance(value, str):
         return value
     return fn(value)
