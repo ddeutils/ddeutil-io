@@ -49,7 +49,7 @@ changelog = "CHANGELOG.md"
 [tool.coverage.run]
 branch = true
 concurrency = ["thread", "multiprocessing"]
-source = ["ddeutil", "tests"]
+source = ["ddeutil.io", "tests"]
 omit = ["scripts/"]
 relative_files = true
 

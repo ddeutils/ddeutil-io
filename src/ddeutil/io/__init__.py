@@ -38,7 +38,7 @@ from .param import (
     PathData,
     Rule,
     Stage,
-    ValueData,
+    Value,
 )
 from .register import Register
 from .utils import (

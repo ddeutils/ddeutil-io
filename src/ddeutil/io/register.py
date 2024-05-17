@@ -37,6 +37,7 @@ from fmtutil import (
 )
 
 from .__base import Fl, rm
+from .__conf import UPDATE_KEY, VERSION_KEY
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .param import Params
@@ -195,9 +196,7 @@ class Register(BaseRegister):
         # NOTE:
         #   Update metadata if the configuration data does not exist, or
         #   it has any changes.
-        if not self.params.engine.flags.auto_update:
-            logging.info("Skip update metadata ...")
-        elif self.changed == 99:
+        if self.changed == 99:
             logging.info(
                 f"Configuration data with stage: {self.stage!r} does not "
                 f"exists in metadata ..."
@@ -263,7 +262,7 @@ class Register(BaseRegister):
         """
         if self.changed > 0:
             return self.updt
-        elif _dt := self.data().get("updt"):
+        elif _dt := self.data().get(UPDATE_KEY):
             return datetime.strptime(
                 _dt,
                 self.params.engine.values.dt_fmt,
@@ -279,7 +278,7 @@ class Register(BaseRegister):
 
         :return: VerPackage
         """
-        _vs = VerPackage.parse(self.data().get("version", "v0.0.1"))
+        _vs = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
         if not _next or self.changed == 0:
             return _vs
         elif self.changed >= 3:
@@ -431,8 +430,8 @@ class Register(BaseRegister):
                 data=merge_dict(
                     self.data(),
                     {
-                        "updt": f"{self.timestamp:{_dt_fmt}}",
-                        "version": f"v{str(self.version())}",
+                        UPDATE_KEY: f"{self.timestamp:{_dt_fmt}}",
+                        VERSION_KEY: f"v{str(self.version())}",
                     },
                 ),
             )

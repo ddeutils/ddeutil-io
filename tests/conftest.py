@@ -9,5 +9,5 @@ def test_path() -> Path:
 
 
 @pytest.fixture(scope="session")
-def root_path(test_path) -> Path:
+def root_path(test_path: Path) -> Path:
     return test_path.parent

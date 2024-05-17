@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import ddeutil.io.param as md
+from ddeutil.io.__conf import UPDATE_KEY, VERSION_KEY
 
 
 def test_model_path_default(test_path):
@@ -9,7 +10,7 @@ def test_model_path_default(test_path):
             "root": test_path,
         }
     )
-    print(p)
+    assert p.root == test_path
 
 
 def test_model_path_data():
@@ -121,11 +122,10 @@ def test_model_params():
         "engine": {
             "values": {
                 "dt_fmt": "%Y-%m-%d %H:%M:%S",
-                "excluded": ("version", "updt"),
+                "excluded": (VERSION_KEY, UPDATE_KEY),
             },
             "flags": {
                 "archive": False,
-                "auto_update": False,
             },
             "paths": {
                 "archive": Path(".archive"),

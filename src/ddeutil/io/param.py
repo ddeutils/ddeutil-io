@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import (
+    Annotated,
     Any,
     Optional,
     Union,
@@ -17,9 +18,13 @@ from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
 
 from .__base import YamlEnvFl
+from .__conf import UPDATE_KEY, VERSION_KEY
 from .exceptions import ConfigArgumentError
 
-FMT_NAMES: tuple[str, ...] = (
+TupleStr = tuple[str, ...]
+
+
+FMT_NAMES: TupleStr = (
     "naming",
     "domain",
     "environ",
@@ -29,7 +34,7 @@ FMT_NAMES: tuple[str, ...] = (
     "extension",
 )
 
-RULE_FIX: tuple[str, ...] = (
+RULE_FIX: TupleStr = (
     "timestamp",
     "version",
     "compress",
@@ -37,7 +42,7 @@ RULE_FIX: tuple[str, ...] = (
 
 
 class Rule(BaseModel):
-    """Rule Data Model
+    """Rule Model that keep rule setting data for Register object.
     .. example::
         {
             "timestamp": {
@@ -49,30 +54,35 @@ class Rule(BaseModel):
     """
 
     timestamp: Optional[dict[str, int]] = Field(default_factory=dict)
-    version: Optional[str] = Field(default=None)
+    version: Annotated[Optional[str], Field()] = None
     excluded: Optional[list[str]] = Field(default_factory=list)
-    compress: Optional[str] = Field(default=None)
+    compress: Annotated[
+        Optional[str],
+        Field(description="Compress type"),
+    ] = None
 
 
 class Stage(BaseModel):
-    """
-    .. example::
-        {
-            "raw": {
-                "format": "",
-                rules: {},
-            },
-        }
+    """Stage Model that keep stage data for transition data.
+
+    Examples:
+        >>> stage = {
+        ...     "raw": {
+        ...         "format": "",
+        ...         "rules": {},
+        ...     },
+        ... }
     """
 
     alias: str
-    rules: Rule = Field(default_factory=Rule)
     format: str
+    rules: Rule = Field(default_factory=Rule, description="Rule of stage")
     layer: int = Field(default=0)
 
     @field_validator("format", mode="before")
     def validate_format(cls, value, info: ValidationInfo):
-        # Validate the name in format string should contain any format name.
+        # NOTE:
+        #   Validate the name in format string should contain any format name.
         if not (
             _searches := re.findall(
                 r"{(?P<name>\w+):?(?P<format>[^{}]+)?}",
@@ -87,7 +97,7 @@ class Stage(BaseModel):
                 ),
             )
 
-        # Validate the name in format string should exist in `FMT_NAMES`.
+        # NOTE: Validate the name in format string should exist in `FMT_NAMES`.
         if any((_search[0] not in FMT_NAMES) for _search in _searches):
             raise ConfigArgumentError(
                 "format",
@@ -97,7 +107,7 @@ class Stage(BaseModel):
 
     @field_validator("format", mode="after")
     def validate_rule_relate_with_format(cls, value, info: ValidationInfo):
-        # Validate a format of stage that relate with rules.
+        # NOTE: Validate a format of stage that relate with rules.
         for validator in RULE_FIX:
             if getattr(info.data.get("rules", {}), validator, None) and (
                 validator not in value
@@ -126,7 +136,7 @@ class PathData(BaseModel):
         return Path(v) if isinstance(v, str) else v
 
     @field_validator("data", "conf", "archive", mode="before")
-    def prepare_path_from_str(cls, v, info: ValidationInfo) -> Path:
+    def prepare_path_from_path_str(cls, v, info: ValidationInfo) -> Path:
         if v is not None:
             return Path(v) if isinstance(v, str) else v
         if info.field_name == "archive":
@@ -136,23 +146,17 @@ class PathData(BaseModel):
 
 class Flag(BaseModel):
     archive: bool = Field(default=False)
-    auto_update: bool = Field(default=False)
 
 
-class ValueData(BaseModel):
+class Value(BaseModel):
     dt_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    excluded: tuple[str, ...] = Field(
-        default=(
-            "version",
-            "updt",
-        )
-    )
+    excluded: TupleStr = Field(default=(VERSION_KEY, UPDATE_KEY))
 
 
 class Engine(BaseModel):
     paths: PathData = Field(default_factory=PathData)
+    values: Value = Field(default_factory=Value)
     flags: Flag = Field(default_factory=Flag)
-    values: ValueData = Field(default_factory=ValueData)
 
 
 class Params(BaseModel, validate_assignment=True):
@@ -160,44 +164,41 @@ class Params(BaseModel, validate_assignment=True):
     engine: Engine = Field(default_factory=Engine)
 
     @classmethod
-    def from_file(cls, path: Union[str, Path]):
+    def from_yaml(cls, path: Union[str, Path]):
+        """Load params from .yaml file"""
         cls._origin_path = path
         return cls.model_validate(YamlEnvFl(path).read())
 
     @field_validator("stages", mode="before")
-    def order_layer(cls, value: dict[str, dict[Any, Any]]):
+    def prepare_order_layer(cls, value: dict[str, dict[Any, Any]]):
         for i, k in enumerate(value, start=1):
             value[k] = value[k].copy() | {"layer": i, "alias": k}
         return value
 
     @property
     def stage_final(self) -> str:
+        """Return the final stage name that ordered from layer value."""
         return max(self.stages.items(), key=lambda i: i[1].layer)[0]
 
     @property
     def stage_first(self) -> str:
+        """Return the first stage name that ordered from layer value which
+        does not be the base stage.
+        """
         return min(self.stages.items(), key=lambda i: i[1].layer)[0]
 
     def get_stage(self, name: str) -> Stage:
+        """Return Stage model that match with stage name."""
         if name == "base":
             return Stage.model_validate(
                 {
                     "format": "{naming}_{timestamp}",
-                    "layer": 0,
                     "alias": "base",
                 }
             )
         elif name not in self.stages:
             raise ConfigArgumentError(
                 "stage",
-                (
-                    f"Cannot get stage: {name!r} because it does not set "
-                    f"in `parameters.yaml`"
-                ),
+                f"Cannot get stage: {name!r} cause it does not exists",
             )
         return self.stages[name].model_copy()
-
-    def refresh(self, path: Optional[str] = None) -> Params:
-        _origin_path = path or self._origin_path
-        self.__dict__.update(self.from_file(path=_origin_path).__dict__)
-        return self
