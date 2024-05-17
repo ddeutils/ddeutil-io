@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import ddeutil.io.models as md
+import ddeutil.io.param as md
 
 
 def test_model_path_default(test_path):
@@ -45,11 +45,11 @@ def test_model_rule_data():
         "version": None,
         "excluded": [],
         "compress": None,
-    } == md.RuleData.model_validate({}).model_dump()
+    } == md.Rule.model_validate({}).model_dump()
 
 
 def test_model_stage_data():
-    stage = md.StageData.model_validate(
+    stage = md.Stage.model_validate(
         {
             "alias": "persisted",
             "format": "{timestamp:%Y-%m-%d}{naming:%c}.json",

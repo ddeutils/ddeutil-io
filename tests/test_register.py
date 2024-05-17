@@ -5,7 +5,7 @@ from pathlib import Path
 import ddeutil.io.register as rgt
 import pytest
 import yaml
-from ddeutil.io.models import Params
+from ddeutil.io.param import Params
 
 
 @pytest.fixture(scope="module")

@@ -31,13 +31,13 @@ from .exceptions import (
     ConfigNotFound,
     IOBaseError,
 )
-from .models import (
-    EngineData,
-    FlagData,
+from .param import (
+    Engine,
+    Flag,
     Params,
     PathData,
-    RuleData,
-    StageData,
+    Rule,
+    Stage,
     ValueData,
 )
 from .register import Register

@@ -39,7 +39,7 @@ from fmtutil import (
 from .__base import Fl, rm
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
-from .models import Params
+from .param import Params
 
 METADATA: dict[str, Any] = {}
 

@@ -36,7 +36,7 @@ RULE_FIX: tuple[str, ...] = (
 )
 
 
-class RuleData(BaseModel):
+class Rule(BaseModel):
     """Rule Data Model
     .. example::
         {
@@ -54,7 +54,7 @@ class RuleData(BaseModel):
     compress: Optional[str] = Field(default=None)
 
 
-class StageData(BaseModel):
+class Stage(BaseModel):
     """
     .. example::
         {
@@ -66,7 +66,7 @@ class StageData(BaseModel):
     """
 
     alias: str
-    rules: RuleData = Field(default_factory=RuleData)
+    rules: Rule = Field(default_factory=Rule)
     format: str
     layer: int = Field(default=0)
 
@@ -134,7 +134,7 @@ class PathData(BaseModel):
         return info.data["root"] / info.field_name
 
 
-class FlagData(BaseModel):
+class Flag(BaseModel):
     archive: bool = Field(default=False)
     auto_update: bool = Field(default=False)
 
@@ -149,15 +149,15 @@ class ValueData(BaseModel):
     )
 
 
-class EngineData(BaseModel):
+class Engine(BaseModel):
     paths: PathData = Field(default_factory=PathData)
-    flags: FlagData = Field(default_factory=FlagData)
+    flags: Flag = Field(default_factory=Flag)
     values: ValueData = Field(default_factory=ValueData)
 
 
 class Params(BaseModel, validate_assignment=True):
-    stages: dict[str, StageData] = Field(default_factory=dict)
-    engine: EngineData = Field(default_factory=EngineData)
+    stages: dict[str, Stage] = Field(default_factory=dict)
+    engine: Engine = Field(default_factory=Engine)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]):
@@ -178,9 +178,9 @@ class Params(BaseModel, validate_assignment=True):
     def stage_first(self) -> str:
         return min(self.stages.items(), key=lambda i: i[1].layer)[0]
 
-    def get_stage(self, name: str) -> StageData:
+    def get_stage(self, name: str) -> Stage:
         if name == "base":
-            return StageData.model_validate(
+            return Stage.model_validate(
                 {
                     "format": "{naming}_{timestamp}",
                     "layer": 0,
