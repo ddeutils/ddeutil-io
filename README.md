@@ -8,6 +8,7 @@
 
 - [Installation](#installation)
 - [Features](#features)
+  - [File](#file)
   - [Config](#config)
   - [Register](#register)
 
@@ -22,6 +23,18 @@ pip install ddeutil-io
 ```
 
 ## Features
+
+### File
+
+File Objects that use to read or write data to that format.
+
+```python
+import os
+from ddeutil.io import YamlEnvFl
+
+os.environ["HELLO"] = "WORLD"
+content = YamlEnvFl('./.pre-commit-config.yaml').read(safe=True)
+```
 
 ### Config
 
