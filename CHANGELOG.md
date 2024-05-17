@@ -2,6 +2,23 @@
 
 ## Latest Changes
 
+## 0.1.6
+
+### :black_nib: Code Changes
+
+- :construction: refactored: rename param models and add __conf file for keep tracking keys. (_2024-05-17_)
+- :construction: refactored: change module name from models to param. (_2024-05-17_)
+- :construction: refactored: change args name on move method and add doc-string on utils. (_2024-05-17_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update feature on readme file. (_2024-05-17_)
+- :page_facing_up: docs: update doc-string on __base.utils module. (_2024-05-17_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: add modules importer on __init__ file. (_2024-05-16_)
+
 ## 0.1.5
 
 ### :sparkles: Features
