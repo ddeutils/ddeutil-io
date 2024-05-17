@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import (
     Callable,
@@ -11,7 +13,14 @@ except ImportError:
 
 
 def add_newline(text: str, newline: Optional[str] = None) -> str:
-    """Add newline to a text value."""
+    """Add newline to a text value.
+
+    :param text: A text value that want to add newline.
+    :param newline: A newline value that want to use.
+
+    :rtype: str
+    :returns: A newline added text.
+    """
     nl: str = newline or "\n"
     return f"{text}{nl}" if not text.endswith(nl) else text
 
@@ -20,18 +29,34 @@ def search_env_replace(
     contents: str,
     *,
     raise_if_default_not_exists: bool = False,
-    default: str = "N/A",
+    default: str = "null",
     escape: str = "ESC",
     caller: Callable[[str], str] = (lambda x: x),
 ) -> str:
     """Prepare content data before parse to any file parsing object.
 
-    :param contents:
-    :param raise_if_default_not_exists:
+    :param contents: A string content that want to format with env vars
+    :type contents: str
+    :param raise_if_default_not_exists: A flag that will allow this function
+        raise the error when default of env var does not set from contents.
+    :type raise_if_default_not_exists: bool(=False)
     :param default: a default value.
+    :type default: str(='null')
     :param escape: a escape value that use for initial replace when found escape
         char on searching.
-    :param caller: a prepare function.
+    :type escape: str(='ESC')
+    :param caller: a prepare function that will execute before replace env var.
+    :type caller: Callable[[str], str]
+
+    :rtype: str
+    :returns: A prepared content data.
+
+    Examples:
+
+        >>> import os
+        >>> os.environ["NAME"] = 'foo'
+        >>> search_env_replace("Hello ${NAME}")
+        'Hello foo'
     """
     shifting: int = 0
     replaces: dict = {}
@@ -75,17 +100,32 @@ def search_env(
     contents: str,
     *,
     keep_newline: bool = False,
-    default: Optional[str] = None,
+    default: str | None = None,
 ) -> dict[str, str]:
     """Prepare content data from `.env` file before load to the OS environment
     variables.
 
-    :param contents: a string content in the `.env` file
-    :param keep_newline: a flag that filter out a newline
-    :param default: a default value that use if it does not exists
+    :param contents: A string content in the `.env` file
+    :type contents: str
+    :param keep_newline: A flag that filter out a newline
+    :type keep_newline: bool(=False)
+    :param default: A default value that use if it does not exists
+    :type default: str | None(=None)
 
-    References:
-        - python-dotenv (https://github.com/theskumar/python-dotenv)
+    :rtype: dict[str, str]
+    :returns: A mapping of name and value of env variable
+
+    Note:
+        This function reference code from python-dotenv package. I will use this
+    instead install this package. Because I want to enhance serialize step that
+    fit with my package. (https://github.com/theskumar/python-dotenv)
+
+    Examples:
+
+        >>> search_env("Data='demo'\\nfoo=bar")
+        {'Data': 'demo', 'foo': 'bar'}
+        >>> search_env("Data='demo'\\n# foo=bar\\nhello=${Data}-2")
+        {'Data': 'demo', 'hello': 'demo-2'}
     """
     _default: str = default or ""
     env: dict[str, str] = {}
@@ -125,13 +165,19 @@ def __search_var(
     value: str,
     env: dict[str, str],
     *,
-    default: Optional[str] = None,
+    default: str | None = None,
 ) -> str:
-    """Search variable on the string content
+    """Search variable on the string content.
 
     :param value: a string value that want to search env variable.
+    :type value: str
     :param env: a pair of env values that keep in memory dict.
+    :type env: dict[str, str]
     :param default: a default value if it does not found on env vars.
+    :type default: str | None(=None)
+
+    :rtype: str
+    :returns: A searched value from env veriables.
 
     Examples:
         >>> __search_var("Test ${VAR}", {"VAR": "foo"})
