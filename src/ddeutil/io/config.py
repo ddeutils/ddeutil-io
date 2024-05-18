@@ -311,7 +311,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
     def save_stage(
         self,
         table: str,
-        data: dict,
+        data: dict[str, Any],
         merge: bool = False,
     ) -> None:
         """Write content data to database with table name. If merge is true, it

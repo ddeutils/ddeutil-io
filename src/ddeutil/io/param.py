@@ -43,14 +43,13 @@ RULE_FIX: TupleStr = (
 
 class Rule(BaseModel):
     """Rule Model that keep rule setting data for Register object.
-    .. example::
-        {
-            "timestamp": {
-                "minutes": 15
-            },
-            "excluded": [],
-            "compress": None,
-        }
+
+    Examples:
+        >>> rule = {
+        ...     "timestamp": {"minutes": 15},
+        ...     "excluded": [],
+        ...     "compress": None,
+        ... }
     """
 
     timestamp: Optional[dict[str, int]] = Field(default_factory=dict)
