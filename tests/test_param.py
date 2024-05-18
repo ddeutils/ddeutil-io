@@ -18,14 +18,12 @@ def test_model_path_data():
         {
             "data": Path("."),
             "conf": Path("."),
-            "archive": Path("."),
         }
     )
 
     assert {
         "data": Path("."),
         "conf": Path("."),
-        "archive": Path("."),
         "root": Path("."),
     } == p.model_dump()
 
@@ -35,7 +33,6 @@ def test_model_path_data_with_root():
     assert {
         "data": Path("./src/data"),
         "conf": Path("./src/conf"),
-        "archive": Path("./src/.archive"),
         "root": Path("./src/"),
     } == p.model_dump()
 
@@ -124,11 +121,7 @@ def test_model_params():
                 "dt_fmt": "%Y-%m-%d %H:%M:%S",
                 "excluded": (VERSION_KEY, UPDATE_KEY),
             },
-            "flags": {
-                "archive": False,
-            },
             "paths": {
-                "archive": Path(".archive"),
                 "conf": Path("conf"),
                 "data": Path("data"),
                 "root": Path("."),

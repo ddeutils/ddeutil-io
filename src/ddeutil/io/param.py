@@ -129,23 +129,18 @@ class PathData(BaseModel):
     root: Path = Field(default_factory=Path)
     data: Path = Field(default=None, validate_default=True)
     conf: Path = Field(default=None, validate_default=True)
-    archive: Path = Field(default=None, validate_default=True)
 
     @field_validator("root", mode="before")
     def prepare_root(cls, v: Union[str, Path]) -> Path:
         return Path(v) if isinstance(v, str) else v
 
-    @field_validator("data", "conf", "archive", mode="before")
+    @field_validator("data", "conf", mode="before")
     def prepare_path_from_path_str(cls, v, info: ValidationInfo) -> Path:
         if v is not None:
             return Path(v) if isinstance(v, str) else v
         if info.field_name == "archive":
             return info.data["root"] / ".archive"
         return info.data["root"] / info.field_name
-
-
-class Flag(BaseModel):
-    archive: bool = Field(default=False)
 
 
 class Value(BaseModel):
@@ -156,7 +151,6 @@ class Value(BaseModel):
 class Engine(BaseModel):
     paths: PathData = Field(default_factory=PathData)
     values: Value = Field(default_factory=Value)
-    flags: Flag = Field(default_factory=Flag)
 
 
 class Params(BaseModel, validate_assignment=True):

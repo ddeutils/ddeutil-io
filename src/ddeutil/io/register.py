@@ -486,14 +486,6 @@ class Register(BaseRegister):
                 rs.items(),
             ):
                 _file: str = data["file"]
-                if self.params.engine.flags.archive:
-                    _ac_path: str = (
-                        f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
-                    )
-                    loading.move(
-                        _file,
-                        dest=self.params.engine.paths.archive / _ac_path,
-                    )
                 rm(loading.path / _file)
 
     def deploy(self, stop: Optional[str] = None) -> Register:
@@ -534,15 +526,83 @@ class Register(BaseRegister):
         data: StageFiles
         for _, data in self.__stage_files(_stage, loading).items():
             _file: str = data["file"]
-            if self.params.engine.flags.archive:
-                _ac_path: str = (
-                    f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
-                )
-                loading.move(
-                    _file,
-                    dest=self.params.engine.paths.archive / _ac_path,
-                )
             rm(loading.path / _file)
 
 
-__all__ = ("Register",)
+class FullRegister(Register):
+    """Full register that implement archiving step on base Register."""
+
+    def purge(self, stage: Optional[str] = None) -> None:
+        """Purge configuration files that match with any rules in the stage
+        setting.
+        """
+        _stage: str = stage or self.stage
+        if not (_rules := self.params.get_stage(_stage).rules):
+            return
+        loading: ConfFl = ConfFl(
+            path=self.params.engine.paths.data / stage,
+            compress=_rules.compress,
+            open_file=self.loader,
+            open_file_stg=self.loader_stg,
+        )
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, loading)
+        max_file: FormatterGroup = max(
+            rs.items(),
+            key=lambda x: (x[1]["parse"],),
+        )[1]["parse"]
+
+        upper_bound: Optional[FormatterGroup] = None
+        if _rtt_ts := _rules.timestamp:
+            upper_bound = max_file.adjust(
+                {"timestamp": relativedelta(**_rtt_ts)}
+            )
+
+        if upper_bound is not None:
+            for _, data in filter(
+                lambda x: x[1]["parse"] < upper_bound,
+                rs.items(),
+            ):
+                _file: str = data["file"]
+                # NOTE: Archive step
+                _ac_path: str = (
+                    f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
+                )
+                loading.move(
+                    _file,
+                    dest=self.params.engine.paths.data / ".archive" / _ac_path,
+                )
+                rm(loading.path / _file)
+
+    def remove(self, stage: Optional[str] = None) -> None:
+        """Remove config file from the stage storage.
+
+        :param stage: a stage value that want to remove.
+        :type stage: Optional[str]
+        """
+        _stage: str = stage or self.stage
+        assert (
+            _stage != "base"
+        ), "The remove method can not process on the 'base' stage."
+        loading: ConfFl = ConfFl(
+            path=self.params.engine.paths.data / _stage,
+            open_file=self.loader,
+            open_file_stg=self.loader_stg,
+        )
+
+        # NOTE: Remove all files from the stage.
+        data: StageFiles
+        for _, data in self.__stage_files(_stage, loading).items():
+            _file: str = data["file"]
+            # NOTE: Archive step
+            _ac_path: str = f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
+            loading.move(
+                _file,
+                dest=self.params.engine.paths / ".archive" / _ac_path,
+            )
+            rm(loading.path / _file)
+
+
+__all__ = (
+    "Register",
+    "FullRegister",
+)

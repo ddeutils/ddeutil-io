@@ -33,7 +33,6 @@ from .exceptions import (
 )
 from .param import (
     Engine,
-    Flag,
     Params,
     PathData,
     Rule,
