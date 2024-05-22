@@ -33,6 +33,9 @@ def yaml_str_safe() -> str:
             bool: false
             list: ['i1', 'i2', 'i3']
             str2bool: on
+            statement: |
+                # Comment ${DEMO_ENV_VALUE}
+                This is a long statement with comment above
     """
     ).strip()
 
@@ -47,6 +50,10 @@ def yaml_data_safe() -> dict[str, Any]:
                 "bool": False,
                 "list": ["i1", "i2", "i3"],
                 "str2bool": True,
+                "statement": (
+                    "# Comment ${DEMO_ENV_VALUE}\n"
+                    "This is a long statement with comment above"
+                ),
             }
         }
     }
@@ -65,6 +72,10 @@ def test_read_yaml_resolve_file(target_path, yaml_str_safe, yaml_data_safe):
 
     data = fl.YamlFlResolve(path=yaml_path).read(safe=False)
     assert "on" == data["main_key"]["sub_key"]["str2bool"]
+    assert (
+        "# Comment ${DEMO_ENV_VALUE}\n"
+        "This is a long statement with comment above"
+    ) == data["main_key"]["sub_key"]["statement"]
 
 
 def test_read_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
@@ -106,6 +117,9 @@ class YamlEnvFileTestCase(unittest.TestCase):
                 key05: ${DEMO_ENV_VALUE_EMPTY:default}
                 key06: $${DEMO_ENV_VALUE}
                 key07: This ${DEMO_ENV_VALUE} ${{DEMO_ENV_VALUE}}
+                key08: |
+                    # Comment
+                    statement ${DEMO_ENV_VALUE}
         """
         ).strip()
         self.yaml_data: dict = {
@@ -118,8 +132,9 @@ class YamlEnvFileTestCase(unittest.TestCase):
                     "key05": "default",
                     "key06": "${DEMO_ENV_VALUE}",
                     "key07": "This demo ${{DEMO_ENV_VALUE}}",
-                }
-            }
+                    "key08": "# Comment\nstatement demo",
+                },
+            },
         }
 
     def test_read_yaml_file_with_safe_mode(self):
@@ -157,6 +172,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                         "key05": "default!!",
                         "key06": "${DEMO_ENV_VALUE}",
                         "key07": "This demo!! ${{DEMO_ENV_VALUE}}",
+                        "key08": "# Comment\nstatement demo!!",
                     }
                 }
             },
@@ -191,6 +207,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                         "key05": "default",
                         "key06": "${DEMO_ENV_VALUE}",
                         "key07": "This P%40ssW0rd ${{DEMO_ENV_VALUE}}",
+                        "key08": "# Comment\nstatement P%40ssW0rd",
                     }
                 }
             },

@@ -49,7 +49,6 @@ try:
 except ImportError:
     from yaml import SafeLoader, UnsafeLoader
 
-from .__regex import RegexConf
 from .utils import search_env, search_env_replace
 
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
@@ -333,7 +332,7 @@ class YamlEnvFl(YamlFl):
     def read(self, safe: bool = True) -> dict[str, Any]:
         with self.open(mode="r") as _r:
             _env_replace: str = search_env_replace(
-                RegexConf.RE_YAML_COMMENT.sub("", _r.read()),
+                yaml.dump(yaml.load(_r.read(), UnsafeLoader)),
                 raise_if_default_not_exists=self.raise_if_not_default,
                 default=self.default,
                 escape=self.escape,
