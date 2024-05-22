@@ -105,6 +105,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                 key04: ['i1', 'i2', '${DEMO_ENV_VALUE}']
                 key05: ${DEMO_ENV_VALUE_EMPTY:default}
                 key06: $${DEMO_ENV_VALUE}
+                key07: This ${DEMO_ENV_VALUE} ${{DEMO_ENV_VALUE}}
         """
         ).strip()
         self.yaml_data: dict = {
@@ -116,6 +117,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                     "key04": ["i1", "i2", "demo"],
                     "key05": "default",
                     "key06": "${DEMO_ENV_VALUE}",
+                    "key07": "This demo ${{DEMO_ENV_VALUE}}",
                 }
             }
         }
@@ -154,6 +156,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                         "key04": ["i1", "i2", "demo!!"],
                         "key05": "default!!",
                         "key06": "${DEMO_ENV_VALUE}",
+                        "key07": "This demo!! ${{DEMO_ENV_VALUE}}",
                     }
                 }
             },
@@ -187,6 +190,7 @@ class YamlEnvFileTestCase(unittest.TestCase):
                         "key04": ["i1", "i2", "P%40ssW0rd"],
                         "key05": "default",
                         "key06": "${DEMO_ENV_VALUE}",
+                        "key07": "This P%40ssW0rd ${{DEMO_ENV_VALUE}}",
                     }
                 }
             },

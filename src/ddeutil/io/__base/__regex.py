@@ -113,14 +113,19 @@ class RegexConf:
     # NOTE:
     # ---
     # [\"\']?(\$(?:(?P<escaped>\$|\d+)|({(?P<braced>.*?)(:(?P<braced_default>.*?))?})))[\"\']?
+    #
+    # NOTE: If you want to catch only string not number:
+    #   ... `([a-zA-Z0-9_.\s'\"\[\]\(\)]+?)`
     __re_env_search: str = r"""
         [\"\']?                             # single or double quoted value
         (\$(?:                              # start with non-capturing group
             (?P<escaped>\$|\d+)             # escape $ or number like $1
             |
             (\{
-                (?P<braced>.*?)             # value if use braced {}
-                (:(?P<braced_default>.*?))? # value default with sep :
+                (?P<braced>([^{}]*?))       # value in braced {} not contain {}
+                (:                          # : seperator for default
+                    (?P<braced_default>[^{}]*?) # value default with sep :
+                )?
             })
         ))
         [\"\']?                             # single or double quoted value
