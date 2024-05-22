@@ -2,6 +2,24 @@
 
 ## Latest Changes
 
+## 0.1.7
+
+### :sparkles: Features
+
+- :dart: feat: seperate Register with archiving step to FullRegister. (_2024-05-18_)
+
+### :black_nib: Code Changes
+
+- :construction: refactored: change constructure of regex conf class. (_2024-05-17_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update doc-string and type hint. (_2024-05-18_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: regex config for yaml env that catch caller. (_2024-05-22_)
+
 ## 0.1.6
 
 ### :black_nib: Code Changes
