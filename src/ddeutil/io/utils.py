@@ -89,6 +89,8 @@ def map_func(value: T, fn: Callable[[str], str]) -> T:
     Examples:
         >>> map_func({"foo": "bar"}, lambda x: x + "!")
         {'foo': 'bar!'}
+        >>> map_func(("foo", "bar"), lambda x: x + "!")
+        ('foo!', 'bar!')
     """
     if isinstance(value, dict):
         return {k: map_func(value[k], fn) for k in value}
