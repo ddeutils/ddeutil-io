@@ -1,61 +1,70 @@
-import os
-import pathlib
 import shutil
-import unittest
+from collections.abc import Generator
+from pathlib import Path
 
 import ddeutil.io.__base.files as fl
+import pytest
 
 
-class OpenDirTestCase(unittest.TestCase):
-    root_path: str
+@pytest.fixture(scope="module")
+def target_path(test_path) -> Generator[Path, None, None]:
+    target_path: Path = test_path / "open_dir"
+    target_path.mkdir(parents=True, exist_ok=True)
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        _root_path: str = os.path.dirname(os.path.abspath(__file__)).replace(
-            os.sep, "/"
-        )
-        os.makedirs(f"{_root_path}/open_dir", exist_ok=True)
-        os.makedirs(f"{_root_path}/open_dir/data", exist_ok=True)
+    data_path: Path = test_path / "open_dir/data"
+    data_path.mkdir(parents=True, exist_ok=True)
 
-        cls.root_path: str = f"{_root_path}/open_dir"
-        cls.data_path: str = f"{_root_path}/open_dir/data"
+    with open(data_path / "test_file.json", mode="w") as f:
+        f.write('{"key": "value"}')
 
-        with open(
-            pathlib.Path(f"{_root_path}/open_dir/data/test_file.json"),
-            mode="w",
-        ) as f:
-            f.write('{"key": "value"}')
-        with open(
-            pathlib.Path(f"{_root_path}/open_dir/data/test_file_2.json"),
-            mode="w",
-        ) as f:
-            f.write('{"foo": "bar"}')
+    with open(data_path / "test_file_2.json", mode="w") as f:
+        f.write('{"foo": "bar"}')
 
-    def setUp(self) -> None:
-        self.encoding = "utf-8"
+    yield target_path
 
-    def test_open_dir_common_zip(self):
-        data_dir = pathlib.Path(self.data_path)
+    shutil.rmtree(target_path)
 
-        opd = fl.Dir(
-            path=pathlib.Path(f"{self.root_path}/test_common_dir.zip"),
-            compress="zip",
-        )
-        with opd.open(mode="w") as d:
-            for data in data_dir.rglob("*"):
-                d.write(filename=data, arcname=data.relative_to(data_dir))
 
-    def test_open_dir_common_tar(self):
-        data_dir = pathlib.Path(self.data_path)
+@pytest.fixture(scope="module")
+def data_path(target_path):
+    return target_path / "data"
 
-        opd = fl.Dir(
-            path=pathlib.Path(f"{self.root_path}/test_common_dir.tar.gz"),
-            compress="tar",
-        )
-        with opd.open(mode="w") as d:
-            for data in data_dir.rglob("*"):
-                d.add(name=data, arcname=data.relative_to(data_dir))
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        shutil.rmtree(cls.root_path)
+def test_open_dir_common_zip(target_path, data_path):
+    with fl.Dir(
+        path=target_path / "test_common_zip.zip",
+        compress="zip",
+    ).open(mode="w") as d:
+        for data in data_path.rglob("*"):
+            d.write(filename=data, arcname=data.relative_to(data_path))
+
+    with fl.Dir(
+        path=target_path / "test_common_zip.zip",
+        compress="zip",
+    ).open(mode="r") as d:
+        d.extractall(target_path / "test_common_zip_extract")
+
+    assert [
+        "test_file.json",
+        "test_file_2.json",
+    ] == [f.name for f in (target_path / "test_common_zip_extract").rglob("*")]
+
+
+def test_open_dir_common_tar(target_path, data_path):
+    with fl.Dir(
+        path=target_path / "test_common_tar.tar.gz",
+        compress="tar",
+    ).open(mode="w") as d:
+        for data in data_path.rglob("*"):
+            d.write(name=data, arcname=data.relative_to(data_path))
+
+    with fl.Dir(
+        path=target_path / "test_common_tar.tar.gz",
+        compress="tar:gz",
+    ).open(mode="r") as d:
+        d.extractall(target_path / "test_common_tar_extract")
+
+    assert [
+        "test_file.json",
+        "test_file_2.json",
+    ] == [f.name for f in (target_path / "test_common_tar_extract").rglob("*")]

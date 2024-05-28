@@ -27,6 +27,7 @@ import os
 import pickle
 from contextlib import contextmanager
 from pathlib import Path
+from tarfile import TarFile
 from typing import (
     IO,
     Any,
@@ -44,6 +45,7 @@ import toml
 
 # NOTE: import msgpack
 import yaml
+from ddeutil.core import must_split
 
 try:
     from yaml import CSafeLoader as SafeLoader
@@ -109,12 +111,12 @@ class Fl:
         *,
         encoding: Optional[str] = None,
         compress: Optional[FileCompressType] = None,
-    ):
+    ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.encoding: str = encoding or "utf-8"
         self.compress: Optional[FileCompressType] = compress
 
-        # Action anything after set up attributes.
+        # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
 
     def after_set_attrs(self) -> None: ...
@@ -182,11 +184,18 @@ class Fl:
         finally:
             file.close()
 
-    def read(self, *args, **kwargs):
-        raise NotImplementedError
 
-    def write(self, *args, **kwargs):
-        raise NotImplementedError
+class OpenDirProtocol(Protocol):
+
+    def write(self, name, arcname): ...
+
+    def extractall(self, path): ...
+
+
+class CustomTarFile(TarFile):
+
+    def write(self, name, arcname=None):
+        return self.add(name, arcname)
 
 
 class Dir:
@@ -196,37 +205,47 @@ class Dir:
         self,
         path: Union[str, Path],
         *,
-        compress: Optional[DirCompressType] = None,
-    ):
+        compress: str,
+    ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
-        self.compress = compress
-        # Action anything after set up attributes.
+        _compress, sub = must_split(compress, ":", maxsplit=1)
+        self.compress: DirCompressType = _compress
+        self.sub_compress: str = sub or "_"
+
+        # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
 
     def after_set_attrs(self) -> None: ...
 
-    def open(self, *, mode: str, **kwargs):
-        if not self.compress:
-            return ""
-        elif self.compress in {"zip"}:
+    def open(self, *, mode: str, **kwargs) -> OpenDirProtocol:
+        """Open dir"""
+        if self.compress in {"zip"}:
             import zipfile
+
+            ZIP_COMPRESS: dict[str, Any] = {
+                "_": zipfile.ZIP_DEFLATED,
+                "bz2": zipfile.ZIP_BZIP2,
+            }
 
             return zipfile.ZipFile(
                 self.path,
                 mode=mode,
-                compression=zipfile.ZIP_DEFLATED,
+                compression=ZIP_COMPRESS[self.sub_compress],
                 **kwargs,
             )
         elif self.compress in {"tar"}:
-            import tarfile
+            TAR_COMPRESS: dict[str, str] = {
+                "_": "gz",
+                "gz": "gz",
+                "bz2": "bz2",
+                "xz": "xz",
+            }
 
-            # TODO: Wrapped tar module with change some methods like,
-            #   - add --> write
-            return tarfile.open(
+            return CustomTarFile.open(
                 self.path,
-                mode=f"{mode}:gz",  # w:bz2
+                mode=f"{mode}:{TAR_COMPRESS[self.sub_compress]}",
             )
-        return NotImplementedError
+        raise NotImplementedError
 
 
 class EnvFl(Fl, FlAbc):
