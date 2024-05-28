@@ -1,7 +1,5 @@
 import os
 import shutil
-import unittest
-import warnings
 from collections.abc import Generator
 from pathlib import Path
 from textwrap import dedent
@@ -96,122 +94,117 @@ def test_read_yaml_file(target_path, yaml_str_safe, yaml_data_safe):
     assert yaml_data_safe == data
 
 
-class YamlEnvFileTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.root_path: str = os.path.dirname(os.path.abspath(__file__)).replace(
-            os.sep, "/"
-        )
-
-    def setUp(self) -> None:
-        self.maxDiff = None
-        warnings.simplefilter("ignore", category=ResourceWarning)
-        self.yaml_str: str = dedent(
-            """
-        main_key:
-            sub_key:
-                key01: 'test ${DEMO_ENV_VALUE} value'
-                key02: $1 This is escape with number
-                key03: $$ESCAPE This is escape with $
-                key04: ['i1', 'i2', '${DEMO_ENV_VALUE}']
-                key05: ${DEMO_ENV_VALUE_EMPTY:default}
-                key06: $${DEMO_ENV_VALUE}
-                key07: This ${DEMO_ENV_VALUE} ${{DEMO_ENV_VALUE}}
-                key08: |
-                    # Comment
-                    statement ${DEMO_ENV_VALUE}
+@pytest.fixture(scope="module")
+def yaml_str_env_safe() -> str:
+    return dedent(
         """
-        ).strip()
-        self.yaml_data: dict = {
-            "main_key": {
-                "sub_key": {
-                    "key01": "test demo value",
-                    "key02": "$1 This is escape with number",
-                    "key03": "$ESCAPE This is escape with $",
-                    "key04": ["i1", "i2", "demo"],
-                    "key05": "default",
-                    "key06": "${DEMO_ENV_VALUE}",
-                    "key07": "This demo ${{DEMO_ENV_VALUE}}",
-                    "key08": "# Comment\nstatement demo",
-                },
+    main_key:
+        sub_key:
+            key01: 'test ${DEMO_ENV_VALUE} value'
+            key02: $1 This is escape with number
+            key03: $$ESCAPE This is escape with $
+            key04: ['i1', 'i2', '${DEMO_ENV_VALUE}']
+            key05: ${DEMO_ENV_VALUE_EMPTY:default}
+            key06: $${DEMO_ENV_VALUE}
+            key07: This ${DEMO_ENV_VALUE} ${{DEMO_ENV_VALUE}}
+            key08: |
+                # Comment
+                statement ${DEMO_ENV_VALUE}
+    """
+    ).strip()
+
+
+@pytest.fixture(scope="module")
+def yaml_data_env_safe() -> dict[str, Any]:
+    return {
+        "main_key": {
+            "sub_key": {
+                "key01": "test demo value",
+                "key02": "$1 This is escape with number",
+                "key03": "$ESCAPE This is escape with $",
+                "key04": ["i1", "i2", "demo"],
+                "key05": "default",
+                "key06": "${DEMO_ENV_VALUE}",
+                "key07": "This demo ${{DEMO_ENV_VALUE}}",
+                "key08": "# Comment\nstatement demo",
             },
+        },
+    }
+
+
+def test_read_yaml_file_with_safe_mode(
+    yaml_str_env_safe,
+    yaml_data_env_safe,
+    target_path,
+):
+    yaml_path: str = target_path / "test_read_file_env.yaml"
+
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
+
+    os.environ["DEMO_ENV_VALUE"] = "demo"
+
+    data = fl.YamlEnvFl(path=yaml_path).read()
+    assert yaml_data_env_safe == data
+
+
+def test_read_yaml_file_with_safe_mode_and_prepare(
+    target_path,
+    yaml_str_env_safe,
+):
+    yaml_path: str = target_path / "test_read_file_env_prepare.yaml"
+
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
+
+    os.environ["DEMO_ENV_VALUE"] = "demo"
+
+    yml_loader = fl.YamlEnvFl(path=yaml_path)
+    yml_loader.prepare = lambda x: f"{x}!!"
+    data = yml_loader.read()
+    assert {
+        "main_key": {
+            "sub_key": {
+                "key01": "test demo!! value",
+                "key02": "$1 This is escape with number",
+                "key03": "$ESCAPE This is escape with $",
+                "key04": ["i1", "i2", "demo!!"],
+                "key05": "default!!",
+                "key06": "${DEMO_ENV_VALUE}",
+                "key07": "This demo!! ${{DEMO_ENV_VALUE}}",
+                "key08": "# Comment\nstatement demo!!",
+            }
         }
+    } == data
 
-    def test_read_yaml_file_with_safe_mode(self):
-        yaml_path: str = f"{self.root_path}/test_read_file_env.yaml"
 
-        with open(yaml_path, mode="w", encoding="utf-8") as f:
-            yaml.dump(yaml.safe_load(self.yaml_str), f)
+def test_read_yaml_file_with_safe_mode_and_prepare_2(
+    target_path,
+    yaml_str_env_safe,
+):
+    yaml_path: str = target_path / "test_read_file_env_prepare_2.yaml"
 
-        os.environ["DEMO_ENV_VALUE"] = "demo"
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
 
-        data = fl.YamlEnvFl(path=yaml_path).read()
-        self.assertDictEqual(self.yaml_data, data)
+    os.environ["DEMO_ENV_VALUE"] = "P@ssW0rd"
 
-        os.remove(yaml_path)
+    import urllib.parse
 
-    def test_read_yaml_file_with_safe_mode_and_prepare(self):
-        yaml_path: str = f"{self.root_path}/test_read_file_env_prepare.yaml"
-
-        with open(yaml_path, mode="w", encoding="utf-8") as f:
-            yaml.dump(yaml.safe_load(self.yaml_str), f)
-
-        os.environ["DEMO_ENV_VALUE"] = "demo"
-
-        yml_loader = fl.YamlEnvFl(path=yaml_path)
-        yml_loader.prepare = lambda x: f"{x}!!"
-        data = yml_loader.read()
-        self.assertDictEqual(
-            {
-                "main_key": {
-                    "sub_key": {
-                        "key01": "test demo!! value",
-                        "key02": "$1 This is escape with number",
-                        "key03": "$ESCAPE This is escape with $",
-                        "key04": ["i1", "i2", "demo!!"],
-                        "key05": "default!!",
-                        "key06": "${DEMO_ENV_VALUE}",
-                        "key07": "This demo!! ${{DEMO_ENV_VALUE}}",
-                        "key08": "# Comment\nstatement demo!!",
-                    }
-                }
-            },
-            data,
-        )
-
-        os.remove(yaml_path)
-
-    def test_read_yaml_file_with_safe_mode_and_prepare_2(self):
-        yaml_path: str = f"{self.root_path}/test_read_file_env_prepare_2.yaml"
-
-        with open(yaml_path, mode="w", encoding="utf-8") as f:
-            yaml.dump(yaml.safe_load(self.yaml_str), f)
-
-        os.environ["DEMO_ENV_VALUE"] = "P@ssW0rd"
-
-        import urllib.parse
-
-        yml_loader = fl.YamlEnvFl
-        yml_loader.prepare = staticmethod(
-            lambda x: urllib.parse.quote_plus(str(x))
-        )
-        data = yml_loader(path=yaml_path).read()
-        self.assertDictEqual(
-            {
-                "main_key": {
-                    "sub_key": {
-                        "key01": "test P%40ssW0rd value",
-                        "key02": "$1 This is escape with number",
-                        "key03": "$ESCAPE This is escape with $",
-                        "key04": ["i1", "i2", "P%40ssW0rd"],
-                        "key05": "default",
-                        "key06": "${DEMO_ENV_VALUE}",
-                        "key07": "This P%40ssW0rd ${{DEMO_ENV_VALUE}}",
-                        "key08": "# Comment\nstatement P%40ssW0rd",
-                    }
-                }
-            },
-            data,
-        )
-
-        os.remove(yaml_path)
+    yml_loader = fl.YamlEnvFl
+    yml_loader.prepare = staticmethod(lambda x: urllib.parse.quote_plus(str(x)))
+    data = yml_loader(path=yaml_path).read()
+    assert {
+        "main_key": {
+            "sub_key": {
+                "key01": "test P%40ssW0rd value",
+                "key02": "$1 This is escape with number",
+                "key03": "$ESCAPE This is escape with $",
+                "key04": ["i1", "i2", "P%40ssW0rd"],
+                "key05": "default",
+                "key06": "${DEMO_ENV_VALUE}",
+                "key07": "This P%40ssW0rd ${{DEMO_ENV_VALUE}}",
+                "key08": "# Comment\nstatement P%40ssW0rd",
+            }
+        }
+    } == data
