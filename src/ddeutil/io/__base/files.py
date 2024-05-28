@@ -40,6 +40,8 @@ from typing import (
     get_args,
 )
 
+import toml
+
 # NOTE: import msgpack
 import yaml
 
@@ -470,15 +472,15 @@ class JsonFl(Fl, FlAbc):
 
 class JsonEnvFl(JsonFl):
     raise_if_not_default: bool = False
-    default: str = "N/A"
-    escape: str = "ESC"
+    default: str = "null"
+    escape: str = "<ESCAPE>"
 
     @staticmethod
     def prepare(x: str) -> str:
         return x
 
     def read(self) -> Union[dict[Any, Any], list[Any]]:
-        with self.open(mode="r") as _r:
+        with self.open(mode="rt") as _r:
             return json.loads(
                 search_env_replace(
                     _r.read(),
@@ -491,6 +493,38 @@ class JsonEnvFl(JsonFl):
 
     def write(self, data, *, indent: int = 4) -> None:
         raise NotImplementedError
+
+
+class TomlFl(Fl, FlAbc):
+    def read(self):
+        with self.open(mode="rt") as _r:
+            return toml.loads(_r.read())
+
+    def write(self, data: Any) -> None:
+        with self.open(mode="wt") as _w:
+            toml.dump(data, _w)
+
+
+class TomlEnvFl(TomlFl):
+    raise_if_not_default: bool = False
+    default: str = "null"
+    escape: str = "<ESCAPE>"
+
+    @staticmethod
+    def prepare(x: str) -> str:
+        return x
+
+    def read(self):
+        with self.open(mode="rt") as _r:
+            return toml.loads(
+                search_env_replace(
+                    _r.read(),
+                    raise_if_default_not_exists=self.raise_if_not_default,
+                    default=self.default,
+                    escape=self.escape,
+                    caller=self.prepare,
+                )
+            )
 
 
 class PickleFl(Fl, FlAbc):
@@ -523,6 +557,8 @@ __all__ = (
     "YamlEnvFl",
     "CsvFl",
     "CsvPipeFl",
+    "TomlFl",
+    "TomlEnvFl",
     "MarshalFl",
     "PickleFl",
 )
