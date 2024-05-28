@@ -2,6 +2,25 @@
 
 ## Latest Changes
 
+## 0.1.8
+
+### :sparkles: Features
+
+- :dart: feat: add toml file for base file loader. (_2024-05-28_)
+
+### :black_nib: Code Changes
+
+- :construction: refactored: update dir on file utils func. (_2024-05-28_)
+- :test_tube: tests: remve unittest to assert test. (_2024-05-28_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update docs-string for mapping utils func. (_2024-05-27_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: add pre-load yaml file instead comment search replace. (_2024-05-22_)
+
 ## 0.1.7
 
 ### :sparkles: Features
