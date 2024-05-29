@@ -97,7 +97,7 @@ class FlAbc(abc.ABC):
     def write(self, *args, **kwargs): ...
 
 
-class Fl:
+class Fl(FlAbc):
     """Open File Object that use to open any simple or compression file from
     local file system.
 
@@ -185,6 +185,12 @@ class Fl:
         finally:
             file.close()
 
+    def read(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def write(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class OpenDirProtocol(Protocol):
 
@@ -263,7 +269,7 @@ class Dir:
         raise NotImplementedError
 
 
-class EnvFl(Fl, FlAbc):
+class EnvFl(Fl):
     """Env object which mapping search engine"""
 
     keep_newline: ClassVar[bool] = False
@@ -285,7 +291,7 @@ class EnvFl(Fl, FlAbc):
         raise NotImplementedError
 
 
-class YamlFl(Fl, FlAbc):
+class YamlFl(Fl):
     """Yaml File Object
 
     .. noted::
@@ -385,7 +391,7 @@ class YamlEnvFl(YamlFl):
         raise NotImplementedError
 
 
-class CsvFl(Fl, FlAbc):
+class CsvFl(Fl):
     def read(self) -> list[str]:
         with self.open(mode="r") as _r:
             try:
@@ -482,7 +488,7 @@ class CsvPipeFl(CsvFl):
                 writer.writerows(data)
 
 
-class JsonFl(Fl, FlAbc):
+class JsonFl(Fl):
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as _r:
             try:
@@ -529,7 +535,7 @@ class JsonEnvFl(JsonFl):
         raise NotImplementedError
 
 
-class TomlFl(Fl, FlAbc):
+class TomlFl(Fl):
     def read(self):
         with self.open(mode="rt") as _r:
             return toml.loads(_r.read())
@@ -561,7 +567,7 @@ class TomlEnvFl(TomlFl):
             )
 
 
-class PickleFl(Fl, FlAbc):
+class PickleFl(Fl):
     def read(self):
         with self.open(mode="rb") as _r:
             return pickle.loads(_r.read())
@@ -571,7 +577,7 @@ class PickleFl(Fl, FlAbc):
             pickle.dump(data, _w)
 
 
-class MarshalFl(Fl, FlAbc):
+class MarshalFl(Fl):
     def read(self):
         with self.open(mode="rb") as _r:
             return marshal.loads(_r.read())

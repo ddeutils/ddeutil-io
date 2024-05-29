@@ -8,7 +8,7 @@
 
 - [Installation](#installation)
 - [Features](#features)
-  - [File](#file)
+  - [Files](#files)
   - [Config](#config)
   - [Register](#register)
 
@@ -22,29 +22,45 @@ of this config file lifecycle.
 pip install ddeutil-io
 ```
 
+This package need to install `ddeutil` for core package namespace.
+
 ## Features
 
-### File
+### Files
 
 File Objects that use to read or write data to that format.
+
+For example, I will represent YamlEnvFl object that passing environment variable
+to reading content before passing to the Yaml loader.
+
+```yaml
+data:
+  get: HELLO ${HELLO}
+```
 
 ```python
 import os
 from ddeutil.io import YamlEnvFl
 
 os.environ["HELLO"] = "WORLD"
+
 content = YamlEnvFl('./.pre-commit-config.yaml').read(safe=True)
+assert content['data']['get'] == "HELLO WORLD"
 ```
 
 ### Config
 
-The **Config Object** is the file system handler object.
+Config Object is the dir system handler object that manage any files in that
+input dir path like `load`, `save`, `load_stage`, `save_stage`, or `files`.
 
 ```python
 from pathlib import Path
 from ddeutil.io.config import ConfFl
 
-config: ConfFl = ConfFl(path=Path('./file.gz.yaml'), compress="gzip")
+config: ConfFl = ConfFl(path=Path('./conf'), compress="gzip")
+
+data = config.load('config_file.yaml')
+config.save_stage('./stage/file.json', data)
 ```
 
 ### Register
@@ -55,11 +71,11 @@ in any stage storage and generate its metadata to you.
 
 ```python
 from ddeutil.io.register import Register
-from ddeutil.io.models import Params
+from ddeutil.io.param import Params
 
 registry: Register = Register(
     name='examples:conn_data_local_file',
-    config=Params.model_validate({
+    params=Params.model_validate({
         "stages": {
             "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
         },
@@ -67,6 +83,24 @@ registry: Register = Register(
 )
 registry.move(stage="raw")
 ```
+
+The raw data of this config was written in `conn_file.yaml` file.
+
+```text
+conf/
+  examples/
+    conn_file.yaml
+```
+
+When call `move` method, it will transfer data from `.yaml` file to `json` file
+with the data hashing algorithm.
+
+```text
+data/
+  raw/
+    conn_file_20240101_000000.json
+```
+
 
 ## License
 
