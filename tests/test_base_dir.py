@@ -42,7 +42,7 @@ def test_open_dir_common_zip(target_path, data_path):
         path=target_path / "test_common_zip.zip",
         compress="zip",
     ).open(mode="r") as d:
-        d.extractall(target_path / "test_common_zip_extract")
+        d.safe_extract(target_path / "test_common_zip_extract")
 
     assert [
         "test_file.json",
@@ -62,7 +62,7 @@ def test_open_dir_common_tar(target_path, data_path):
         path=target_path / "test_common_tar.tar.gz",
         compress="tar:gz",
     ).open(mode="r") as d:
-        d.extractall(target_path / "test_common_tar_extract")
+        d.safe_extract(target_path / "test_common_tar_extract")
 
     assert [
         "test_file.json",
