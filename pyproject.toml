@@ -68,7 +68,7 @@ addopts = [
 ]
 filterwarnings = [
     "error",
-    "ignore::DeprecationWarning",
+#    "ignore::DeprecationWarning",
 ]
 
 [tool.mypy]

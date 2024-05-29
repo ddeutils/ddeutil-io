@@ -8,7 +8,7 @@ This is then main function for open any files in local or remote space
 with the best python libraries and the best practice such as build-in
 ``io.open``, ``mmap.mmap``, etc.
 
-NOTE:
+TODO:
     - Add more compress type such as
         - h5,hdf5(h5py)
         - fits(astropy)
@@ -25,6 +25,7 @@ import marshal
 import mmap
 import os
 import pickle
+import zipfile
 from contextlib import contextmanager
 from pathlib import Path
 from tarfile import TarFile
@@ -189,13 +190,29 @@ class OpenDirProtocol(Protocol):
 
     def write(self, name, arcname): ...
 
-    def extractall(self, path): ...
+    def safe_extract(self, path, members): ...
 
 
-class CustomTarFile(TarFile):
+class CustomZipFl(zipfile.ZipFile):
+
+    def safe_extract(self, path=None, members=None):
+        self.extractall(path, members)
+
+
+class CustomTarFl(TarFile):
 
     def write(self, name, arcname=None):
+        """Clone ``self.add`` method to the new name."""
         return self.add(name, arcname)
+
+    def safe_extract(self, path: str | Path = ".", members=None):
+        path: Path = path if isinstance(path, Path) else Path(path)
+        # NOTE: For Python version >= 3.12
+        if hasattr(self, "data_filter"):
+            self.extractall(path, members, filter="data")
+            return
+
+        self.extractall(path, members)
 
 
 class Dir:
@@ -220,14 +237,12 @@ class Dir:
     def open(self, *, mode: str, **kwargs) -> OpenDirProtocol:
         """Open dir"""
         if self.compress in {"zip"}:
-            import zipfile
-
             ZIP_COMPRESS: dict[str, Any] = {
                 "_": zipfile.ZIP_DEFLATED,
                 "bz2": zipfile.ZIP_BZIP2,
             }
 
-            return zipfile.ZipFile(
+            return CustomZipFl(
                 self.path,
                 mode=mode,
                 compression=ZIP_COMPRESS[self.sub_compress],
@@ -241,7 +256,7 @@ class Dir:
                 "xz": "xz",
             }
 
-            return CustomTarFile.open(
+            return CustomTarFl.open(
                 self.path,
                 mode=f"{mode}:{TAR_COMPRESS[self.sub_compress]}",
             )
