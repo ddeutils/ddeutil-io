@@ -24,6 +24,7 @@ import marshal
 import mmap
 import os
 import pickle
+import sys
 import zipfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -205,10 +206,9 @@ class CustomTarFl(TarFile):
     def safe_extract(self, path: str | Path = ".", members=None):
         path: Path = path if isinstance(path, Path) else Path(path)
         # NOTE: For Python version >= 3.12
-        if hasattr(self, "data_filter"):
+        if sys.version_info >= (3, 12):
             self.extractall(path, members, filter="data")
             return
-
         self.extractall(path, members)
 
 
