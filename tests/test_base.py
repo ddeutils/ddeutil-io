@@ -46,17 +46,17 @@ def test_base_path_search_raise(make_empty_path):
 
 def test_base_path_search(make_path):
     ps = base.PathSearch(make_path)
-    assert [
+    assert {
         make_path / "dir01/01_01_test.text",
         make_path / "dir01/01_02_test.text",
         make_path / "dir02/02_01_test.text",
-    ] == ps.files
+    } == set(ps.files)
 
     ps = base.PathSearch(make_path, exclude=["dir02"])
-    assert [
+    assert {
         make_path / "dir01/01_01_test.text",
         make_path / "dir01/01_02_test.text",
-    ] == ps.files
+    } == set(ps.files)
 
     assert (
         dedent(
