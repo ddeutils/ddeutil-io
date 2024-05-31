@@ -6,18 +6,15 @@
 from __future__ import annotations
 
 import os
-from typing import (
-    Callable,
-    Optional,
-)
+from typing import Callable
 
 try:
     from .__regex import RegexConf
-except ImportError:
+except ImportError:  # no cove
     from __regex import RegexConf
 
 
-def add_newline(text: str, newline: Optional[str] = None) -> str:
+def add_newline(text: str, newline: str | None = None) -> str:
     """Add newline to a text value.
 
     :param text: A text value that want to add newline.
@@ -70,16 +67,16 @@ def search_env_replace(
         search: str = content.group(1)
         if not (_escaped := content.group("escaped")):
             var: str = content.group("braced")
+            print(f"{var=}")
             _braced_default: str = content.group("braced_default")
             if not _braced_default and raise_if_default_not_exists:
                 raise ValueError(
-                    f"Could not find default value for {var} "
-                    f"in `.yaml` file"
+                    f"Could not find default value for {var} in the contents"
                 )
             elif not var:
                 raise ValueError(
-                    f"Value {search!r} in `.yaml` file has something wrong "
-                    f"with regular expression"
+                    f"Value {search!r} in the contents file has something "
+                    f"wrong with regular expression"
                 )
             replaces[search] = caller(
                 os.environ.get(var, _braced_default) or default
@@ -137,16 +134,16 @@ def search_env(
     for content in RegexConf.RE_DOTENV.finditer(contents):
         name: str = content.group("name")
 
-        # Remove leading/trailing whitespace
+        # NOTE: Remove leading/trailing whitespace
         _value: str = (content.group("value") or "").strip()
 
-        if not _value:
+        if not _value or _value in ("''", '""'):
             raise ValueError(
-                f"Value {name:!r} in `.env` file does not set value "
+                f"Value {name!r} in `.env` file does not set value "
                 f"of variable"
             )
         value: str = _value if keep_newline else "".join(_value.splitlines())
-        quoted: Optional[str] = None
+        quoted: str | None = None
 
         # Remove surrounding quotes
         if m2 := RegexConf.RE_ENV_VALUE_QUOTED.match(value):

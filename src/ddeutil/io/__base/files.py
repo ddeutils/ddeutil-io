@@ -50,7 +50,7 @@ from ddeutil.core import must_split
 try:
     from yaml import CSafeLoader as SafeLoader
     from yaml import CUnsafeLoader as UnsafeLoader
-except ImportError:
+except ImportError:  # no cove
     from yaml import SafeLoader, UnsafeLoader
 
 from .utils import search_env, search_env_replace
@@ -82,13 +82,13 @@ def compress_lib(compress: str) -> CompressProtocol:
     raise NotImplementedError(f"Compress {compress} does not implement yet")
 
 
-class CompressProtocol(Protocol):
+class CompressProtocol(Protocol):  # no cove
     def decompress(self, *args, **kwargs) -> AnyStr: ...
 
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class FlAbc(abc.ABC):
+class FlAbc(abc.ABC):  # no cove
     @abc.abstractmethod
     def read(self, *args, **kwargs): ...
 
@@ -132,25 +132,17 @@ class Fl(FlAbc):
             "Does not implement decompress method for None compress value."
         )
 
-    def convert_mode(
-        self,
-        mode: Optional[str] = None,
-        *,
-        default: bool = True,
-    ) -> dict[str, str]:
+    def convert_mode(self, mode: str | None = None) -> dict[str, str]:
         """Convert mode before passing to the main standard lib.
 
         :param mode: a reading or writing mode for the open method.
-        :param default: a default flag for return reading mode if a mode does
-            not set.
-        :type default: bool(=True)
 
-        :return: A mapping of mode and other input parameters for standard libs.
+        :rtype: dict[str, str]
+        :returns: A mapping of mode and other input parameters for standard
+            libs.
         """
         if not mode:
-            if default:
-                return {"mode": "r"}
-            raise ValueError("The mode value does not set.")
+            return {"mode": "r"}
         byte_mode: bool = "b" in mode
         if self.compress is None:
             _mode: dict[str, str] = {"mode": mode}

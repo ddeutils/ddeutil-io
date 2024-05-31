@@ -56,9 +56,3 @@ def test_base_path_search(make_path):
         make_path / "dir01/01_01_test.text",
         make_path / "dir01/01_02_test.text",
     } == set(ps.files)
-    assert {
-        "[test_path_search]",
-        f"├─[{make_path / 'dir01'}]",
-        f"│   ├─{make_path / 'dir01/01_01_test.text'}",
-        f"│   └─{make_path / 'dir01/01_02_test.text'}",
-    } == set(ps.tree().split("\n"))

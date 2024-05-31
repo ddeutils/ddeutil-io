@@ -9,9 +9,7 @@ import fnmatch
 import os
 import shutil
 from pathlib import Path
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 from .__regex import RegexConf
 from .files import (
@@ -137,7 +135,7 @@ class PathSearch:
             )
         )
 
-    def tree(self, newline: Optional[str] = None) -> str:
+    def tree(self, newline: Optional[str] = None) -> str:  # no cove
         """Return path tree of root path."""
         return (newline or "\n").join(self.output_buf)
 

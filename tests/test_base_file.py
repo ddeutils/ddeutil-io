@@ -35,6 +35,11 @@ def test_open_file_common(openfile_path, encoding):
 
     assert "Write data with common file in normal mode" == rs
 
+    with opf() as f:
+        rs = f.read()
+
+    assert "Write data with common file in normal mode" == rs
+
 
 def test_open_file_common_append(openfile_path, encoding):
     opf = fl.Fl(

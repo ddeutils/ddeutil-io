@@ -11,10 +11,8 @@ from ddeutil.core import import_string, str2args
 
 try:
     from .__base import RegexConf
-    from .exceptions import ConfigArgumentError
-except ImportError:
+except ImportError:  # no cove
     from __base import RegexConf
-    from exceptions import ConfigArgumentError
 
 
 T = TypeVar("T")
@@ -43,9 +41,8 @@ def map_secret(value: T, secrets: dict[str, str]) -> T:
     for search in RegexConf.RE_SECRETS.finditer(value):
         searches: dict = search.groupdict()
         if "." in (br := searches["braced"]):
-            raise ConfigArgumentError(
-                "@secrets",
-                f", value {br!r},  should not contain dot ('.') in get value.",
+            raise ValueError(
+                f"The @secrets: {br!r}, should not contain dot ('.') char"
             )
         value: str = value.replace(
             searches["search"],
@@ -74,9 +71,8 @@ def map_importer(value: T) -> T:
     for search in RegexConf.RE_FUNCTION.finditer(value):
         searches: dict = search.groupdict()
         if not callable(_fn := import_string(searches["function"])):
-            raise ConfigArgumentError(
-                "@function",
-                f'from function {searches["function"]!r} is not callable.',
+            raise ValueError(
+                f'The @function: {searches["function"]!r} is not callable.',
             )
         args, kwargs = str2args(searches["arguments"])
         value: str = value.replace(searches["search"], _fn(*args, **kwargs))
