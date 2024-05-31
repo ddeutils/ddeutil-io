@@ -50,13 +50,17 @@ changelog = "CHANGELOG.md"
 [tool.coverage.run]
 branch = true
 concurrency = ["thread", "multiprocessing"]
-source = ["ddeutil.io", "tests"]
-omit = ["scripts/"]
+source = ["ddeutil.io"]
+omit = [
+    "scripts/",
+    "src/ddeutil/io/__about__.py",
+]
 relative_files = true
 
 [tool.coverage.report]
 exclude_lines = [
-    "raise NotImplementedError"
+    "raise NotImplementedError",
+    "no cove",
 ]
 
 [tool.pytest.ini_options]

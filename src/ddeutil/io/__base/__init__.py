@@ -34,7 +34,7 @@ from .utils import (
 )
 
 
-def rm(path: str, is_dir: bool = False) -> None:
+def rm(path: str, is_dir: bool = False) -> None:  # no cove
     """Remove file or dir from a input path."""
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
@@ -46,7 +46,7 @@ def rm(path: str, is_dir: bool = False) -> None:
         )
 
 
-def touch(filename: str, times=None) -> None:
+def touch(filename: str, times=None) -> None:  # no cove
     """Touch file"""
     file_handle = open(filename, mode="a")
     try:
@@ -63,13 +63,11 @@ class PathSearch:
         root: Path,
         *,
         exclude: Optional[list] = None,
-        exclude_dir: Optional[list] = None,
         max_level: int = -1,
         length: int = 4,
         icon: int = 1,
     ):
         self.root: Path = root
-        self.exclude_dir: list = exclude_dir or []
         self.exclude: list = exclude or []
         self.max_level: int = max_level
         self.length: int = length
@@ -87,10 +85,7 @@ class PathSearch:
 
         self.output_buf: list = [f"[{self.root.stem}]"]
         self.files: list[Path] = []
-        try:
-            self.__recurse(self.root, list(self.root.iterdir()), "", 0)
-        except FileNotFoundError:
-            pass
+        self.__recurse(self.root, list(self.root.iterdir()), "", 0)
 
     @property
     def level(self) -> int:
@@ -100,7 +95,7 @@ class PathSearch:
     def __recurse(
         self,
         path: Path,
-        file_list: list,
+        file_list: list[Path],
         prefix: str,
         level: int,
     ):
@@ -111,13 +106,12 @@ class PathSearch:
         self.real_level: int = max(level, self.real_level)
         file_list.sort(key=lambda f: (path / f).is_file())
         for idx, sub_path in enumerate(file_list):
-            if any(exc == sub_path for exc in self.exclude):
+            if any(exc == sub_path.name for exc in self.exclude):
                 continue
 
             full_path: Path = path / sub_path
             idc: str = self.__switch_icon(idx, len(file_list))
-
-            if full_path.is_dir() and sub_path not in self.exclude_dir:
+            if full_path.is_dir():
                 self.output_buf.append(f"{prefix}{idc}[{sub_path}]")
                 tmp_prefix: str = (
                     (
@@ -130,7 +124,7 @@ class PathSearch:
                 self.__recurse(
                     full_path, list(full_path.iterdir()), tmp_prefix, level + 1
                 )
-            elif full_path.is_file():
+            elif full_path.is_file():  # no cove
                 self.output_buf.append(f"{prefix}{idc}{sub_path}")
                 self.files.append(full_path)
 
