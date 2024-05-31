@@ -137,8 +137,6 @@ class PathData(BaseModel):
     def prepare_path_from_path_str(cls, v, info: ValidationInfo) -> Path:
         if v is not None:
             return Path(v) if isinstance(v, str) else v
-        if info.field_name == "archive":
-            return info.data["root"] / ".archive"
         return info.data["root"] / info.field_name
 
 
