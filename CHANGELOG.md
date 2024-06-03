@@ -2,6 +2,34 @@
 
 ## Latest Changes
 
+## 0.1.9
+
+### :sparkles: Features
+
+- :dart: feat: merge ddeutil-model to this proj. (_2024-06-03_)
+- :dart: feat: override tar and zip class for make the same protocol. (_2024-05-29_)
+
+### :black_nib: Code Changes
+
+- :construction: refactored: 📦 bump pydantic from 2.7.1 to 2.7.2 (_2024-06-01_)
+- :test_tube: tests: add testcase for make coverage. (_2024-05-31_)
+- :test_tube: tests: add testcases for base path search. (_2024-05-31_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file for more examples. (_2024-05-29_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: tarfil extract deprecate on python version 3.12. (_2024-05-31_)
+- :gear: fixed: change charactor that does not display. (_2024-05-31_)
+- :gear: fixed: change list equal to set for file search path. (_2024-05-31_)
+- :gear: fixed: change extract method on test cases. (_2024-05-29_)
+
+### :package: Build & Workflow
+
+- :toolbox: build: update ignore dir for examples on models. (_2024-06-03_)
+
 ## 0.1.8
 
 ### :sparkles: Features
