@@ -166,5 +166,6 @@ cython_debug/
 .ruff_cache/
 
 # Internal
-/logs/
-/data/
+logs/
+data/
+examples/
