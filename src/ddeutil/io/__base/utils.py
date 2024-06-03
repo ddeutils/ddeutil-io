@@ -67,7 +67,6 @@ def search_env_replace(
         search: str = content.group(1)
         if not (_escaped := content.group("escaped")):
             var: str = content.group("braced")
-            print(f"{var=}")
             _braced_default: str = content.group("braced_default")
             if not _braced_default and raise_if_default_not_exists:
                 raise ValueError(
