@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import ddeutil.io.param as md
+import pytest
 from ddeutil.io.__conf import UPDATE_KEY, VERSION_KEY
+from ddeutil.io.exceptions import ConfigArgumentError
 
 
 def test_model_path_default(test_path):
@@ -68,6 +70,28 @@ def test_model_stage_data():
         },
         "layer": 0,
     } == stage.model_dump()
+
+    with pytest.raises(ConfigArgumentError):
+        md.Stage.model_validate(
+            {
+                "alias": "persisted",
+                "format": "timestamp.json",
+                "rules": {
+                    "timestamp": {"minutes": 15},
+                },
+            }
+        )
+
+    with pytest.raises(ConfigArgumentError):
+        md.Stage.model_validate(
+            {
+                "alias": "persisted",
+                "format": "{datetime:%Y%m%d}.json",
+                "rules": {
+                    "timestamp": {"minutes": 15},
+                },
+            }
+        )
 
 
 def test_model_params():

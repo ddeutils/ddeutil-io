@@ -8,8 +8,6 @@ Define Errors Object for IO package
 """
 from __future__ import annotations
 
-from typing import Union
-
 
 class BaseError(Exception):
     """Base Error Object that use for catch any errors statement of
@@ -28,7 +26,7 @@ class ConfigNotFound(IOBaseError):
 class ConfigArgumentError(IOBaseError):
     """Error raise for a wrong configuration argument."""
 
-    def __init__(self, argument: Union[str, tuple], message: str):
+    def __init__(self, argument: str | tuple, message: str) -> None:
         """Main Initialization that merge the argument and message input values
         with specific content message together like
 

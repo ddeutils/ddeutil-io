@@ -80,6 +80,10 @@ class BaseConfFl:
         :param order: An order number that want to get from ordered list
             of duplicate data.
         :type order: int(=1)
+
+        :rtype: dict[str, Any]
+        :returns: A loaded data from open file object that already adding
+            `alias` key with a config name.
         """
         rs: list[dict[Any, Any]]
         if rs := [

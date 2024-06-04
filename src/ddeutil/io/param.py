@@ -79,7 +79,7 @@ class Stage(BaseModel):
     layer: int = Field(default=0)
 
     @field_validator("format", mode="before")
-    def validate_format(cls, value, info: ValidationInfo):
+    def validate_format(cls, value: str, info: ValidationInfo):
         # NOTE:
         #   Validate the name in format string should contain any format name.
         if not (
@@ -125,6 +125,16 @@ class Stage(BaseModel):
 
 
 class PathData(BaseModel):
+    """Path Data Model that keep necessary paths for register or loading object.
+
+    Examples:
+        >>> path_data = {
+        ...     "root": "./",
+        ...     "data": "./data",
+        ...     "conf": "./config",
+        ... }
+    """
+
     root: Path = Field(default_factory=Path)
     data: Path = Field(default=None, validate_default=True)
     conf: Path = Field(default=None, validate_default=True)
@@ -157,7 +167,6 @@ class Params(BaseModel, validate_assignment=True):
     @classmethod
     def from_yaml(cls, path: Union[str, Path]):
         """Load params from .yaml file"""
-        cls._origin_path = path
         return cls.model_validate(YamlEnvFl(path).read())
 
     @field_validator("stages", mode="before")
@@ -179,7 +188,12 @@ class Params(BaseModel, validate_assignment=True):
         return min(self.stages.items(), key=lambda i: i[1].layer)[0]
 
     def get_stage(self, name: str) -> Stage:
-        """Return Stage model that match with stage name."""
+        """Return Stage model that match with stage name. If an input stage
+        value equal 'base', it will return the default stage model.
+
+        :param name: A stage name that want to getting from this params.
+        :type name: str
+        """
         if name == "base":
             return Stage.model_validate(
                 {

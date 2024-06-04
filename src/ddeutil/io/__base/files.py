@@ -42,9 +42,8 @@ from typing import (
     get_args,
 )
 
+import msgpack
 import toml
-
-# NOTE: import msgpack
 import yaml
 from ddeutil.core import must_split
 
@@ -578,6 +577,16 @@ class MarshalFl(Fl):
             marshal.dump(data, _w)
 
 
+class MsgpackFl(Fl):
+    def read(self):
+        with self.open(mode="rb") as _r:
+            return msgpack.loads(_r.read())
+
+    def write(self, data):
+        with self.open(mode="wb") as _w:
+            msgpack.dump(data, _w)
+
+
 __all__ = (
     "Fl",
     "EnvFl",
@@ -591,5 +600,6 @@ __all__ = (
     "TomlFl",
     "TomlEnvFl",
     "MarshalFl",
+    "MsgpackFl",
     "PickleFl",
 )

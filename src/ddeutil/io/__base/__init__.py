@@ -20,6 +20,7 @@ from .files import (
     JsonEnvFl,
     JsonFl,
     MarshalFl,
+    MsgpackFl,
     PickleFl,
     TomlEnvFl,
     TomlFl,

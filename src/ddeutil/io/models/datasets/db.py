@@ -60,11 +60,8 @@ class Tbl(BaseTbl):
     ]
 
     @field_validator("pk")
-    def __receive_pk_from_schemas(
-        cls,
-        value: Pk,
-        info: ValidationInfo,
-    ) -> Pk:
+    def __receive_pk_from_features(cls, value: Pk, info: ValidationInfo) -> Pk:
+        """Receive the primary key from the features."""
         # NOTE:
         #   we respect that `info.data` should contain schema before `pk`
         #   validation.
@@ -87,25 +84,17 @@ class Tbl(BaseTbl):
         return value
 
 
-class BaseFunc(BaseDef):
+class BaseDefine(BaseDef):
     definition: str
 
 
-class Func(BaseFunc): ...
+class Func(BaseDefine): ...
 
 
-class BaseProc(BaseDef):
-    definition: str
+class Proc(BaseDefine): ...
 
 
-class Proc(BaseProc): ...
-
-
-class BaseView(BaseDef):
-    definition: str
-
-
-class View(BaseView): ...
+class View(BaseDefine): ...
 
 
 class BaseScm(BaseUpdatableModel):
