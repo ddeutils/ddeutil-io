@@ -57,6 +57,7 @@ source = ["ddeutil.io"]
 omit = [
     "scripts/",
     "src/ddeutil/io/__about__.py",
+    "src/ddeutil/io/models/examples/",
 ]
 relative_files = true
 

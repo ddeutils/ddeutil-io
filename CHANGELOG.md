@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+## 0.1.10
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update doc-str on param. (_2024-06-04_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: edit print statement to logging. (_2024-06-03_)
+
 ## 0.1.9
 
 ### :sparkles: Features
