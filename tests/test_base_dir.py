@@ -44,10 +44,10 @@ def test_open_dir_common_zip(target_path, data_path):
     ).open(mode="r") as d:
         d.safe_extract(target_path / "test_common_zip_extract")
 
-    assert [
+    assert {
         "test_file.json",
         "test_file_2.json",
-    ] == [f.name for f in (target_path / "test_common_zip_extract").rglob("*")]
+    } == {f.name for f in (target_path / "test_common_zip_extract").rglob("*")}
 
 
 def test_open_dir_common_tar(target_path, data_path):
@@ -64,7 +64,7 @@ def test_open_dir_common_tar(target_path, data_path):
     ).open(mode="r") as d:
         d.safe_extract(target_path / "test_common_tar_extract")
 
-    assert [
+    assert {
         "test_file.json",
         "test_file_2.json",
-    ] == [f.name for f in (target_path / "test_common_tar_extract").rglob("*")]
+    } == {f.name for f in (target_path / "test_common_tar_extract").rglob("*")}
