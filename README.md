@@ -13,9 +13,10 @@
   - [Register](#register)
   - [Models](#models)
 
-This **Utility IO** Object was created for `load` the config data from any file
-format types like `.yaml`, `.json`, or `.toml`, and manage retention and version
-of this config file lifecycle.
+This **Utility IO** Object project was created for the Input/Out Python package
+such as `load` the config data from any file format types like `.yaml`, `.json`,
+or `.toml`, and manage retention and version of this config file lifecycle, or
+data serialization object with Pydantic model.
 
 ## Installation
 
