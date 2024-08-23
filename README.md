@@ -12,6 +12,7 @@
   - [Config](#config)
   - [Register](#register)
   - [Models](#models)
+    - [Usage](#usage)
 
 This **Utility IO** Object project was created for the Input/Out Python package
 such as `load` the config data from any file format types like `.yaml`, `.json`,
@@ -27,6 +28,8 @@ pip install ddeutil-io
 This package need to install `ddeutil` for core package namespace.
 
 ## Features
+
+The features of this package is Input/Output utility objects.
 
 ### Files
 
@@ -152,7 +155,7 @@ assert tbl.features[0].name == "id"
 assert tbl.features[0].dtype.type == "integer"
 ```
 
-#### Examples
+#### Usage
 
 If I have some catalog config, it easy to pass this config to model object.
 
