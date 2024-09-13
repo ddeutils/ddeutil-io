@@ -2,6 +2,14 @@
 
 ## Latest Changes
 
+## 0.1.12
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update testing workflow support python version 3.13. (_2024-09-13_)
+- :pushpin: deps: remove msgspec from this project. (_2024-09-13_)
+- :pushpin: deps: add lower bound dependencies. (_2024-09-13_)
+
 ## 0.1.11
 
 ### :black_nib: Code Changes
