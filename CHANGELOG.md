@@ -2,6 +2,23 @@
 
 ## Latest Changes
 
+## 0.1.11
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: fix a testcase that use list to check equal. (_2024-08-06_)
+- :construction: refactored: 📦 bump pydantic from 2.8.0 to 2.8.2 (_2024-07-25_)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.8.14 to 1.9.0 (_2024-07-01_)
+- :construction: refactored: 📦 bump pydantic from 2.7.2 to 2.8.0 (_2024-07-01_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file. (_2024-08-06_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update pyyaml version to 6.0.2. (_2024-08-23_)
+
 ## 0.1.10
 
 ### :card_file_box: Documents
