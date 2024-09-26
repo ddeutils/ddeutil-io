@@ -24,7 +24,7 @@ dependencies = [
     "ddeutil==0.4.0",
     "fmtutil==1.0.10",
     "tzdata==2024.2",
-    "pydantic==2.8.2",
+    "pydantic==2.9.2",
     "msgpack==1.0.8",
     "deepdiff==8.0.1",
     "pyyaml==6.0.2",

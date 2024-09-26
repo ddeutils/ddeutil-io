@@ -133,6 +133,7 @@ class DbConn(BaseConn):
         if len(dbs := self.db.replace("\\", "/").split("/")) > 1:
             self.db: str = dbs[0]
             self.options["_path"] = "/".join(dbs[1:])
+        return self
 
 
 # @remove_validators('_check_db_name')
@@ -144,4 +145,5 @@ class DbWithSlashConn(DbConn):
         return v
 
     @model_validator(mode="after")
-    def _add_path_to_options(self): ...
+    def _add_path_to_options(self):
+        return self
