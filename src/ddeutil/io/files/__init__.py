@@ -3,6 +3,16 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
+"""
+This is the main function for open any files in local or remote space
+with the best python libraries and the best practice such as build-in
+``io.open``, ``mmap.mmap``, etc.
+
+TODO: Add more compress type such as
+    - h5,hdf5(h5py)
+    - fits(astropy)
+    - rar(...)
+"""
 from __future__ import annotations
 
 import fnmatch
@@ -34,7 +44,11 @@ from .utils import (
 
 
 def rm(path: str, is_dir: bool = False) -> None:  # no cove
-    """Remove file or dir from a input path."""
+    """Remove a file or dir from a input path.
+
+    :param path: A path of file or dir that want to remove.
+    :param is_dir: A flag that tell this input path is dir or not.
+    """
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
     elif os.path.isdir(path) and is_dir:
@@ -46,7 +60,7 @@ def rm(path: str, is_dir: bool = False) -> None:  # no cove
 
 
 def touch(filename: str, times=None) -> None:  # no cove
-    """Touch file"""
+    """Create an empty file with specific name."""
     file_handle = open(filename, mode="a")
     try:
         os.utime(filename, times)

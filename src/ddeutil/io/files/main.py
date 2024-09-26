@@ -3,16 +3,6 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
-"""
-This is then main function for open any files in local or remote space
-with the best python libraries and the best practice such as build-in
-``io.open``, ``mmap.mmap``, etc.
-
-TODO: Add more compress type such as
-    - h5,hdf5(h5py)
-    - fits(astropy)
-    - rar(...)
-"""
 from __future__ import annotations
 
 import abc
@@ -58,6 +48,23 @@ from .utils import search_env, search_env_replace
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
+__all__: tuple[str, ...] = (
+    "Fl",
+    "EnvFl",
+    "JsonFl",
+    "JsonEnvFl",
+    "YamlFl",
+    "YamlFlResolve",
+    "YamlEnvFl",
+    "CsvFl",
+    "CsvPipeFl",
+    "TomlFl",
+    "TomlEnvFl",
+    "MarshalFl",
+    "MsgpackFl",
+    "PickleFl",
+)
+
 
 def compress_lib(compress: str) -> CompressProtocol:
     """Return Compress module that use to unpack data from the compressed file.
@@ -88,7 +95,11 @@ class CompressProtocol(Protocol):  # no cove
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class FlAbc(abc.ABC):  # no cove
+class FlABC(abc.ABC):  # no cove
+    """Open File abstraction object for marking abstract method that need to
+    implement on any subclass.
+    """
+
     @abc.abstractmethod
     def read(self, *args, **kwargs): ...
 
@@ -96,12 +107,20 @@ class FlAbc(abc.ABC):  # no cove
     def write(self, *args, **kwargs): ...
 
 
-class Fl(FlAbc):
-    """Open File Object that use to open any simple or compression file from
-    local file system.
+class Fl(FlABC):
+    """Open File object that use to open any normal or compression file from
+    current local file system (I do not have plan to implement remote object
+    storage like AWS S3, GCS, or ADLS).
+
+        Note that, this object should to implement it with subclass again
+    because it do not override necessary methods from FlABC abstract class.
+
+    :param path: A path that respresent the file location.
+    :param encoding: An open file encoding value, it will use UTF-8 by default.
+    :param compress: A compress type for this file.
 
     Examples:
-        >>> with Fl('./dwh/conf/params.gz.txt', compress='gzip').open() as f:
+        >>> with Fl('./<path>/<filename>.gz.txt', compress='gzip').open() as f:
         ...     data = f.readline()
     """
 
@@ -122,6 +141,7 @@ class Fl(FlAbc):
     def after_set_attrs(self) -> None: ...
 
     def __call__(self, *args, **kwargs) -> IO:
+        """Return IO of this object."""
         return self.open(*args, **kwargs)
 
     @property
@@ -156,6 +176,7 @@ class Fl(FlAbc):
         return {"mode": mode}
 
     def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
+        """Opening this file object."""
         return compress_lib(self.compress).open(
             self.path,
             **(self.convert_mode(mode) | kwargs),
@@ -177,10 +198,10 @@ class Fl(FlAbc):
             file.close()
 
     def read(self, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def write(self, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class OpenDirProtocol(Protocol):
@@ -282,7 +303,7 @@ class EnvFl(Fl):
 
 
 class YamlFl(Fl):
-    """Yaml File Object
+    """Open Yaml File object.
 
     .. noted::
         - The boolean value in the yaml file
@@ -307,6 +328,7 @@ class YamlFlResolve(YamlFl):
             Handle top level yaml property ``on``
             docs: https://github.com/yaml/pyyaml/issues/696
 
+            ```
             import re
             from yaml.resolver import Resolver
 
@@ -326,6 +348,7 @@ class YamlFlResolve(YamlFl):
                     'tag:yaml.org,2002:bool',
                     re.compile(r'^(?:true|false)$', re.X),
                     list('tf'))
+            ```
         """
         from yaml.resolver import Resolver
 
@@ -351,7 +374,7 @@ class YamlFlResolve(YamlFl):
 
 
 class YamlEnvFl(YamlFl):
-    """Yaml object which mapping search environment variable."""
+    """Open Yaml object which mapping search environment variable."""
 
     raise_if_not_default: ClassVar[bool] = False
     default: ClassVar[str] = "null"
@@ -585,21 +608,3 @@ class MsgpackFl(Fl):
     def write(self, data):
         with self.open(mode="wb") as _w:
             msgpack.dump(data, _w)
-
-
-__all__ = (
-    "Fl",
-    "EnvFl",
-    "JsonFl",
-    "JsonEnvFl",
-    "YamlFl",
-    "YamlFlResolve",
-    "YamlEnvFl",
-    "CsvFl",
-    "CsvPipeFl",
-    "TomlFl",
-    "TomlEnvFl",
-    "MarshalFl",
-    "MsgpackFl",
-    "PickleFl",
-)
