@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 from textwrap import dedent
 
-import ddeutil.io.__base as bfl
+import ddeutil.io.files as bfl
 import pytest
 
 

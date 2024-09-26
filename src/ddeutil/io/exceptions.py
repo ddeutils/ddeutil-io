@@ -10,8 +10,8 @@ from __future__ import annotations
 
 
 class BaseError(Exception):
-    """Base Error Object that use for catch any errors statement of
-    all step in this src
+    """Base Error Object that use for catch any errors statement of all steps in
+    this ``/src`` directory.
     """
 
 

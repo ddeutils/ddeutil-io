@@ -1,6 +1,6 @@
 import os
 
-import ddeutil.io.__base.utils as utils
+import ddeutil.io.files.utils as utils
 import pytest
 
 
@@ -13,7 +13,8 @@ def test_search_env_replace():
 def test_search_env_replace_raise():
     with pytest.raises(ValueError):
         utils.search_env_replace(
-            "Hello ${NAME01}", raise_if_default_not_exists=True
+            "Hello ${NAME01}",
+            raise_if_default_not_exists=True,
         )
 
     with pytest.raises(ValueError):
@@ -22,7 +23,7 @@ def test_search_env_replace_raise():
 
 def test_search_env():
     rs = utils.search_env(
-        ("key='demo'\n" "# foo=bar\n" "hello=${key}-2\n" "escape=\\${key}\n"),
+        "key='demo'\n# foo=bar\nhello=${key}-2\nescape=\\${key}\n",
     )
     assert {"key": "demo", "hello": "demo-2", "escape": "${key}"} == rs
 

@@ -2,7 +2,7 @@ import shutil
 from collections.abc import Generator
 from pathlib import Path
 
-import ddeutil.io.__base as base
+import ddeutil.io.files as base
 import pytest
 
 

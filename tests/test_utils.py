@@ -42,11 +42,11 @@ def test_map_secrets_raise():
 
 def test_map_importer():
     rs = utils.map_importer(
-        "Test @function{ddeutil.io.__base.add_newline:'a',newline='|'}"
+        "Test @function{ddeutil.io.files.add_newline:'a',newline='|'}"
     )
     assert "Test a|" == rs
 
-    reuse: str = "@function{ddeutil.io.__base.add_newline:'a',newline='|'}"
+    reuse: str = "@function{ddeutil.io.files.add_newline:'a',newline='|'}"
     rs = utils.map_importer(
         {
             "list": [reuse, 1],

@@ -36,10 +36,10 @@ from fmtutil import (
     make_group,
 )
 
-from .__base import Fl, rm
 from .__conf import UPDATE_KEY, VERSION_KEY
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
+from .files import Fl, rm
 from .param import Params
 
 METADATA: dict[str, Any] = {}

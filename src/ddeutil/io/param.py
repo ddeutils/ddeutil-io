@@ -17,9 +17,9 @@ from typing import (
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
 
-from .__base import YamlEnvFl
 from .__conf import UPDATE_KEY, VERSION_KEY
 from .exceptions import ConfigArgumentError
+from .files import YamlEnvFl
 
 TupleStr = tuple[str, ...]
 

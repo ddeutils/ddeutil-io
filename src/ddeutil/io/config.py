@@ -18,22 +18,33 @@ from pathlib import Path
 from sqlite3 import Connection
 from typing import Any, Union
 
-from .__base import (
+from .exceptions import ConfigArgumentError
+from .files import (
     Fl,
     JsonFl,
     PathSearch,
     YamlEnvFl,
     rm,
 )
-from .exceptions import ConfigArgumentError
+
+TupleStr = tuple[str, ...]
 
 DEFAULT_OPEN_FILE: type[Fl] = YamlEnvFl
 DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
-DEFAULT_EXCLUDED_FMT: tuple[str, ...] = (".json", ".toml")
+DEFAULT_EXCLUDED_FMT: TupleStr = (".json", ".toml")
+
+__all__: TupleStr = (
+    "ConfABC",
+    "ConfFl",
+    "ConfSQLite",
+)
 
 
 class ConfABC(abc.ABC):
-    """Config Adapter abstract object."""
+    """Config Adapter abstract class for any config sub-class that should
+    implement necessary methods for unity usage and dynamic config backend
+    changing scenario.
+    """
 
     @abc.abstractmethod
     def load_stage(self, name: str) -> dict:
@@ -63,7 +74,7 @@ class BaseConfFl:
         *,
         compress: str | None = None,
         open_file: type[Fl] | None = None,
-        excluded_fmt: tuple[str, ...] | None = None,
+        excluded_fmt: TupleStr | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: str | None = compress
@@ -394,10 +405,3 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
         rs: dict[str, Any] = data.copy()
         rs[_key] = json.loads(data[_key])
         return rs
-
-
-__all__ = (
-    "ConfABC",
-    "ConfFl",
-    "ConfSQLite",
-)

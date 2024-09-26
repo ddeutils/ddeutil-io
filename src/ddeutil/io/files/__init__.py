@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from .__regex import RegexConf
-from .files import (
+from .main import (
     CsvFl,
     CsvPipeFl,
     EnvFl,

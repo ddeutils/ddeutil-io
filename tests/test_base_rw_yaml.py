@@ -5,7 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-import ddeutil.io.__base.files as fl
+import ddeutil.io.files.main as fl
 import pytest
 import yaml
 
