@@ -1,3 +1,4 @@
+from . import __base as base
 from .__about__ import __version__
 from .__base import (
     PathSearch,
@@ -23,6 +24,10 @@ from .__base.files import (
 from .__base.utils import (
     search_env,
     search_env_replace,
+)
+from .__conf import (
+    UPDATE_KEY,
+    VERSION_KEY,
 )
 from .config import (
     ConfABC,

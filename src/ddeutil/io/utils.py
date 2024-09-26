@@ -9,11 +9,7 @@ from typing import Callable, TypeVar
 
 from ddeutil.core import import_string, str2args
 
-try:
-    from .__base import RegexConf
-except ImportError:  # no cove
-    from __base import RegexConf
-
+from .__base import RegexConf
 
 T = TypeVar("T")
 
