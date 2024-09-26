@@ -21,9 +21,9 @@ classifiers = [
 ]
 requires-python = ">=3.9.13"
 dependencies = [
-    "ddeutil>=0.3.0",
-    "fmtutil>=1.0.0",
-    "tzdata>=2024.0",
+    "ddeutil==0.4.0",
+    "fmtutil==1.0.10",
+    "tzdata==2024.2",
     "pydantic==2.8.2",
     "msgpack==1.0.8",
     "deepdiff==8.0.1",

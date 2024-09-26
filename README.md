@@ -1,33 +1,32 @@
 # Data Utility Package: _IO_
 
 [![test](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml)
+[![pypi version](https://img.shields.io/pypi/v/ddeutil-io)](https://pypi.org/project/ddeutil-io/)
 [![python support version](https://img.shields.io/pypi/pyversions/ddeutil-io)](https://pypi.org/project/ddeutil-io/)
 [![size](https://img.shields.io/github/languages/code-size/korawica/ddeutil-io)](https://github.com/korawica/ddeutil-io)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**Table of Contents**:
-
-- [Installation](#installation)
-- [Features](#features)
-  - [Files](#files)
-  - [Config](#config)
-  - [Register](#register)
-  - [Models](#models)
-    - [Usage](#usage)
-
-This **Utility IO** Object project was created for the Input/Out Python package
-such as `load` the config data from any file format types like `.yaml`, `.json`,
+The **Input/Output transport utility objects** with less dependencies created for
+`load` the config data from any file format types like `.yaml`, `.json`,
 or `.toml`, and manage retention and version of this config file lifecycle, or
 data serialization object with Pydantic model.
 
-## Installation
+## :round_pushpin: Installation
 
 ```shell
-pip install ddeutil-io
+pip install -U ddeutil-io
 ```
 
-This package need to install `ddeutil` for core package namespace.
+**Python version supported**:
 
-## Features
+| Python Version | Installation                  | Support Fixed Bug  |
+|----------------|-------------------------------|--------------------|
+| `>=3.9,<3.14`  | `pip install -U ddeutil-io`   | :heavy_check_mark: |
+
+> [!NOTE]
+> This package need to install `ddeutil` for core package namespace.
+
+## :dart: Features
 
 The features of this package is Input/Output utility objects.
 
@@ -155,7 +154,9 @@ assert tbl.features[0].name == "id"
 assert tbl.features[0].dtype.type == "integer"
 ```
 
-#### Usage
+## :beers: Usage
+
+### Models
 
 If I have some catalog config, it easy to pass this config to model object.
 
@@ -180,7 +181,3 @@ schema = Scm.model_validate(config)
 assert len(schema.tables) == 1
 assert schema.tables[0].name == 'customer_master'
 ```
-
-## License
-
-This project was licensed under the terms of the [MIT license](LICENSE).
