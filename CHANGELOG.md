@@ -2,6 +2,26 @@
 
 ## Latest Changes
 
+## 0.1.13
+
+### :sparkles: Features
+
+- :dart: feat: add config and base import on root package. (_2024-09-26_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update header of readme. (_2024-09-26_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: change keyword of this package. (_2024-09-26_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: fixed install ddeutil with all optional. (_2024-09-26_)
+- :pushpin: deps: update pydantic to 2.9.2. (_2024-09-26_)
+- :pushpin: deps: update dependency; ddeutil==0.4.0 fmtutil==1.0.10. (_2024-09-26_)
+
 ## 0.1.12
 
 ### :postbox: Dependencies
