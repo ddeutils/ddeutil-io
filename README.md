@@ -8,8 +8,7 @@
 
 The **Input/Output transport utility objects** created for `load` the config data
 from any file format types like `.yaml`, `.json`, or `.toml`, and manage retention
-and version of this config file lifecycle, or data serialization object with
-Pydantic model.
+and version of this config file lifecycle.
 
 ## :round_pushpin: Installation
 
@@ -41,7 +40,7 @@ The features of this package is Input/Output utility objects.
 > [!NOTE]
 > The file objects use to **read** or **write** data with its format.
 
-For example, I will represent YamlEnvFl object that passing environment variable
+For example, I will represent `YamlEnvFl` object that passing environment variable
 to reading content before passing to the Yaml loader.
 
 ```yaml
