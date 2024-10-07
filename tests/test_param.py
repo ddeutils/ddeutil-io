@@ -6,23 +6,13 @@ from ddeutil.io.conf import UPDATE_KEY, VERSION_KEY
 from ddeutil.io.exceptions import ConfigArgumentError
 
 
-def test_model_path_default(test_path):
-    p = md.PathData.model_validate(
-        {
-            "root": test_path,
-        }
-    )
-    assert p.root == test_path
+def test_param_path_data_default(test_path):
+    param = md.PathData.model_validate({"root": test_path})
+    assert param.root == test_path
 
 
-def test_model_path_data():
-    p = md.PathData.model_validate(
-        {
-            "data": Path("."),
-            "conf": Path("."),
-        }
-    )
-
+def test_param_path_data():
+    p = md.PathData.model_validate({"data": Path("."), "conf": Path(".")})
     assert {
         "data": Path("."),
         "conf": Path("."),

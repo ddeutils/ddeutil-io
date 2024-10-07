@@ -47,20 +47,20 @@ class ConfABC(abc.ABC):
     """
 
     @abc.abstractmethod
-    def load_stage(self, name: str) -> dict:
-        raise NotImplementedError
+    def load_stage(self, name: str) -> dict[str, Any]:
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def save_stage(self, name: str, data: dict, merge: bool = False) -> None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def remove_stage(self, name: str, data_name: str) -> None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def create(self, name: str, **kwargs) -> None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class BaseConfFl:

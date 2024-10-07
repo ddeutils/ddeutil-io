@@ -173,7 +173,7 @@ class Register(BaseRegister):
         params: Params | None = None,
         loader: type[Fl] | None = None,
         loader_stg: type[Fl] | None = None,
-    ):
+    ) -> None:
         _domain, _name = splitter.must_rsplit(
             base.concat(name.split()),
             sep=":",

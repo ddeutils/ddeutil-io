@@ -13,6 +13,11 @@ engine of configuration file that include `load` from any config file format typ
 like `.yaml`, `.json`, or `.toml`, and manage retention and version of config files
 lifecycle.
 
+This package has 3 parts of core module; **Register**, **Config**, and **File**.
+The base module is the file module that is open file objects with specific format
+that want to open include open directory objects (I think the open dir object do
+not should to use now because I do not done with its code.)
+
 ## :round_pushpin: Installation
 
 ```shell
@@ -26,31 +31,34 @@ pip install -U ddeutil-io
 | `>=3.9,<3.14`  | `pip install -U ddeutil-io`   | :heavy_check_mark: |
 
 > [!NOTE]
-> This package need to install `ddeutil` for core package namespace.
+> This package need to install `ddeutil` first to be core package namespace.
+> You do not need to pip it because I include this package to the required list.
 
 ## :dart: Features
 
 The features of this package is Input/Output data transport utility objects.
 
-| Module   |     Name      | Description | Remark |
-|----------|:-------------:|-------------|--------|
-| files    |     CsvFl     |             |        |
-|          |   CsvPipeFl   |             |        |
-|          |     EnvFl     |             |        |
-|          |      Fl       |             |        |
-|          |   JsonEnvFl   |             |        |
-|          |    JsonFl     |             |        |
-|          |   MarshalFl   |             |        |
-|          |   PickleFl    |             |        |
-|          |   TomlEnvFl   |             |        |
-|          |    TomlFl     |             |        |
-|          |   YamlEnvFl   |             |        |
-|          |    YamlFl     |             |        |
-|          | YamlFlResolve |             |        |
-|          |  PathSearch   |             |        |
-|          |   RegexConf   |             |        |
-| config   |               |             |        |
-| register |   Register    |             |        |
+| Module   |     Name      | Description                                                                         | Remark |
+|----------|:-------------:|-------------------------------------------------------------------------------------|--------|
+| files    |     CsvFl     |                                                                                     |        |
+|          |   CsvPipeFl   |                                                                                     |        |
+|          |     EnvFl     |                                                                                     |        |
+|          |      Fl       |                                                                                     |        |
+|          |   JsonEnvFl   |                                                                                     |        |
+|          |    JsonFl     |                                                                                     |        |
+|          |   MarshalFl   |                                                                                     |        |
+|          |   PickleFl    |                                                                                     |        |
+|          |   TomlEnvFl   |                                                                                     |        |
+|          |    TomlFl     |                                                                                     |        |
+|          |   YamlEnvFl   |                                                                                     |        |
+|          |    YamlFl     |                                                                                     |        |
+|          | YamlFlResolve |                                                                                     |        |
+|          |  PathSearch   |                                                                                     |        |
+|          |   RegexConf   |                                                                                     |        |
+| config   |    ConfFl     |                                                                                     |        |
+|          |  ConfSQLite   |                                                                                     |        |
+| register |   Register    | Register Object that contain configuration loading methods and metadata management. |        |
+|          | FullRegister  |                                                                                     |        |
 
 ## :beers: Usages
 
