@@ -5,7 +5,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
-      - '*.rst'
   pull_request:
     branches:
       - "main"
@@ -13,7 +12,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
-      - '*.rst'
 
 permissions:
   contents: read
@@ -32,6 +30,7 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.13-dev"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,15 +38,23 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
+        if: "!endsWith(matrix.python-version, '-dev')"
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+
+      - name: Set up Pre-release Python with no GIL
+        uses: deadsnakes/action@v3.1.0
+        if: "endsWith(matrix.python-version, '-dev')"
+        with:
+          python-version: ${{ matrix.python-version }}
+          nogil: true
 
       - uses: actions/cache@v4
         id: cache
         with:
           path: .venv
-          key: ${{ runner.os }}-python-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('pyproject.toml') }}-test-01
+          key: ${{ runner.os }}-python-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('pyproject.toml') }}-test-02
 
       - name: Install Python Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -56,7 +63,15 @@ jobs:
           uv venv
           uv pip install -U pip
           uv pip install -e .
-          uv pip install pytest
+          uv pip install pytest freezegun
+
+      - name: Check GIL
+        if: "startsWith(matrix.python-version, '3.13')"
+        run: |
+          python --version --version
+          which python
+          python -c "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED'))"
+          python -c "import sys; print(sys._is_gil_enabled())"
 
       - name: Use Python virtual environment
         run: |
