@@ -50,6 +50,6 @@ from .param import (
 from .register import Register
 from .utils import (
     map_func,
-    map_importer,
-    map_secret,
+    template_func,
+    template_secret,
 )

@@ -7,15 +7,11 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import (
-    Annotated,
-    Any,
-    Optional,
-    Union,
-)
+from typing import Annotated, Any, Optional
 
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
+from typing_extensions import Self
 
 from .conf import UPDATE_KEY, VERSION_KEY
 from .exceptions import ConfigArgumentError
@@ -140,7 +136,7 @@ class PathData(BaseModel):
     conf: Path = Field(default=None, validate_default=True)
 
     @field_validator("root", mode="before")
-    def prepare_root(cls, v: Union[str, Path]) -> Path:
+    def prepare_root(cls, v: str | Path) -> Path:
         return Path(v) if isinstance(v, str) else v
 
     @field_validator("data", "conf", mode="before")
@@ -165,7 +161,7 @@ class Params(BaseModel, validate_assignment=True):
     engine: Engine = Field(default_factory=Engine)
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path]):
+    def from_yaml(cls, path: str | Path) -> Self:
         """Load params from .yaml file"""
         return cls.model_validate(YamlEnvFl(path).read())
 

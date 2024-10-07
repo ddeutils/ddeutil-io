@@ -14,7 +14,7 @@ from .files import RegexConf
 T = TypeVar("T")
 
 
-def map_secret(value: T, secrets: dict[str, str]) -> T:
+def template_secret(value: T, secrets: dict[str, str]) -> T:
     """Map the secret value to a any input data.
 
     :param value: A data that want to map secrets
@@ -22,16 +22,16 @@ def map_secret(value: T, secrets: dict[str, str]) -> T:
     :type secrets: dict[str, str]
 
     Examples:
-        >>> map_secret(
+        >>> template_secret(
         ...     "Value include secrets: s3://@secrets{foo}",
         ...     secrets={"foo": "bar"},
         ... )
         'Value include secrets: s3://bar'
     """
     if isinstance(value, dict):
-        return {k: map_secret(value[k], secrets) for k in value}
+        return {k: template_secret(value[k], secrets) for k in value}
     elif isinstance(value, (list, tuple)):
-        return type(value)([map_secret(i, secrets) for i in value])
+        return type(value)([template_secret(i, secrets) for i in value])
     elif not isinstance(value, str):
         return value
     for search in RegexConf.RE_SECRETS.finditer(value):
@@ -47,21 +47,21 @@ def map_secret(value: T, secrets: dict[str, str]) -> T:
     return value
 
 
-def map_importer(value: T) -> T:
+def template_func(value: T) -> T:
     """Map the function result to configuration data.
 
     :param value: A data that want to map imported function with arguments.
 
     Examples:
-        >>> map_importer(
+        >>> template_func(
         ...     "Test @function{ddeutil.io.__base.add_newline:'a',newline='|'}"
         ... )
         'Test a|'
     """
     if isinstance(value, dict):
-        return {k: map_importer(value[k]) for k in value}
+        return {k: template_func(value[k]) for k in value}
     elif isinstance(value, (list, tuple)):
-        return type(value)([map_importer(i) for i in value])
+        return type(value)([template_func(i) for i in value])
     elif not isinstance(value, str):
         return value
     for search in RegexConf.RE_FUNCTION.finditer(value):
@@ -75,7 +75,7 @@ def map_importer(value: T) -> T:
     return value
 
 
-def map_func(value: T, fn: Callable[[str], str]) -> T:
+def map_func(value: T, func: Callable[[str], str]) -> T:
     """Map any function from input argument to configuration data.
 
     Examples:
@@ -85,9 +85,9 @@ def map_func(value: T, fn: Callable[[str], str]) -> T:
         ('foo!', 'bar!')
     """
     if isinstance(value, dict):
-        return {k: map_func(value[k], fn) for k in value}
+        return {k: map_func(value[k], func) for k in value}
     elif isinstance(value, (list, tuple)):
-        return type(value)([map_func(i, fn) for i in value])
+        return type(value)([map_func(i, func) for i in value])
     elif not isinstance(value, str):
         return value
-    return fn(value)
+    return func(value)

@@ -10,7 +10,7 @@ from typing import Callable
 
 try:
     from .conf import RegexConf
-except ImportError:  # no cove
+except ImportError:  # pragma: no cover
     from conf import RegexConf
 
 

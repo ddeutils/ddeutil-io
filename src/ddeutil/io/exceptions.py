@@ -20,7 +20,7 @@ class ConfigNotFound(IOBaseError):
     """Error raise for a method not found the config file or data."""
 
 
-class ConfigArgumentError(IOBaseError):  # pragma: no cov
+class ConfigArgumentError(IOBaseError):  # pragma: no cover
     """Error raise for a wrong configuration argument."""
 
     def __init__(self, argument: str | tuple, message: str) -> None:
@@ -44,5 +44,4 @@ class ConfigArgumentError(IOBaseError):  # pragma: no cov
             )
         else:
             _argument: str = f"{argument!r}"
-        _message: str = f"with {_argument}, {message}"
-        super().__init__(_message)
+        super().__init__(f"with {_argument}, {message}")

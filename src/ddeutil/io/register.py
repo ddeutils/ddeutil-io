@@ -30,12 +30,19 @@ from fmtutil import (
     make_const,
     make_group,
 )
+from typing_extensions import Self
 
 from .conf import UPDATE_KEY, VERSION_KEY
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .files import Fl, rm
 from .param import Params
+
+__all__: tuple[str, ...] = (
+    "Register",
+    "FullRegister",
+)
+
 
 METADATA: dict[str, Any] = {}
 
@@ -69,7 +76,9 @@ FileExtensionConst: ConstantType = make_const(
 
 
 class BaseRegister:
-    """Base Register Object"""
+    """Base Register object that is not implement any features for register
+    config data.
+    """
 
     def __init__(
         self,
@@ -92,6 +101,8 @@ class BaseRegister:
     def fullname(self) -> str:
         """Return a configuration fullname, which join `name` and `domain`
         together with domain partition string.
+
+        :rtype: str
         """
         return f"{self.domain}:{self.name}" if self.domain else self.name
 
@@ -99,6 +110,8 @@ class BaseRegister:
     def shortname(self) -> str:
         """Return a configuration shortname, which get first character of any
         split string by name partition string.
+
+        :rtype: str
         """
         return base.concat(word[0] for word in self.name.split("_"))
 
@@ -106,6 +119,8 @@ class BaseRegister:
     def fmt_group(self) -> FormatterGroupType:
         """Generate the formatter group that include constant formatters from
         ``self.name`` and ``self.domain``.
+
+        :rtype: FormatterGroupType
         """
         return make_group(
             {
@@ -130,7 +145,7 @@ class Register(BaseRegister):
         cls,
         name: str,
         params: Params,
-    ) -> Register:
+    ) -> Self:
         """Reset all configuration data files that exists in any stage but
         does not do anything in the base stage. This method will use when the
         config name of data was changed and does not use the old name. If the
@@ -141,6 +156,7 @@ class Register(BaseRegister):
         :type name: str
         :param params:
         :type params: Params
+        :rtype: Self
         """
         for stage in params.stages:
             try:
@@ -601,9 +617,3 @@ class FullRegister(Register):
                 dest=self.params.engine.paths / ".archive" / _ac_path,
             )
             rm(loading.path / _file)
-
-
-__all__ = (
-    "Register",
-    "FullRegister",
-)
