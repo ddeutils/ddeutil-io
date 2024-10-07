@@ -2,6 +2,21 @@
 
 ## Latest Changes
 
+## 0.1.14
+
+### :black_nib: Code Changes
+
+- :construction: refactored: move models to vendor package. (_2024-10-07_)
+- :art: styled: change __conf and __regex to conf module. (_2024-10-07_)
+- :construction: refactored: 📦 bump msgpack from 1.0.8 to 1.1.0 (_2024-10-01_)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.10.0 to 1.10.2 (_2024-10-01_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file. (_2024-10-07_)
+- :page_facing_up: docs: update docs-string on files module. (_2024-09-26_)
+- :page_facing_up: docs: update doc-string on files. (_2024-09-26_)
+
 ## 0.1.13
 
 ### :sparkles: Features
