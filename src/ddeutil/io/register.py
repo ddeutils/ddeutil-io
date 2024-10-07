@@ -15,12 +15,7 @@ from typing import (
 )
 
 from dateutil.relativedelta import relativedelta
-from ddeutil.core import (
-    concat,
-    hash_all,
-    merge_dict,
-)
-from ddeutil.core.__base import must_rsplit
+from ddeutil.core import base, hash, merge, splitter
 from ddeutil.core.dtutils import get_date
 from deepdiff import DeepDiff
 from fmtutil import (
@@ -105,7 +100,7 @@ class BaseRegister:
         """Return a configuration shortname, which get first character of any
         split string by name partition string.
         """
-        return concat(word[0] for word in self.name.split("_"))
+        return base.concat(word[0] for word in self.name.split("_"))
 
     @property
     def fmt_group(self) -> FormatterGroupType:
@@ -163,7 +158,11 @@ class Register(BaseRegister):
         loader: type[Fl] | None = None,
         loader_stg: type[Fl] | None = None,
     ):
-        _domain, _name = must_rsplit(concat(name.split()), ":", maxsplit=1)
+        _domain, _name = splitter.must_rsplit(
+            base.concat(name.split()),
+            sep=":",
+            maxsplit=1,
+        )
         super().__init__(name=_name, domain=_domain)
         if not params:
             raise NotImplementedError(
@@ -214,7 +213,7 @@ class Register(BaseRegister):
         METADATA.pop(self.fullname, None)
 
     def __hash__(self) -> int:
-        return hash(
+        return hash.hash_all(
             self.fullname
             + self.stage
             + f"{self.timestamp:{self.params.engine.values.dt_fmt}}"
@@ -248,7 +247,9 @@ class Register(BaseRegister):
                 if k in self.params.engine.values.excluded
             } | self.__data
         return (
-            hash_all(_data, exclude=set(self.params.engine.values.excluded))
+            hash.hash_all(
+                _data, exclude=set(self.params.engine.values.excluded)
+            )
             if hashing
             else _data
         )
@@ -408,7 +409,7 @@ class Register(BaseRegister):
         )
         if (
             self.compare_data(
-                hash_all(
+                hash.hash_all(
                     self.pick(stage=stage),
                     exclude=set(self.params.engine.values.excluded),
                 )
@@ -427,7 +428,7 @@ class Register(BaseRegister):
             _dt_fmt: str = self.params.engine.values.dt_fmt
             loading.save_stage(
                 path=(loading.path / _filename),
-                data=merge_dict(
+                data=merge.merge_dict(
                     self.data(),
                     {
                         UPDATE_KEY: f"{self.timestamp:{_dt_fmt}}",

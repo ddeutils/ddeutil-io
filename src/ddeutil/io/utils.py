@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Callable, TypeVar
 
-from ddeutil.core import import_string, str2args
+from ddeutil.core import convert, import_string
 
 from .files import RegexConf
 
@@ -70,7 +70,7 @@ def map_importer(value: T) -> T:
             raise ValueError(
                 f'The @function: {searches["function"]!r} is not callable.',
             )
-        args, kwargs = str2args(searches["arguments"])
+        args, kwargs = convert.str2args(searches["arguments"])
         value: str = value.replace(searches["search"], _fn(*args, **kwargs))
     return value
 

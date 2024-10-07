@@ -35,7 +35,7 @@ from typing import (
 import msgpack
 import toml
 import yaml
-from ddeutil.core import must_split
+from ddeutil.core import splitter
 
 try:
     from yaml import CSafeLoader as SafeLoader
@@ -242,7 +242,7 @@ class Dir:
         compress: str,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
-        _compress, sub = must_split(compress, ":", maxsplit=1)
+        _compress, sub = splitter.must_split(compress, ":", maxsplit=1)
         self.compress: DirCompressType = _compress
         self.sub_compress: str = sub or "_"
 
