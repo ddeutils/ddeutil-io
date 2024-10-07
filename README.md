@@ -82,7 +82,6 @@ import os
 from ddeutil.io import YamlEnvFl
 
 os.environ["HELLO"] = "WORLD"
-
 content = YamlEnvFl('./.pre-commit-config.yaml').read(safe=True)
 assert content['data']['get'] == "HELLO WORLD"
 ```

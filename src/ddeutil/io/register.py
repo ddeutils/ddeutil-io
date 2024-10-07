@@ -32,7 +32,7 @@ from fmtutil import (
 )
 from typing_extensions import Self
 
-from .conf import UPDATE_KEY, VERSION_KEY
+from .conf import DATE_FMT, UPDATE_KEY, VERSION_KEY
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .files import Fl, rm
@@ -230,9 +230,7 @@ class Register(BaseRegister):
 
     def __hash__(self) -> int:
         return hash.hash_all(
-            self.fullname
-            + self.stage
-            + f"{self.timestamp:{self.params.engine.values.dt_fmt}}"
+            self.fullname + self.stage + f"{self.timestamp:{DATE_FMT}}"
         )
 
     def __str__(self) -> str:
@@ -260,12 +258,10 @@ class Register(BaseRegister):
             _data = {
                 k: v
                 for k, v in (self.meta.get(self.stage, {}).items())
-                if k in self.params.engine.values.excluded
+                if k in (UPDATE_KEY, VERSION_KEY)
             } | self.__data
         return (
-            hash.hash_all(
-                _data, exclude=set(self.params.engine.values.excluded)
-            )
+            hash.hash_all(_data, exclude={UPDATE_KEY, VERSION_KEY})
             if hashing
             else _data
         )
@@ -280,10 +276,7 @@ class Register(BaseRegister):
         if self.changed > 0:
             return self.updt
         elif _dt := self.data().get(UPDATE_KEY):
-            return datetime.strptime(
-                _dt,
-                self.params.engine.values.dt_fmt,
-            )
+            return datetime.strptime(_dt, DATE_FMT)
         return self.updt
 
     def version(self, _next: bool = False) -> VerPackage:
@@ -331,7 +324,7 @@ class Register(BaseRegister):
             target,
             ignore_order=True,
             exclude_paths={
-                f"root[{key!r}]" for key in self.params.engine.values.excluded
+                f"root[{key!r}]" for key in (UPDATE_KEY, VERSION_KEY)
             },
         )
         if any(
@@ -386,13 +379,13 @@ class Register(BaseRegister):
     ) -> dict[str, Any]:
         if (stage is None) or (stage == "base"):
             return ConfFl(
-                path=(self.params.engine.paths.conf / self.domain),
+                path=(self.params.paths.conf / self.domain),
                 open_file=self.loader,
                 open_file_stg=self.loader_stg,
             ).load(name=self.name, order=order)
 
         loading = ConfFl(
-            path=self.params.engine.paths.data / stage,
+            path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -418,7 +411,7 @@ class Register(BaseRegister):
     ) -> Register:
         """Move file to the target stage."""
         loading: ConfFl = ConfFl(
-            path=self.params.engine.paths.data / stage,
+            path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -427,7 +420,7 @@ class Register(BaseRegister):
             self.compare_data(
                 hash.hash_all(
                     self.pick(stage=stage),
-                    exclude=set(self.params.engine.values.excluded),
+                    exclude={UPDATE_KEY, VERSION_KEY},
                 )
             )
             > 0
@@ -441,13 +434,12 @@ class Register(BaseRegister):
                 logging.warning(
                     f"File {_filename!r} already exists in {stage!r} stage."
                 )
-            _dt_fmt: str = self.params.engine.values.dt_fmt
             loading.save_stage(
                 path=(loading.path / _filename),
                 data=merge.merge_dict(
                     self.data(),
                     {
-                        UPDATE_KEY: f"{self.timestamp:{_dt_fmt}}",
+                        UPDATE_KEY: f"{self.timestamp:{DATE_FMT}}",
                         VERSION_KEY: f"v{str(self.version())}",
                     },
                 ),
@@ -480,7 +472,7 @@ class Register(BaseRegister):
         if not (_rules := self.params.get_stage(_stage).rules):
             return
         loading: ConfFl = ConfFl(
-            path=self.params.engine.paths.data / stage,
+            path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -534,7 +526,7 @@ class Register(BaseRegister):
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
         loading: ConfFl = ConfFl(
-            path=self.params.engine.paths.data / _stage,
+            path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
@@ -557,7 +549,7 @@ class FullRegister(Register):
         if not (_rules := self.params.get_stage(_stage).rules):
             return
         loading: ConfFl = ConfFl(
-            path=self.params.engine.paths.data / stage,
+            path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -586,7 +578,7 @@ class FullRegister(Register):
                 )
                 loading.move(
                     _file,
-                    dest=self.params.engine.paths.data / ".archive" / _ac_path,
+                    dest=self.params.paths.data / ".archive" / _ac_path,
                 )
                 rm(loading.path / _file)
 
@@ -601,7 +593,7 @@ class FullRegister(Register):
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
         loading: ConfFl = ConfFl(
-            path=self.params.engine.paths.data / _stage,
+            path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
@@ -614,6 +606,6 @@ class FullRegister(Register):
             _ac_path: str = f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
             loading.move(
                 _file,
-                dest=self.params.engine.paths / ".archive" / _ac_path,
+                dest=self.params.paths.data / ".archive" / _ac_path,
             )
             rm(loading.path / _file)

@@ -31,13 +31,10 @@ def target_path(test_path) -> Generator[Path, None, None]:
 def params(target_path, root_path) -> Params:
     return Params.model_validate(
         {
-            "engine": {
-                "paths": {
-                    "conf": target_path / "conf",
-                    "data": root_path / "data",
-                    "archive": root_path / "/data/.archive",
-                },
-                "flags": {"auto_update": True},
+            "paths": {
+                "conf": target_path / "conf",
+                "data": root_path / "data",
+                "archive": root_path / "/data/.archive",
             },
             "stages": {
                 "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},

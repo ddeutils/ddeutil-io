@@ -3,11 +3,10 @@ from ddeutil.io.utils import map_func, template_func, template_secret
 
 
 def test_template_secret():
-    rs = template_secret(
+    assert "Value include secrets: s3://bar" == template_secret(
         "Value include secrets: s3://@secrets{foo}",
         secrets={"foo": "bar"},
     )
-    assert "Value include secrets: s3://bar" == rs
 
     rs = template_secret(
         {

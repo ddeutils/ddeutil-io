@@ -13,7 +13,6 @@ from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
 from typing_extensions import Self
 
-from .conf import UPDATE_KEY, VERSION_KEY
 from .exceptions import ConfigArgumentError
 from .files import YamlEnvFl
 
@@ -146,19 +145,20 @@ class PathData(BaseModel):
         return info.data["root"] / info.field_name
 
 
-class Value(BaseModel):
-    dt_fmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    excluded: TupleStr = Field(default=(VERSION_KEY, UPDATE_KEY))
-
-
-class Engine(BaseModel):
-    paths: PathData = Field(default_factory=PathData)
-    values: Value = Field(default_factory=Value)
-
-
 class Params(BaseModel, validate_assignment=True):
+    """Params Pydantic model.
+
+    Examples:
+        >>> params = {
+        ...     "paths": {
+        ...         "root": ".",
+        ...     },
+        ...     "stage": {},
+        ... }
+    """
+
     stages: dict[str, Stage] = Field(default_factory=dict)
-    engine: Engine = Field(default_factory=Engine)
+    paths: PathData = Field(default_factory=PathData)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> Self:

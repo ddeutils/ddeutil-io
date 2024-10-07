@@ -31,13 +31,10 @@ def target_path(test_path) -> Generator[Path, None, None]:
 def params(target_path, root_path) -> Params:
     return Params.model_validate(
         {
-            "engine": {
-                "paths": {
-                    "conf": target_path / "conf",
-                    "data": root_path / "data",
-                    "archive": root_path / "/data/.archive",
-                },
-                "flags": {"auto_update": True},
+            "paths": {
+                "conf": target_path / "conf",
+                "data": root_path / "data",
+                "archive": root_path / "/data/.archive",
             },
             "stages": {
                 "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
@@ -83,10 +80,5 @@ def test_register_init(params: Params):
 
 
 def test_register_without_params():
-    try:
+    with pytest.raises(NotImplementedError):
         rgt.Register(name="demo:conn_local_file")
-    except NotImplementedError as err:
-        assert (
-            "This register instance can not do any actions because config "
-            "param does not set."
-        ) == str(err)

@@ -40,7 +40,7 @@ from ddeutil.core import splitter
 try:
     from yaml import CSafeLoader as SafeLoader
     from yaml import CUnsafeLoader as UnsafeLoader
-except ImportError:  # no cove
+except ImportError:  # pragma: no cover
     from yaml import SafeLoader, UnsafeLoader
 
 from .utils import search_env, search_env_replace
@@ -68,9 +68,12 @@ __all__: tuple[str, ...] = (
 
 def compress_lib(compress: str) -> CompressProtocol:
     """Return Compress module that use to unpack data from the compressed file.
+    Now, it support for "gzip", "gz", "xz", "bz2"]
 
-    Note:
-        Now, it support for "gzip", "gz", "xz", "bz2"]
+    :param compress: A compress string type value that want to get compress
+        package.
+    :type compress: str
+    :rtype: CompressProtocol
     """
     if not compress:
         return io
@@ -89,13 +92,13 @@ def compress_lib(compress: str) -> CompressProtocol:
     raise NotImplementedError(f"Compress {compress} does not implement yet")
 
 
-class CompressProtocol(Protocol):  # no cove
+class CompressProtocol(Protocol):  # pragma: no cover
     def decompress(self, *args, **kwargs) -> AnyStr: ...
 
     def open(self, *args, **kwargs) -> IO: ...
 
 
-class FlABC(abc.ABC):  # no cove
+class FlABC(abc.ABC):  # pragma: no cover
     """Open File abstraction object for marking abstract method that need to
     implement on any subclass.
     """
@@ -120,7 +123,10 @@ class Fl(FlABC):
     :param compress: A compress type for this file.
 
     Examples:
-        >>> with Fl('./<path>/<filename>.gz.txt', compress='gzip').open() as f:
+        >>> with Fl(
+        ...     './<path>/<filename>.gz.txt',
+        ...     compress='gzip',
+        ... ).open() as f:
         ...     data = f.readline()
     """
 
@@ -138,7 +144,7 @@ class Fl(FlABC):
         # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
 
-    def after_set_attrs(self) -> None: ...
+    def after_set_attrs(self) -> None: ...  # pragma: no cover
 
     def __call__(self, *args, **kwargs) -> IO:
         """Return IO of this object."""
