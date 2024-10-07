@@ -1,6 +1,6 @@
 from . import files as base
 from .__about__ import __version__
-from .__conf import (
+from .conf import (
     UPDATE_KEY,
     VERSION_KEY,
 )

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import ddeutil.io.param as md
 import pytest
-from ddeutil.io.__conf import UPDATE_KEY, VERSION_KEY
+from ddeutil.io.conf import UPDATE_KEY, VERSION_KEY
 from ddeutil.io.exceptions import ConfigArgumentError
 
 

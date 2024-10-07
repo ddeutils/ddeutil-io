@@ -1,6 +1,6 @@
 [project]
 name = "ddeutil-io"
-description = "Input/Output transport utility objects with less dependencies"
+description = "Input/Output transport utility objects"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
 authors = [{ name = "ddeutils", email = "korawich.anu@gmail.com" }]

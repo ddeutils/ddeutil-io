@@ -9,9 +9,9 @@ import os
 from typing import Callable
 
 try:
-    from .__regex import RegexConf
+    from .conf import RegexConf
 except ImportError:  # no cove
-    from __regex import RegexConf
+    from conf import RegexConf
 
 
 def add_newline(text: str, newline: str | None = None) -> str:

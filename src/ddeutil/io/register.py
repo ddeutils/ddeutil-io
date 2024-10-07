@@ -36,7 +36,7 @@ from fmtutil import (
     make_group,
 )
 
-from .__conf import UPDATE_KEY, VERSION_KEY
+from .conf import UPDATE_KEY, VERSION_KEY
 from .config import ConfFl
 from .exceptions import ConfigArgumentError, ConfigNotFound
 from .files import Fl, rm

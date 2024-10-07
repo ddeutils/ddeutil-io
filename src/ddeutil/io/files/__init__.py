@@ -21,7 +21,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from .__regex import RegexConf
+from .conf import RegexConf
 from .main import (
     CsvFl,
     CsvPipeFl,

@@ -3,9 +3,6 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
-"""
-Define Errors Object for IO package
-"""
 from __future__ import annotations
 
 
@@ -23,7 +20,7 @@ class ConfigNotFound(IOBaseError):
     """Error raise for a method not found the config file or data."""
 
 
-class ConfigArgumentError(IOBaseError):
+class ConfigArgumentError(IOBaseError):  # pragma: no cov
     """Error raise for a wrong configuration argument."""
 
     def __init__(self, argument: str | tuple, message: str) -> None:

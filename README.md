@@ -6,10 +6,10 @@
 [![size](https://img.shields.io/github/languages/code-size/korawica/ddeutil-io)](https://github.com/korawica/ddeutil-io)
 [![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-The **Input/Output transport utility objects** with less dependencies created for
-`load` the config data from any file format types like `.yaml`, `.json`,
-or `.toml`, and manage retention and version of this config file lifecycle, or
-data serialization object with Pydantic model.
+The **Input/Output transport utility objects** created for `load` the config data
+from any file format types like `.yaml`, `.json`, or `.toml`, and manage retention
+and version of this config file lifecycle, or data serialization object with
+Pydantic model.
 
 ## :round_pushpin: Installation
 
