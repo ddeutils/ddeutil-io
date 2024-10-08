@@ -2,8 +2,8 @@ import shutil
 from collections.abc import Generator
 from pathlib import Path
 
-import ddeutil.io.files.main as fl
 import pytest
+from ddeutil.io.files import Dir
 
 
 @pytest.fixture(scope="module")
@@ -31,14 +31,14 @@ def data_path(target_path):
 
 
 def test_open_dir_common_zip(target_path, data_path):
-    with fl.Dir(
+    with Dir(
         path=target_path / "test_common_zip.zip",
         compress="zip",
     ).open(mode="w") as d:
         for data in data_path.rglob("*"):
             d.write(filename=data, arcname=data.relative_to(data_path))
 
-    with fl.Dir(
+    with Dir(
         path=target_path / "test_common_zip.zip",
         compress="zip",
     ).open(mode="r") as d:
@@ -51,14 +51,14 @@ def test_open_dir_common_zip(target_path, data_path):
 
 
 def test_open_dir_common_tar(target_path, data_path):
-    with fl.Dir(
+    with Dir(
         path=target_path / "test_common_tar.tar.gz",
         compress="tar",
     ).open(mode="w") as d:
         for data in data_path.rglob("*"):
             d.write(name=data, arcname=data.relative_to(data_path))
 
-    with fl.Dir(
+    with Dir(
         path=target_path / "test_common_tar.tar.gz",
         compress="tar:gz",
     ).open(mode="r") as d:

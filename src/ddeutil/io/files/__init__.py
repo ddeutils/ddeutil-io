@@ -19,10 +19,12 @@ import fnmatch
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
 
 from .conf import RegexConf
-from .main import (
+from .dir import (
+    Dir,
+)
+from .file import (
     CsvFl,
     CsvPipeFl,
     EnvFl,
@@ -36,6 +38,7 @@ from .main import (
     TomlFl,
     YamlEnvFl,
     YamlFl,
+    YamlFlResolve,
 )
 from .utils import (
     add_newline,
@@ -60,7 +63,9 @@ def rm(path: str, is_dir: bool = False) -> None:  # no cove
 
 
 def touch(filename: str, times=None) -> None:  # no cove
-    """Create an empty file with specific name."""
+    """Create an empty file with specific name and modified time of path it an
+    input times was set.
+    """
     file_handle = open(filename, mode="a")
     try:
         os.utime(filename, times)
@@ -69,19 +74,25 @@ def touch(filename: str, times=None) -> None:  # no cove
 
 
 class PathSearch:
-    """Path Search object"""
+    """Path Search object that use to search path tree from an input root path.
+    It allow you to adjust recursive level value and exclude dir or file paths
+    on the searching process.
+
+    :param root: A input root path that want to search.
+    :param exclude: A list of exclude paths.
+    """
 
     def __init__(
         self,
         root: Path,
         *,
-        exclude: Optional[list] = None,
+        exclude: list[str] | None = None,
         max_level: int = -1,
         length: int = 4,
         icon: int = 1,
-    ):
+    ) -> None:
         self.root: Path = root
-        self.exclude: list = exclude or []
+        self.exclude: list[str] = exclude or []
         self.max_level: int = max_level
         self.length: int = length
         self.real_level: int = 0
@@ -145,16 +156,17 @@ class PathSearch:
         """Return filename with match with input argument."""
         return list(
             filter(
-                lambda file: fnmatch.fnmatch(file, f"*/{filename}"),
+                lambda f: fnmatch.fnmatch(f, f"*/{filename}"),
                 self.files,
             )
         )
 
-    def tree(self, newline: Optional[str] = None) -> str:  # no cove
+    def tree(self, newline: str | None = None) -> str:  # no cove
         """Return path tree of root path."""
         return (newline or "\n").join(self.output_buf)
 
     def __switch_icon(self, number_now: int, number_all: int):
+        """Private method that use to switch icon mapping."""
         return (
             self._icon_last
             if number_now == (number_all - 1)

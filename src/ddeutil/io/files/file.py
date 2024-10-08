@@ -14,11 +14,8 @@ import marshal
 import mmap
 import os
 import pickle
-import sys
-import zipfile
 from contextlib import contextmanager
 from pathlib import Path
-from tarfile import TarFile
 from typing import (
     IO,
     Any,
@@ -35,7 +32,6 @@ from typing import (
 import msgpack
 import toml
 import yaml
-from ddeutil.core import splitter
 
 try:
     from yaml import CSafeLoader as SafeLoader
@@ -46,7 +42,6 @@ except ImportError:  # pragma: no cover
 from .utils import search_env, search_env_replace
 
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
-DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
 __all__: tuple[str, ...] = (
     "Fl",
@@ -63,6 +58,7 @@ __all__: tuple[str, ...] = (
     "MarshalFl",
     "MsgpackFl",
     "PickleFl",
+    "compress_lib",
 )
 
 
@@ -93,14 +89,18 @@ def compress_lib(compress: str) -> CompressProtocol:
 
 
 class CompressProtocol(Protocol):  # pragma: no cover
+    """Compress protocol object that allow to implement and use ``decompress``
+    and ``open`` methods.
+    """
+
     def decompress(self, *args, **kwargs) -> AnyStr: ...
 
     def open(self, *args, **kwargs) -> IO: ...
 
 
 class FlABC(abc.ABC):  # pragma: no cover
-    """Open File abstraction object for marking abstract method that need to
-    implement on any subclass.
+    """Open File abstraction object for marking abstract methods that need to
+    implement on any open file subclass.
     """
 
     @abc.abstractmethod
@@ -124,7 +124,7 @@ class Fl(FlABC):
 
     Examples:
         >>> with Fl(
-        ...     './<path>/<filename>.gz.txt',
+        ...     path='./<path>/<filename>.gz.txt',
         ...     compress='gzip',
         ... ).open() as f:
         ...     data = f.readline()
@@ -144,7 +144,8 @@ class Fl(FlABC):
         # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
 
-    def after_set_attrs(self) -> None: ...  # pragma: no cover
+    def after_set_attrs(self) -> None:  # pragma: no cover
+        """Do any action after the object initialize step."""
 
     def __call__(self, *args, **kwargs) -> IO:
         """Return IO of this object."""
@@ -152,16 +153,23 @@ class Fl(FlABC):
 
     @property
     def decompress(self) -> Callable[[...], AnyStr]:
-        if self.compress and self.compress in get_args(FileCompressType):
+        """Return decompress method that getting from its compression type.
+
+        :rtype: Callable[[...], AnyStr]
+        """
+        if self.compress is not None and self.compress in get_args(
+            FileCompressType
+        ):
             return compress_lib(self.compress).decompress
         raise NotImplementedError(
             "Does not implement decompress method for None compress value."
         )
 
-    def convert_mode(self, mode: str | None = None) -> dict[str, str]:
-        """Convert mode before passing to the main standard lib.
+    def __mode(self, mode: str | None = None) -> dict[str, str]:
+        """Convert mode property before passing to the main standard lib.
 
         :param mode: a reading or writing mode for the open method.
+        :type mode: str | None (None)
 
         :rtype: dict[str, str]
         :returns: A mapping of mode and other input parameters for standard
@@ -182,10 +190,13 @@ class Fl(FlABC):
         return {"mode": mode}
 
     def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
-        """Opening this file object."""
+        """Open this file object with standard libs that match with it file
+        format subclass propose.
+
+        :rtype: IO
+        """
         return compress_lib(self.compress).open(
-            self.path,
-            **(self.convert_mode(mode) | kwargs),
+            self.path, **(self.__mode(mode) | kwargs)
         )
 
     @contextmanager
@@ -203,118 +214,53 @@ class Fl(FlABC):
         finally:
             file.close()
 
-    def read(self, *args, **kwargs):
+    def read(self, *args, **kwargs):  # pragma: no cover
         raise NotImplementedError()
 
-    def write(self, *args, **kwargs):
+    def write(self, *args, **kwargs):  # pragma: no cover
         raise NotImplementedError()
-
-
-class OpenDirProtocol(Protocol):
-
-    def write(self, name, arcname): ...
-
-    def safe_extract(self, path, members): ...
-
-
-class CustomZipFl(zipfile.ZipFile):
-
-    def safe_extract(self, path=None, members=None):
-        self.extractall(path, members)
-
-
-class CustomTarFl(TarFile):
-
-    def write(self, name, arcname=None):
-        """Clone ``self.add`` method to the new name."""
-        return self.add(name, arcname)
-
-    def safe_extract(self, path: str | Path = ".", members=None):
-        path: Path = path if isinstance(path, Path) else Path(path)
-        # NOTE: For Python version >= 3.12
-        if sys.version_info >= (3, 12):
-            self.extractall(path, members, filter="data")
-            return
-        self.extractall(path, members)
-
-
-class Dir:
-    """Open File Object"""
-
-    def __init__(
-        self,
-        path: Union[str, Path],
-        *,
-        compress: str,
-    ) -> None:
-        self.path: Path = Path(path) if isinstance(path, str) else path
-        _compress, sub = splitter.must_split(compress, ":", maxsplit=1)
-        self.compress: DirCompressType = _compress
-        self.sub_compress: str = sub or "_"
-
-        # NOTE: Action anything after set up attributes.
-        self.after_set_attrs()
-
-    def after_set_attrs(self) -> None: ...
-
-    def open(self, *, mode: str, **kwargs) -> OpenDirProtocol:
-        """Open dir"""
-        if self.compress in {"zip"}:
-            ZIP_COMPRESS: dict[str, Any] = {
-                "_": zipfile.ZIP_DEFLATED,
-                "bz2": zipfile.ZIP_BZIP2,
-            }
-
-            return CustomZipFl(
-                self.path,
-                mode=mode,
-                compression=ZIP_COMPRESS[self.sub_compress],
-                **kwargs,
-            )
-        elif self.compress in {"tar"}:
-            TAR_COMPRESS: dict[str, str] = {
-                "_": "gz",
-                "gz": "gz",
-                "bz2": "bz2",
-                "xz": "xz",
-            }
-
-            return CustomTarFl.open(
-                self.path,
-                mode=f"{mode}:{TAR_COMPRESS[self.sub_compress]}",
-            )
-        raise NotImplementedError
 
 
 class EnvFl(Fl):
-    """Env object which mapping search engine"""
+    """Dot env open file object which mapping search engine to data context that
+    reading from dot env file format (.env).
+    """
 
     keep_newline: ClassVar[bool] = False
     default: ClassVar[str] = ""
 
     def read(self, *, update: bool = True) -> dict[str, str]:
-        with self.open(mode="r") as _r:
-            _r.seek(0)
+        """Return data context from dot env file format.
+
+        :param update: A update environment variable to interpreter flag.
+        :type update: bool (True)
+        :rtype: dict[str, str]
+        """
+        with self.open(mode="r") as f:
+            f.seek(0)
             _result: dict = search_env(
-                _r.read(),
+                f.read(),
                 keep_newline=self.keep_newline,
                 default=self.default,
             )
-            if update:
-                os.environ.update(**_result)
-            return _result
+        if update:
+            os.environ.update(**_result)
+        return _result
 
-    def write(self, data: dict[str, Any]) -> None:
-        raise NotImplementedError
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+        raise NotImplementedError(
+            "Dot env open file object does not allow to write."
+        )
 
 
 class YamlFl(Fl):
-    """Open Yaml File object.
+    """Yaml open file object that read data context from Yaml file format (.yml,
+    or .yaml).
 
-    .. noted::
-        - The boolean value in the yaml file
-            - true: Y, true, Yes, ON
-            - false: n, false, No, off
+        Note that, the boolean values on the data context in the yaml file will
+    convert to the Python object;
+        * true:     y, Y, true, Yes, on, ON
+        * false:    n, N, false, No, off, OFF
     """
 
     def read(self, safe: bool = True) -> dict[str, Any]:
@@ -330,6 +276,10 @@ class YamlFlResolve(YamlFl):
 
     def read(self, safe: bool = True) -> dict[str, Any]:
         """Reading Yaml data with does not convert boolean value.
+
+        :param safe: A flag that allow to use safe reading mode.
+        :type safe: bool (True)
+
         Note:
             Handle top level yaml property ``on``
             docs: https://github.com/yaml/pyyaml/issues/696
@@ -374,7 +324,7 @@ class YamlFlResolve(YamlFl):
             rs: dict[str, Any] = yaml.load(
                 _r.read(), (SafeLoader if safe else UnsafeLoader)
             )
-            # NOTE: revert resolver when want to use safe load.
+            # NOTE: Override revert resolver when want to use safe load.
             Resolver.yaml_implicit_resolvers = revert
             return rs
 
@@ -411,12 +361,15 @@ class YamlEnvFl(YamlFl):
 
 
 class CsvFl(Fl):
+    """"""
+
     def read(self) -> list[str]:
-        with self.open(mode="r") as _r:
+        """"""
+        with self.open(mode="r") as f:
             try:
-                dialect = csv.Sniffer().sniff(_r.read(128))
-                _r.seek(0)
-                return list(csv.DictReader(_r, dialect=dialect))
+                dialect = csv.Sniffer().sniff(f.read(128))
+                f.seek(0)
+                return list(csv.DictReader(f, dialect=dialect))
             except csv.Error:
                 return []
 
@@ -515,13 +468,7 @@ class JsonFl(Fl):
             except json.decoder.JSONDecodeError:
                 return {}
 
-    def write(
-        self,
-        data,
-        *,
-        indent: int = 4,
-    ) -> None:
-        _w: IO
+    def write(self, data, *, indent: int = 4) -> None:
         with self.open(mode="w") as _w:
             if self.compress:
                 _w.write(json.dumps(data))

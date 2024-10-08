@@ -11,3 +11,8 @@ def test_path() -> Path:
 @pytest.fixture(scope="session")
 def root_path(test_path: Path) -> Path:
     return test_path.parent
+
+
+@pytest.fixture(scope="session")
+def encoding() -> str:
+    return "utf-8"

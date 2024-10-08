@@ -5,9 +5,9 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-import ddeutil.io.files.main as fl
 import pytest
 import yaml
+from ddeutil.io.files import YamlEnvFl, YamlFl, YamlFlResolve
 
 
 @pytest.fixture(scope="module")
@@ -59,7 +59,7 @@ def yaml_data_safe() -> dict[str, Any]:
 
 def test_write_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
     yaml_path: Path = target_path / "test_write_file.yaml"
-    fl.YamlFl(path=yaml_path).write(yaml_data_safe)
+    YamlFl(path=yaml_path).write(yaml_data_safe)
     assert yaml_path.exists()
 
 
@@ -68,7 +68,7 @@ def test_read_yaml_resolve_file(target_path, yaml_str_safe, yaml_data_safe):
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         f.write(yaml_str_safe)
 
-    data = fl.YamlFlResolve(path=yaml_path).read(safe=False)
+    data = YamlFlResolve(path=yaml_path).read(safe=False)
     assert "on" == data["main_key"]["sub_key"]["str2bool"]
     assert (
         "# Comment ${DEMO_ENV_VALUE}\n"
@@ -81,7 +81,7 @@ def test_read_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(yaml.safe_load(yaml_str_safe), f)
 
-    data = fl.YamlFl(path=yaml_path).read()
+    data = YamlFl(path=yaml_path).read()
     assert yaml_data_safe == data
 
 
@@ -90,7 +90,7 @@ def test_read_yaml_file(target_path, yaml_str_safe, yaml_data_safe):
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         f.write(yaml_str_safe)
 
-    data = fl.YamlFl(path=yaml_path).read(safe=False)
+    data = YamlFl(path=yaml_path).read(safe=False)
     assert yaml_data_safe == data
 
 
@@ -144,7 +144,7 @@ def test_read_yaml_file_with_safe_mode(
 
     os.environ["DEMO_ENV_VALUE"] = "demo"
 
-    data = fl.YamlEnvFl(path=yaml_path).read()
+    data = YamlEnvFl(path=yaml_path).read()
     assert yaml_data_env_safe == data
 
 
@@ -159,7 +159,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare(
 
     os.environ["DEMO_ENV_VALUE"] = "demo"
 
-    yml_loader = fl.YamlEnvFl(path=yaml_path)
+    yml_loader = YamlEnvFl(path=yaml_path)
     yml_loader.prepare = lambda x: f"{x}!!"
     data = yml_loader.read()
     assert {
@@ -191,7 +191,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare_2(
 
     import urllib.parse
 
-    yml_loader = fl.YamlEnvFl
+    yml_loader = YamlEnvFl
     yml_loader.prepare = staticmethod(lambda x: urllib.parse.quote_plus(str(x)))
     data = yml_loader(path=yaml_path).read()
     assert {
