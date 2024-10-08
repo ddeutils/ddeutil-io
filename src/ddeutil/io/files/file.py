@@ -264,23 +264,34 @@ class YamlFl(Fl):
     """
 
     def read(self, safe: bool = True) -> dict[str, Any]:
-        with self.open(mode="r") as _r:
-            return yaml.load(_r.read(), (SafeLoader if safe else UnsafeLoader))
+        """Return data context from yaml file format.
+
+        :param safe: A flag that allow to use safe reading mode.
+        :type safe: bool (True)
+        :rtype: dict[str, Any]
+        """
+        with self.open(mode="r") as f:
+            return yaml.load(f.read(), (SafeLoader if safe else UnsafeLoader))
 
     def write(self, data: dict[str, Any]) -> None:
-        with self.open(mode="w") as _w:
-            yaml.dump(data, _w, default_flow_style=False)
+        with self.open(mode="w") as f:
+            yaml.dump(data, f, default_flow_style=False)
 
 
 class YamlFlResolve(YamlFl):
+    """Yaml open file object with resolve boolean convert value problem such as
+    convert 'on' value to true instead a string of 'on' value. This object also
+    read data context from Yaml file format (.yml, or .yaml).
+    """
 
     def read(self, safe: bool = True) -> dict[str, Any]:
         """Reading Yaml data with does not convert boolean value.
 
         :param safe: A flag that allow to use safe reading mode.
         :type safe: bool (True)
+        :rtype: dict[str, Any]
 
-        Note:
+        Note that:
             Handle top level yaml property ``on``
             docs: https://github.com/yaml/pyyaml/issues/696
 
@@ -320,9 +331,9 @@ class YamlFlResolve(YamlFl):
                     if x[0] != "tag:yaml.org,2002:bool"
                 ]
 
-        with self.open(mode="r") as _r:
+        with self.open(mode="r") as f:
             rs: dict[str, Any] = yaml.load(
-                _r.read(), (SafeLoader if safe else UnsafeLoader)
+                f.read(), (SafeLoader if safe else UnsafeLoader)
             )
             # NOTE: Override revert resolver when want to use safe load.
             Resolver.yaml_implicit_resolvers = revert
@@ -330,20 +341,35 @@ class YamlFlResolve(YamlFl):
 
 
 class YamlEnvFl(YamlFl):
-    """Open Yaml object which mapping search environment variable."""
+    """Yaml open file object which mapping search environment variable."""
 
     raise_if_not_default: ClassVar[bool] = False
     default: ClassVar[str] = "null"
     escape: ClassVar[str] = "<ESCAPE>"
 
     @staticmethod
-    def prepare(x: str) -> str:
-        return x
+    def prepare(value: str) -> str:
+        """Prepare function it use on searching environment variable process
+        that passing string value to this function before keeping to the final
+        context data.
+
+        :param value: A string value that passing from searching process
+        :type value: str
+        :rtype: str
+        """
+        return value
 
     def read(self, safe: bool = True) -> dict[str, Any]:
-        with self.open(mode="r") as _r:
+        """Return data context from yaml file format and mapping search
+        environment variables before returning context data.
+
+        :param safe: A flag that allow to use safe reading mode.
+        :type safe: bool (True)
+        :rtype: dict[str, Any]
+        """
+        with self.open(mode="r") as f:
             _env_replace: str = search_env_replace(
-                yaml.dump(yaml.load(_r.read(), UnsafeLoader)),
+                yaml.dump(yaml.load(f.read(), UnsafeLoader)),
                 raise_if_default_not_exists=self.raise_if_not_default,
                 default=self.default,
                 escape=self.escape,
@@ -356,18 +382,26 @@ class YamlEnvFl(YamlFl):
                 return _result
             return {}
 
-    def write(self, data: dict[str, Any]) -> None:
-        raise NotImplementedError
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+        raise NotImplementedError(
+            "Yaml open file with mapping env var does not allow to write."
+        )
 
 
 class CsvFl(Fl):
-    """"""
+    """CSV open file object with comma (,) seperator charactor."""
 
-    def read(self) -> list[str]:
-        """"""
+    def read(self, pre_load: int = 128) -> list[dict[str | int, Any]]:
+        """Return data context from csv file format.
+
+        :param pre_load: An input bytes number that use to pre-loading for
+            define column structure before reading with csv.
+        :type pre_load: int (128)
+        :rtype: list[dict[str | int, Any]]
+        """
         with self.open(mode="r") as f:
             try:
-                dialect = csv.Sniffer().sniff(f.read(128))
+                dialect = csv.Sniffer().sniff(f.read(pre_load))
                 f.seek(0)
                 return list(csv.DictReader(f, dialect=dialect))
             except csv.Error:
@@ -375,39 +409,42 @@ class CsvFl(Fl):
 
     def write(
         self,
-        data: Union[list[Any], dict[Any, Any]],
+        data: list[Any] | dict[Any, Any],
         *,
-        mode: Optional[str] = None,
+        mode: str | None = None,
         **kwargs,
     ) -> None:
-        mode = mode or "w"
+        """Write CSV file with an input data context. This method allow to use
+        append write mode.
+        """
+        if not data:
+            return
+
+        mode: str = mode or "w"
         assert mode in (
             "a",
             "w",
         ), "save mode must contain only value `a` nor `w`."
-        with self.open(mode=mode, newline="") as _w:
-            _has_data: bool = True
-            if isinstance(data, dict):
-                data: list = [data]
-            elif not data:
-                data: list = [{}]
-                _has_data: bool = False
-            if _has_data:
-                writer = csv.DictWriter(
-                    _w,
-                    fieldnames=list(data[0].keys()),
-                    lineterminator="\n",
-                    **kwargs,
-                )
-                if mode == "w" or not self.has_header:
-                    writer.writeheader()
-                writer.writerows(data)
+
+        if isinstance(data, dict):
+            data: list = [data]
+
+        with self.open(mode=mode, newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=list(data[0].keys()),
+                lineterminator="\n",
+                **kwargs,
+            )
+            if mode == "w" or not self.has_header:
+                writer.writeheader()
+            writer.writerows(data)
 
     @property
-    def has_header(self) -> bool:
-        with self.open(mode="r") as _r:
+    def has_header(self, pre_load: int = 128) -> bool:
+        with self.open(mode="r") as f:
             try:
-                return csv.Sniffer().has_header(_r.read(128))
+                return csv.Sniffer().has_header(f.read(pre_load))
             except csv.Error:
                 return False
 
@@ -418,11 +455,11 @@ class CsvPipeFl(CsvFl):
             "pipe_delimiter", delimiter="|", quoting=csv.QUOTE_ALL
         )
 
-    def read(self) -> list:
-        with self.open(mode="r") as _r:
+    def read(self, pre_load: int = 0) -> list:
+        with self.open(mode="r") as f:
             try:
                 return list(
-                    csv.DictReader(_r, delimiter="|", quoting=csv.QUOTE_ALL)
+                    csv.DictReader(f, delimiter="|", quoting=csv.QUOTE_ALL)
                 )
             except csv.Error:
                 return []
@@ -439,7 +476,7 @@ class CsvPipeFl(CsvFl):
             "a",
             "w",
         }, "save mode must contain only value `a` nor `w`."
-        with self.open(mode=mode, newline="") as _w:
+        with self.open(mode=mode, newline="") as f:
             _has_data: bool = True
             if isinstance(data, dict):
                 data: list = [data]
@@ -448,7 +485,7 @@ class CsvPipeFl(CsvFl):
                 _has_data: bool = False
             if _has_data:
                 writer = csv.DictWriter(
-                    _w,
+                    f,
                     fieldnames=list(data[0].keys()),
                     lineterminator="\n",
                     delimiter="|",
@@ -461,35 +498,43 @@ class CsvPipeFl(CsvFl):
 
 
 class JsonFl(Fl):
+    """Json open file object that read data context from Json file format
+    (.json).
+    """
+
     def read(self) -> Union[dict[Any, Any], list[Any]]:
-        with self.open(mode="r") as _r:
+        with self.open(mode="r") as f:
             try:
-                return json.loads(_r.read())
+                return json.loads(f.read())
             except json.decoder.JSONDecodeError:
                 return {}
 
     def write(self, data, *, indent: int = 4) -> None:
-        with self.open(mode="w") as _w:
+        with self.open(mode="w") as f:
             if self.compress:
-                _w.write(json.dumps(data))
+                f.write(json.dumps(data))
             else:
-                json.dump(data, _w, indent=indent)
+                json.dump(data, f, indent=indent)
 
 
 class JsonEnvFl(JsonFl):
-    raise_if_not_default: bool = False
-    default: str = "null"
-    escape: str = "<ESCAPE>"
+    """Json open file object which mapping search environment variable before
+    parsing with json package.
+    """
+
+    raise_if_not_default: ClassVar[bool] = False
+    default: ClassVar[str] = "null"
+    escape: ClassVar[str] = "<ESCAPE>"
 
     @staticmethod
-    def prepare(x: str) -> str:
-        return x
+    def prepare(value: str) -> str:
+        return value
 
     def read(self) -> Union[dict[Any, Any], list[Any]]:
-        with self.open(mode="rt") as _r:
+        with self.open(mode="rt") as f:
             return json.loads(
                 search_env_replace(
-                    _r.read(),
+                    f.read(),
                     raise_if_default_not_exists=self.raise_if_not_default,
                     default=self.default,
                     escape=self.escape,
@@ -497,34 +542,36 @@ class JsonEnvFl(JsonFl):
                 )
             )
 
-    def write(self, data, *, indent: int = 4) -> None:
-        raise NotImplementedError
+    def write(self, data, *, indent: int = 4) -> None:  # pragma: no cover
+        raise NotImplementedError(
+            "Json open file with mapping env var does not allow to write."
+        )
 
 
 class TomlFl(Fl):
     def read(self):
-        with self.open(mode="rt") as _r:
-            return toml.loads(_r.read())
+        with self.open(mode="rt") as f:
+            return toml.loads(f.read())
 
     def write(self, data: Any) -> None:
-        with self.open(mode="wt") as _w:
-            toml.dump(data, _w)
+        with self.open(mode="wt") as f:
+            toml.dump(data, f)
 
 
 class TomlEnvFl(TomlFl):
-    raise_if_not_default: bool = False
-    default: str = "null"
-    escape: str = "<ESCAPE>"
+    raise_if_not_default: ClassVar[bool] = False
+    default: ClassVar[str] = "null"
+    escape: ClassVar[str] = "<ESCAPE>"
 
     @staticmethod
     def prepare(x: str) -> str:
         return x
 
     def read(self):
-        with self.open(mode="rt") as _r:
+        with self.open(mode="rt") as f:
             return toml.loads(
                 search_env_replace(
-                    _r.read(),
+                    f.read(),
                     raise_if_default_not_exists=self.raise_if_not_default,
                     default=self.default,
                     escape=self.escape,
@@ -535,29 +582,29 @@ class TomlEnvFl(TomlFl):
 
 class PickleFl(Fl):
     def read(self):
-        with self.open(mode="rb") as _r:
-            return pickle.loads(_r.read())
+        with self.open(mode="rb") as f:
+            return pickle.loads(f.read())
 
     def write(self, data):
-        with self.open(mode="wb") as _w:
-            pickle.dump(data, _w)
+        with self.open(mode="wb") as f:
+            pickle.dump(data, f)
 
 
 class MarshalFl(Fl):
     def read(self):
-        with self.open(mode="rb") as _r:
-            return marshal.loads(_r.read())
+        with self.open(mode="rb") as f:
+            return marshal.loads(f.read())
 
     def write(self, data):
-        with self.open(mode="wb") as _w:
-            marshal.dump(data, _w)
+        with self.open(mode="wb") as f:
+            marshal.dump(data, f)
 
 
 class MsgpackFl(Fl):
     def read(self):
-        with self.open(mode="rb") as _r:
-            return msgpack.loads(_r.read())
+        with self.open(mode="rb") as f:
+            return msgpack.loads(f.read())
 
     def write(self, data):
-        with self.open(mode="wb") as _w:
-            msgpack.dump(data, _w)
+        with self.open(mode="wb") as f:
+            msgpack.dump(data, f)
