@@ -28,3 +28,10 @@ def csv_data() -> list[dict[str, str]]:
 def test_files_open_csv_read_and_write(csv_path, csv_data):
     CsvFl(csv_path / "test_file.csv").write(csv_data)
     assert csv_data == CsvFl(csv_path / "test_file.csv").read()
+
+
+def test_files_open_csv(csv_path):
+    with open(csv_path / "test_file_raise.csv", mode="w") as f:
+        f.write('\n"Col01","Col02"\n' "1,2,3\n" '--a,"b"\n' ",,,,")
+    data = CsvFl(csv_path / "test_file_raise.csv").read()
+    print(data)

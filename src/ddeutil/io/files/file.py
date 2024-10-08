@@ -23,14 +23,12 @@ from typing import (
     Callable,
     ClassVar,
     Literal,
-    Optional,
     Protocol,
     Union,
     get_args,
 )
 
 import msgpack
-import toml
 import yaml
 
 try:
@@ -39,8 +37,16 @@ try:
 except ImportError:  # pragma: no cover
     from yaml import SafeLoader, UnsafeLoader
 
+import toml
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cove
+    import pip._vendor.tomli as tomllib
+
 from .utils import search_env, search_env_replace
 
+logger = logging.getLogger("ddeutil.io")
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 
 __all__: tuple[str, ...] = (
@@ -119,8 +125,11 @@ class Fl(FlABC):
     because it do not override necessary methods from FlABC abstract class.
 
     :param path: A path that respresent the file location.
+    :type path: str | Path
     :param encoding: An open file encoding value, it will use UTF-8 by default.
+    :type encoding: str | None (None)
     :param compress: A compress type for this file.
+    :type compress: FileCompressType | None (None)
 
     Examples:
         >>> with Fl(
@@ -132,14 +141,14 @@ class Fl(FlABC):
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         *,
-        encoding: Optional[str] = None,
-        compress: Optional[FileCompressType] = None,
+        encoding: str | None = None,
+        compress: FileCompressType | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.encoding: str = encoding or "utf-8"
-        self.compress: Optional[FileCompressType] = compress
+        self.compress: FileCompressType | None = compress
 
         # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
@@ -177,22 +186,30 @@ class Fl(FlABC):
         """
         if not mode:
             return {"mode": "r"}
+
         byte_mode: bool = "b" in mode
         if self.compress is None:
             _mode: dict[str, str] = {"mode": mode}
             return _mode if byte_mode else {"encoding": self.encoding, **_mode}
-        elif not byte_mode and self.compress in ("gzip", "gz", "xz", "bz2"):
-            # NOTE:
-            #   Add `t` in open file mode for force with text mode.
-            return {"mode": f"{mode}t", "encoding": self.encoding}
-        elif byte_mode and self.compress in ("gzip", "gz", "xz", "bz2"):
-            return {"mode": mode}
-        return {"mode": mode}
 
-    def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
+        if self.compress in get_args(FileCompressType):
+            return (
+                {"mode": mode}
+                if byte_mode
+                else {"mode": f"{mode}t", "encoding": self.encoding}
+            )
+
+        raise NotImplementedError(
+            f"mode conversion does not support for compress type no in "
+            f"{get_args(FileCompressType)}."
+        )
+
+    def open(self, *, mode: str | None = None, **kwargs) -> IO:
         """Open this file object with standard libs that match with it file
         format subclass propose.
 
+        :param mode: A opening mode that allow you to use read or write mode.
+        :type mode: str | None (None)
         :rtype: IO
         """
         return compress_lib(self.compress).open(
@@ -200,25 +217,35 @@ class Fl(FlABC):
         )
 
     @contextmanager
-    def mopen(self, *, mode: Optional[str] = None) -> IO:
+    def mopen(self, *, mode: str | None = None) -> IO:
+        """Open with memory mode context manager.
+
+        :param mode: A opening mode that allow you to use read or write mode.
+        :type mode: str | None (None)
+        :rtype: IO
+        """
         mode: str = mode or "r"
         file: IO = self.open(mode=mode)
-        _access = mmap.ACCESS_READ if ("r" in mode) else mmap.ACCESS_WRITE
+        _access: int = mmap.ACCESS_READ if ("r" in mode) else mmap.ACCESS_WRITE
         try:
             yield mmap.mmap(file.fileno(), length=0, access=_access)
-        except ValueError as err:
-            if str(err) != "cannot mmap an empty file":
-                raise err
+        except ValueError:
+            logger.exception("Can not open file with memory mode")
             yield file
-            logging.error("Does not open file with memory mode")
         finally:
             file.close()
 
     def read(self, *args, **kwargs):  # pragma: no cover
-        raise NotImplementedError()
+        raise NotImplementedError(
+            "This is abstract class only, so, you should implement open file "
+            "object with this class and override this method."
+        )
 
     def write(self, *args, **kwargs):  # pragma: no cover
-        raise NotImplementedError()
+        raise NotImplementedError(
+            "This is abstract class only, so, you should implement open file "
+            "object with this class and override this method."
+        )
 
 
 class EnvFl(Fl):
@@ -418,7 +445,7 @@ class CsvFl(Fl):
         append write mode.
         """
         if not data:
-            return
+            raise ValueError("data to write is empty")
 
         mode: str = mode or "w"
         assert mode in (
@@ -442,6 +469,13 @@ class CsvFl(Fl):
 
     @property
     def has_header(self, pre_load: int = 128) -> bool:
+        """Return true if the file with csv format already implement header.
+
+        :param pre_load: An input bytes number that use to pre-loading for
+            define header.
+        :type pre_load: int (128)
+        :rtype: bool
+        """
         with self.open(mode="r") as f:
             try:
                 return csv.Sniffer().has_header(f.read(pre_load))
@@ -468,33 +502,33 @@ class CsvPipeFl(CsvFl):
         self,
         data: Union[list[Any], dict[Any, Any]],
         *,
-        mode: Optional[str] = None,
+        mode: str | None = None,
         **kwargs,
     ) -> None:
-        mode = mode or "w"
+        if not data:
+            raise ValueError("data to write is empty")
+
+        mode: str = mode or "w"
         assert mode in {
             "a",
             "w",
         }, "save mode must contain only value `a` nor `w`."
+
+        if isinstance(data, dict):
+            data: list = [data]
+
         with self.open(mode=mode, newline="") as f:
-            _has_data: bool = True
-            if isinstance(data, dict):
-                data: list = [data]
-            elif not data:
-                data: list = [{}]
-                _has_data: bool = False
-            if _has_data:
-                writer = csv.DictWriter(
-                    f,
-                    fieldnames=list(data[0].keys()),
-                    lineterminator="\n",
-                    delimiter="|",
-                    quoting=csv.QUOTE_ALL,
-                    **kwargs,
-                )
-                if mode == "w" or not self.has_header:
-                    writer.writeheader()
-                writer.writerows(data)
+            writer = csv.DictWriter(
+                f,
+                fieldnames=list(data[0].keys()),
+                lineterminator="\n",
+                delimiter="|",
+                quoting=csv.QUOTE_ALL,
+                **kwargs,
+            )
+            if mode == "w" or not self.has_header:
+                writer.writeheader()
+            writer.writerows(data)
 
 
 class JsonFl(Fl):
@@ -551,7 +585,7 @@ class JsonEnvFl(JsonFl):
 class TomlFl(Fl):
     def read(self):
         with self.open(mode="rt") as f:
-            return toml.loads(f.read())
+            return tomllib.loads(f.read())
 
     def write(self, data: Any) -> None:
         with self.open(mode="wt") as f:
@@ -559,6 +593,10 @@ class TomlFl(Fl):
 
 
 class TomlEnvFl(TomlFl):
+    """Toml open file object which mapping search environment variable before
+    parsing with toml package.
+    """
+
     raise_if_not_default: ClassVar[bool] = False
     default: ClassVar[str] = "null"
     escape: ClassVar[str] = "<ESCAPE>"
@@ -569,7 +607,7 @@ class TomlEnvFl(TomlFl):
 
     def read(self):
         with self.open(mode="rt") as f:
-            return toml.loads(
+            return tomllib.loads(
                 search_env_replace(
                     f.read(),
                     raise_if_default_not_exists=self.raise_if_not_default,

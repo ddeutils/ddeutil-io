@@ -78,6 +78,9 @@ FileExtensionConst: ConstantType = make_const(
 class BaseRegister:
     """Base Register object that is not implement any features for register
     config data.
+
+    :param name:
+    :param domain:
     """
 
     def __init__(
@@ -190,7 +193,7 @@ class Register(BaseRegister):
         self.loader_stg: Optional[type[Fl]] = loader_stg
         self.params: Optional[Params] = params
 
-        # Load latest version of data from data lake or data store of
+        # NOTE: Load latest version of data from data lake or data store of
         # configuration files
         self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
@@ -209,8 +212,8 @@ class Register(BaseRegister):
         )
 
         # NOTE:
-        #   Update metadata if the configuration data does not exist, or
-        #   it has any changes.
+        #   Update metadata if the configuration data does not exist, or it has
+        #   any changes.
         if self.changed == 99:
             logging.info(
                 f"Configuration data with stage: {self.stage!r} does not "

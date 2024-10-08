@@ -39,27 +39,27 @@ pip install -U ddeutil-io
 
 The features of this package is Input/Output data transport utility objects.
 
-| Module   |     Name      | Description                                                                         | Remark |
-|----------|:-------------:|-------------------------------------------------------------------------------------|--------|
-| files    |     CsvFl     |                                                                                     |        |
-|          |   CsvPipeFl   |                                                                                     |        |
-|          |     EnvFl     |                                                                                     |        |
-|          |      Fl       |                                                                                     |        |
-|          |   JsonEnvFl   |                                                                                     |        |
-|          |    JsonFl     |                                                                                     |        |
-|          |   MarshalFl   |                                                                                     |        |
-|          |   PickleFl    |                                                                                     |        |
-|          |   TomlEnvFl   |                                                                                     |        |
-|          |    TomlFl     |                                                                                     |        |
-|          |   YamlEnvFl   |                                                                                     |        |
-|          |    YamlFl     |                                                                                     |        |
-|          | YamlFlResolve |                                                                                     |        |
-|          |  PathSearch   |                                                                                     |        |
-|          |   RegexConf   |                                                                                     |        |
-| config   |    ConfFl     |                                                                                     |        |
-|          |  ConfSQLite   |                                                                                     |        |
-| register |   Register    | Register Object that contain configuration loading methods and metadata management. |        |
-|          | FullRegister  |                                                                                     |        |
+| Module   |     Name      | Description                                                                                     | Remark |
+|----------|:-------------:|-------------------------------------------------------------------------------------------------|--------|
+| files    |      Fl       | Open File object that use to open any normal or compression file from current local file system |        |
+|          |     CsvFl     |                                                                                                 |        |
+|          |   CsvPipeFl   |                                                                                                 |        |
+|          |     EnvFl     |                                                                                                 |        |
+|          |   JsonEnvFl   |                                                                                                 |        |
+|          |    JsonFl     |                                                                                                 |        |
+|          |   MarshalFl   |                                                                                                 |        |
+|          |   PickleFl    |                                                                                                 |        |
+|          |   TomlEnvFl   |                                                                                                 |        |
+|          |    TomlFl     |                                                                                                 |        |
+|          |   YamlEnvFl   |                                                                                                 |        |
+|          |    YamlFl     |                                                                                                 |        |
+|          | YamlFlResolve |                                                                                                 |        |
+|          |  PathSearch   |                                                                                                 |        |
+|          |   RegexConf   |                                                                                                 |        |
+| config   |    ConfFl     |                                                                                                 |        |
+|          |  ConfSQLite   |                                                                                                 |        |
+| register |   Register    | Register Object that contain configuration loading methods and metadata management.             |        |
+|          | FullRegister  |                                                                                                 |        |
 
 ## :beers: Usages
 
