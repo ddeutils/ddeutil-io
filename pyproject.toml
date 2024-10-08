@@ -25,12 +25,25 @@ dependencies = [
     "fmtutil==1.0.10",
     "tzdata==2024.2",
     "pydantic==2.9.2",
-    "msgpack==1.1.0",
     "deepdiff==8.0.1",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+all = [
+    "msgpack==1.1.0",
     "pyyaml==6.0.2",
     "toml==0.10.2",
 ]
-dynamic = ["version"]
+yaml = [
+    "pyyaml==6.0.2",
+]
+toml = [
+    "toml==0.10.2",
+]
+msgpack = [
+    "msgpack==1.1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/korawica/ddeutil-io/"

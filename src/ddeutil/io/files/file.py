@@ -619,6 +619,10 @@ class TomlEnvFl(TomlFl):
 
 
 class PickleFl(Fl):
+    """Pickle open file object that read data context from Pickle file format
+    (.pickle).
+    """
+
     def read(self):
         with self.open(mode="rb") as f:
             return pickle.loads(f.read())
