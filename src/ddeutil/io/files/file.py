@@ -28,16 +28,28 @@ from typing import (
     get_args,
 )
 
-import msgpack
-import yaml
+try:
+    import msgpack
+except ImportError:  # pragma: no cover
+    msgpack = None
 
 try:
-    from yaml import CSafeLoader as SafeLoader
-    from yaml import CUnsafeLoader as UnsafeLoader
-except ImportError:  # pragma: no cover
-    from yaml import SafeLoader, UnsafeLoader
+    import yaml
 
-import toml
+    try:
+        from yaml import CSafeLoader as SafeLoader
+        from yaml import CUnsafeLoader as UnsafeLoader
+    except ImportError:  # pragma: no cover
+        from yaml import SafeLoader, UnsafeLoader
+except ImportError:  # pragma: no cover
+    yaml = None
+    SafeLoader = None
+    UnsafeLoader = None
+
+try:
+    import toml
+except ImportError:  # pragma: no cover
+    toml = None
 
 try:
     import tomllib
@@ -51,6 +63,7 @@ FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
 
 __all__: tuple[str, ...] = (
     "Fl",
+    "EnvFlMixin",
     "EnvFl",
     "JsonFl",
     "JsonEnvFl",
@@ -241,10 +254,42 @@ class Fl(FlABC):
             "object with this class and override this method."
         )
 
-    def write(self, *args, **kwargs):  # pragma: no cover
+    def write(self, *args, **kwargs) -> None:  # pragma: no cover
         raise NotImplementedError(
             "This is abstract class only, so, you should implement open file "
             "object with this class and override this method."
+        )
+
+
+class EnvFlMixin:
+    """Environment Mapping to read method of open file object mixin. This object
+    already implement class variables that need to use on ``search_env_replace``
+    function.
+    """
+
+    raise_if_not_default: ClassVar[bool] = False
+    default: ClassVar[str] = "null"
+    escape: ClassVar[str] = "<ESCAPE>"
+
+    @staticmethod
+    def prepare(value: str) -> str:
+        """Prepare function it use on searching environment variable process
+        that passing string value to this function before keeping to the final
+        context data.
+
+        :param value: A string value that passing from searching process
+        :type value: str
+        :rtype: str
+        """
+        return value
+
+    def search_env_replace(self, content: str) -> Any:
+        return search_env_replace(
+            content,
+            raise_if_default_not_exists=self.raise_if_not_default,
+            default=self.default,
+            escape=self.escape,
+            caller=self.prepare,
         )
 
 
@@ -265,7 +310,7 @@ class EnvFl(Fl):
         """
         with self.open(mode="r") as f:
             f.seek(0)
-            _result: dict = search_env(
+            _result: dict[str, str] = search_env(
                 f.read(),
                 keep_newline=self.keep_newline,
                 default=self.default,
@@ -367,24 +412,8 @@ class YamlFlResolve(YamlFl):
             return rs
 
 
-class YamlEnvFl(YamlFl):
+class YamlEnvFl(YamlFl, EnvFlMixin):
     """Yaml open file object which mapping search environment variable."""
-
-    raise_if_not_default: ClassVar[bool] = False
-    default: ClassVar[str] = "null"
-    escape: ClassVar[str] = "<ESCAPE>"
-
-    @staticmethod
-    def prepare(value: str) -> str:
-        """Prepare function it use on searching environment variable process
-        that passing string value to this function before keeping to the final
-        context data.
-
-        :param value: A string value that passing from searching process
-        :type value: str
-        :rtype: str
-        """
-        return value
 
     def read(self, safe: bool = True) -> dict[str, Any]:
         """Return data context from yaml file format and mapping search
@@ -395,19 +424,15 @@ class YamlEnvFl(YamlFl):
         :rtype: dict[str, Any]
         """
         with self.open(mode="r") as f:
-            _env_replace: str = search_env_replace(
-                yaml.dump(yaml.load(f.read(), UnsafeLoader)),
-                raise_if_default_not_exists=self.raise_if_not_default,
-                default=self.default,
-                escape=self.escape,
-                caller=self.prepare,
+            context_env_replace: str = self.search_env_replace(
+                yaml.dump(yaml.load(f.read(), UnsafeLoader))
             )
-            if _result := yaml.load(
-                _env_replace,
-                (SafeLoader if safe else UnsafeLoader),
-            ):
-                return _result
-            return {}
+        if result := yaml.load(
+            context_env_replace,
+            (SafeLoader if safe else UnsafeLoader),
+        ):
+            return result
+        return {}
 
     def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
         raise NotImplementedError(
@@ -546,35 +571,19 @@ class JsonFl(Fl):
     def write(self, data, *, indent: int = 4) -> None:
         with self.open(mode="w") as f:
             if self.compress:
-                f.write(json.dumps(data))
+                f.write(json.dumps(data, default=str))
             else:
-                json.dump(data, f, indent=indent)
+                json.dump(data, f, indent=indent, default=str)
 
 
-class JsonEnvFl(JsonFl):
+class JsonEnvFl(JsonFl, EnvFlMixin):
     """Json open file object which mapping search environment variable before
     parsing with json package.
     """
 
-    raise_if_not_default: ClassVar[bool] = False
-    default: ClassVar[str] = "null"
-    escape: ClassVar[str] = "<ESCAPE>"
-
-    @staticmethod
-    def prepare(value: str) -> str:
-        return value
-
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="rt") as f:
-            return json.loads(
-                search_env_replace(
-                    f.read(),
-                    raise_if_default_not_exists=self.raise_if_not_default,
-                    default=self.default,
-                    escape=self.escape,
-                    caller=self.prepare,
-                )
-            )
+            return json.loads(self.search_env_replace(f.read()))
 
     def write(self, data, *, indent: int = 4) -> None:  # pragma: no cover
         raise NotImplementedError(
@@ -587,38 +596,32 @@ class TomlFl(Fl):
         with self.open(mode="rt") as f:
             return tomllib.loads(f.read())
 
-    def write(self, data: Any) -> None:
+    def write(self, data: dict[str, Any]) -> None:
+        if toml is None:  # pragma: no cover
+            raise ImportError(
+                "writing toml file need `toml` package, you should to install "
+                "toml via `pip install toml` first."
+            )
         with self.open(mode="wt") as f:
             toml.dump(data, f)
 
 
-class TomlEnvFl(TomlFl):
+class TomlEnvFl(TomlFl, EnvFlMixin):
     """Toml open file object which mapping search environment variable before
     parsing with toml package.
     """
 
-    raise_if_not_default: ClassVar[bool] = False
-    default: ClassVar[str] = "null"
-    escape: ClassVar[str] = "<ESCAPE>"
-
-    @staticmethod
-    def prepare(x: str) -> str:
-        return x
-
     def read(self):
         with self.open(mode="rt") as f:
-            return tomllib.loads(
-                search_env_replace(
-                    f.read(),
-                    raise_if_default_not_exists=self.raise_if_not_default,
-                    default=self.default,
-                    escape=self.escape,
-                    caller=self.prepare,
-                )
-            )
+            return tomllib.loads(self.search_env_replace(f.read()))
+
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+        raise NotImplementedError(
+            "Toml open file with mapping env var does not allow to write."
+        )
 
 
-class PickleFl(Fl):
+class PickleFl(Fl):  # pragma: no cover
     """Pickle open file object that read data context from Pickle file format
     (.pickle).
     """
@@ -632,7 +635,7 @@ class PickleFl(Fl):
             pickle.dump(data, f)
 
 
-class MarshalFl(Fl):
+class MarshalFl(Fl):  # pragma: no cover
     def read(self):
         with self.open(mode="rb") as f:
             return marshal.loads(f.read())
@@ -642,7 +645,7 @@ class MarshalFl(Fl):
             marshal.dump(data, f)
 
 
-class MsgpackFl(Fl):
+class MsgpackFl(Fl):  # pragma: no cover
     def read(self):
         with self.open(mode="rb") as f:
             return msgpack.loads(f.read())

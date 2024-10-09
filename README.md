@@ -34,32 +34,42 @@ pip install -U ddeutil-io
 > [!NOTE]
 > This package need to install `ddeutil` first to be core package namespace.
 > You do not need to pip it because I include this package to the required list.
+>
+> For optional dependencies that should to additional install;
+>
+> | Module     | Additional dependencies  |
+> |------------|--------------------------|
+> | YamlFl     | `pip install PyYaml`     |
+> | TomlFl     | `pip install toml`       |
+> | MsgpackFl  | `pip install msgpack`    |
 
 ## :dart: Features
 
 The features of this package is Input/Output data transport utility objects.
 
-| Module   |     Name      | Description                                                                                     | Remark |
-|----------|:-------------:|-------------------------------------------------------------------------------------------------|--------|
-| files    |      Fl       | Open File object that use to open any normal or compression file from current local file system |        |
-|          |     CsvFl     |                                                                                                 |        |
-|          |   CsvPipeFl   |                                                                                                 |        |
-|          |     EnvFl     |                                                                                                 |        |
-|          |   JsonEnvFl   |                                                                                                 |        |
-|          |    JsonFl     |                                                                                                 |        |
-|          |   MarshalFl   |                                                                                                 |        |
-|          |   PickleFl    |                                                                                                 |        |
-|          |   TomlEnvFl   |                                                                                                 |        |
-|          |    TomlFl     |                                                                                                 |        |
-|          |   YamlEnvFl   |                                                                                                 |        |
-|          |    YamlFl     |                                                                                                 |        |
-|          | YamlFlResolve |                                                                                                 |        |
-|          |  PathSearch   |                                                                                                 |        |
-|          |   RegexConf   |                                                                                                 |        |
-| config   |    ConfFl     |                                                                                                 |        |
-|          |  ConfSQLite   |                                                                                                 |        |
-| register |   Register    | Register Object that contain configuration loading methods and metadata management.             |        |
-|          | FullRegister  |                                                                                                 |        |
+| Module     |     Name      | Description                                                                                     | Remark   |
+|------------|:-------------:|-------------------------------------------------------------------------------------------------|----------|
+| files.base |  PathSearch   |                                                                                                 |          |
+|            |   RegexConf   |                                                                                                 |          |
+| files.file |      Fl       | Open File object that use to open any normal or compression file from current local file system |          |
+|            |  EnvFlMixin   |                                                                                                 |          |
+|            |     EnvFl     |                                                                                                 |          |
+|            |   YamlEnvFl   |                                                                                                 |          |
+|            |    YamlFl     |                                                                                                 |          |
+|            | YamlFlResolve |                                                                                                 |          |
+|            |   JsonEnvFl   |                                                                                                 |          |
+|            |    JsonFl     |                                                                                                 |          |
+|            |     CsvFl     |                                                                                                 |          |
+|            |   CsvPipeFl   |                                                                                                 |          |
+|            |   TomlEnvFl   |                                                                                                 |          |
+|            |    TomlFl     |                                                                                                 |          |
+|            |   PickleFl    |                                                                                                 | no cover |
+|            |   MarshalFl   |                                                                                                 | no cover |
+|            |   MsgpackFl   |                                                                                                 | no cover |
+| config     |    ConfFl     |                                                                                                 |          |
+|            |  ConfSQLite   |                                                                                                 |          |
+| register   |   Register    | Register Object that contain configuration loading methods and metadata management.             |          |
+|            | FullRegister  |                                                                                                 |          |
 
 ## :beers: Usages
 
