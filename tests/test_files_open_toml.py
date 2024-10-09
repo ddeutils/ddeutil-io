@@ -38,13 +38,21 @@ def toml_path(test_path) -> Iterator[Path]:
     shutil.rmtree(this_path)
 
 
-def test_files_open_toml(toml_path):
+def test_files_open_toml_read(toml_path):
     assert {"config": {"value": "foo"}} == TomlFl(
         path=toml_path / "test_simple.toml"
     ).read()
 
 
-def test_files_open_toml_env(toml_path):
+def test_files_open_toml_write(toml_path):
+    TomlFl(path=toml_path / "test_simple_write.toml").write(
+        {"config": {"value": "foo"}}
+    )
+    with open(toml_path / "test_simple_write.toml") as f:
+        assert f.read() == ("[config]\n" 'value = "foo"\n')
+
+
+def test_files_open_toml_env_read(toml_path):
     os.environ["TEST_TOML_ENV"] = "FOO"
     assert {"config": {"value": "foo is FOO"}} == TomlEnvFl(
         path=toml_path / "test_env.toml"

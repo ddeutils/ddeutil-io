@@ -14,6 +14,7 @@ import marshal
 import mmap
 import os
 import pickle
+import re
 from contextlib import contextmanager
 from pathlib import Path
 from typing import (
@@ -556,6 +557,35 @@ class CsvPipeFl(CsvFl):
             writer.writerows(data)
 
 
+class JSONCommentsDecoder(json.JSONDecoder):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def decode(self, s: str, _w=None):
+        """Decode with a comment in the Json data context.
+
+        Reference:
+            - https://stackoverflow.com/questions/69021815/
+                how-to-read-json-file-with-comments
+        """
+        # NOTE: This below regex requires the ``re.X`` flag, to ignore
+        #   whitespaces inside the regex.
+        #
+        #   (
+        #       "(?:\\"|[^"])*?" (?# First try to match balanced quotes)
+        #   )
+        #   | (?# If not successfully, try the following)
+        #   (
+        #       \/\*(?:.|\s)*?\*\/ (?# Match a block comment)
+        #       |
+        #       \/\/.* (?# Match a line comment)
+        #   )
+        #
+        regex: str = r"""("(?:\\"|[^"])*?")|(\/\*(?:.|\s)*?\*\/|\/\/.*)"""
+        s: str = re.sub(regex, r"\1", s)  # NOTE: , flags = re.X | re.M)
+        return super().decode(s)
+
+
 class JsonFl(Fl):
     """Json open file object that read data context from Json file format
     (.json).
@@ -564,9 +594,10 @@ class JsonFl(Fl):
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as f:
             try:
-                return json.loads(f.read())
-            except json.decoder.JSONDecodeError:
-                return {}
+                return json.loads(f.read(), cls=JSONCommentsDecoder)
+            except json.decoder.JSONDecodeError as err:
+                logger.exception(err)
+                raise
 
     def write(self, data, *, indent: int = 4) -> None:
         with self.open(mode="w") as f:
@@ -583,7 +614,14 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
 
     def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="rt") as f:
-            return json.loads(self.search_env_replace(f.read()))
+            try:
+                return json.loads(
+                    self.search_env_replace(f.read()),
+                    cls=JSONCommentsDecoder,
+                )
+            except json.decoder.JSONDecodeError as err:
+                logger.exception(err)
+                raise
 
     def write(self, data, *, indent: int = 4) -> None:  # pragma: no cover
         raise NotImplementedError(
