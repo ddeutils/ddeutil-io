@@ -444,19 +444,19 @@ class YamlEnvFl(YamlFl, EnvFlMixin):
 class CsvFl(Fl):
     """CSV open file object with comma (,) seperator charactor."""
 
-    def read(self, pre_load: int = 128) -> list[dict[str | int, Any]]:
+    def read(self, pre_load: int = 0) -> list[dict[str | int, Any]]:
         """Return data context from csv file format.
 
         :param pre_load: An input bytes number that use to pre-loading for
             define column structure before reading with csv.
-        :type pre_load: int (128)
+        :type pre_load: int (0)
         :rtype: list[dict[str | int, Any]]
         """
         with self.open(mode="r") as f:
             try:
-                dialect = csv.Sniffer().sniff(f.read(pre_load))
-                f.seek(0)
-                return list(csv.DictReader(f, dialect=dialect))
+                return list(
+                    csv.DictReader(f, delimiter=",", quoting=csv.QUOTE_ALL)
+                )
             except csv.Error:
                 return []
 
@@ -509,13 +509,45 @@ class CsvFl(Fl):
                 return False
 
 
+class CsvDynamicFl(CsvFl):  # pragma: no cove
+    """CSV open file object with dynamic dialect reader."""
+
+    def read(self, pre_load: int = 128) -> list[dict[str | int, Any]]:
+        """Return data context from csv file format with dynamic dialect reader.
+
+        :param pre_load: An input bytes number that use to pre-loading for
+            define column structure before reading with csv.
+        :type pre_load: int (128)
+        :rtype: list[dict[str | int, Any]]
+        """
+        with self.open(mode="r") as f:
+            try:
+                dialect = csv.Sniffer().sniff(f.read(pre_load))
+                f.seek(0)
+                return list(csv.DictReader(f, dialect=dialect))
+            except csv.Error:
+                return []
+
+
 class CsvPipeFl(CsvFl):
+    """CSV open file object with pipe (|) seperator charactor."""
+
     def after_set_attrs(self) -> None:
+        """Register csv dialect after setting attribute open file object."""
         csv.register_dialect(
             "pipe_delimiter", delimiter="|", quoting=csv.QUOTE_ALL
         )
 
     def read(self, pre_load: int = 0) -> list:
+        """Return data context from csv file format with the pipe seperator.
+        This read method do not use ``pre_load`` parameter because it passing
+        fix dialect argument.
+
+        :param pre_load: An input bytes number that use to pre-loading for
+            define column structure before reading with csv.
+        :type pre_load: int (0)
+        :rtype: list[dict[str | int, Any]]
+        """
         with self.open(mode="r") as f:
             try:
                 return list(
