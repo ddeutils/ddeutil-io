@@ -2,6 +2,42 @@
 
 ## Latest Changes
 
+## 0.2.0
+
+### :sparkles: Features
+
+- :dart: feat: add dynamic reading data on csv file format. (_2024-10-09_)
+- :dart: feat: remove engine and value from param model. (_2024-10-07_)
+- :dart: feat: add comment pragma for exclude coverage. (_2024-10-07_)
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: add testcase for json open file object. (_2024-10-09_)
+- :art: styled: change variable name that use on testcase. (_2024-10-08_)
+- :art: styled: change variable name on files module. (_2024-10-08_)
+- :test_tube: tests: reformat testcase name for support features change. (_2024-10-08_)
+- :art: styled: change code styled. (_2024-10-07_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme for optional deps. (_2024-10-09_)
+- :page_facing_up: docs: update readme file. (_2024-10-07_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: change import for support ddeutil 0.4.2. (_2024-10-07_)
+
+### :package: Build & Workflow
+
+- :toolbox: build: change ruff run only pre-commit stage. (_2024-10-09_)
+- :toolbox: build: add coverage workflow. (_2024-10-07_)
+- :toolbox: build: change pre-commit config syntax support pre-commit version 4. (_2024-10-07_)
+- :toolbox: build: add support nogil for python version 3.13. (_2024-10-07_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: adjust optional dependency. (_2024-10-08_)
+
 ## 0.1.14
 
 ### :black_nib: Code Changes
