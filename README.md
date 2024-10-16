@@ -14,7 +14,7 @@ engine of configuration file that include `load` from any config file format typ
 like `.yaml`, `.json`, or `.toml`, and manage retention and version of config files
 lifecycle.
 
-This package has 3 parts of core module; **Register**, **Config**, and **File**.
+This package has 3 parts of core module; **Register**, **Stores**, and **Files**.
 The base module is the file module that is open file objects with specific format
 that want to open include open directory objects (I think the open dir object do
 not should to use now because I do not done with its code.)
@@ -60,14 +60,14 @@ The features of this package is Input/Output data transport utility objects.
 |            |   JsonEnvFl   |                                                                                                 |          |
 |            |    JsonFl     |                                                                                                 |          |
 |            |     CsvFl     |                                                                                                 |          |
-|            |   CsvPipeFl   |                                                                                                 |          |
+|            |   CsvPipeFl   | CSV open file object with pipe (\| ) seperator charactor.                                       |          |
 |            |   TomlEnvFl   |                                                                                                 |          |
 |            |    TomlFl     |                                                                                                 |          |
 |            |   PickleFl    |                                                                                                 | no cover |
 |            |   MarshalFl   |                                                                                                 | no cover |
 |            |   MsgpackFl   |                                                                                                 | no cover |
-| config     |    ConfFl     |                                                                                                 |          |
-|            |  ConfSQLite   |                                                                                                 |          |
+| stores     |    StoreFl    |                                                                                                 |          |
+|            |  StoreSQLite  |                                                                                                 |          |
 | register   |   Register    | Register Object that contain configuration loading methods and metadata management.             |          |
 |            | FullRegister  |                                                                                                 |          |
 
@@ -96,16 +96,16 @@ content = YamlEnvFl('./.pre-commit-config.yaml').read(safe=True)
 assert content['data']['get'] == "HELLO WORLD"
 ```
 
-### Config
+### Store
 
-Config Object is the dir system handler object that manage any files in that
+Store Object is the dir system handler object that manage any files in that
 input dir path like `load`, `save`, `load_stage`, `save_stage`, or `files`.
 
 ```python
 from pathlib import Path
-from ddeutil.io.config import ConfFl
+from ddeutil.io.stores import StoreFl
 
-config: ConfFl = ConfFl(path=Path('./conf'), compress="gzip")
+config: StoreFl = StoreFl(path=Path('./conf'), compress="gzip")
 
 data = config.load('config_file.yaml')
 config.save_stage('./stage/file.json', data)

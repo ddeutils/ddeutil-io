@@ -33,10 +33,10 @@ from fmtutil import (
 from typing_extensions import Self
 
 from .conf import DATE_FMT, UPDATE_KEY, VERSION_KEY
-from .config import ConfFl
-from .exceptions import ConfigArgumentError, ConfigNotFound
+from .exceptions import StoreArgumentError, StoreNotFound
 from .files import Fl, rm
 from .param import Params
+from .stores import StoreFl
 
 __all__: tuple[str, ...] = (
     "Register",
@@ -95,7 +95,7 @@ class BaseRegister:
             domain.replace(os.sep, "/").strip("/").lower() if domain else ""
         )
         if any(sep in self.name for sep in (",", ".")):
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "name",
                 "Config name should not contain `,` or `.` char",
             )
@@ -164,7 +164,7 @@ class Register(BaseRegister):
         for stage in params.stages:
             try:
                 cls(name, stage=stage, params=params).remove()
-            except ConfigNotFound:
+            except StoreNotFound:
                 continue
         return cls(name, params=params)
 
@@ -197,7 +197,7 @@ class Register(BaseRegister):
         # configuration files
         self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
-            raise ConfigNotFound(
+            raise StoreNotFound(
                 f"Config {self.name!r} "
                 f"{f'in domain {self.domain!r} ' if self.domain else ' '}"
                 f"does not exist in stage {self.stage!r}."
@@ -353,7 +353,7 @@ class Register(BaseRegister):
     def __stage_files(
         self,
         stage: str,
-        config: ConfFl,
+        config: StoreFl,
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
         results: dict[int, StageFiles] = {}
@@ -381,13 +381,13 @@ class Register(BaseRegister):
         reverse: bool = False,
     ) -> dict[str, Any]:
         if (stage is None) or (stage == "base"):
-            return ConfFl(
+            return StoreFl(
                 path=(self.params.paths.conf / self.domain),
                 open_file=self.loader,
                 open_file_stg=self.loader_stg,
             ).load(name=self.name, order=order)
 
-        config = ConfFl(
+        config = StoreFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -413,7 +413,7 @@ class Register(BaseRegister):
         retention: bool = True,
     ) -> Register:
         """Move file to the target stage."""
-        config: ConfFl = ConfFl(
+        config: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -474,7 +474,7 @@ class Register(BaseRegister):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        config: ConfFl = ConfFl(
+        config: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
@@ -528,7 +528,7 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        config: ConfFl = ConfFl(
+        config: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -551,7 +551,7 @@ class FullRegister(Register):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        config: ConfFl = ConfFl(
+        config: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
@@ -595,7 +595,7 @@ class FullRegister(Register):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        config: ConfFl = ConfFl(
+        config: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,

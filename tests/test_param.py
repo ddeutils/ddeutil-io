@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ddeutil.io.exceptions import ConfigArgumentError
+from ddeutil.io.exceptions import StoreArgumentError
 from ddeutil.io.param import Params, PathData, Rule, Stage
 
 
@@ -60,7 +60,7 @@ def test_model_stage_data():
         "layer": 0,
     } == stage.model_dump()
 
-    with pytest.raises(ConfigArgumentError):
+    with pytest.raises(StoreArgumentError):
         Stage.model_validate(
             {
                 "alias": "persisted",
@@ -71,7 +71,7 @@ def test_model_stage_data():
             }
         )
 
-    with pytest.raises(ConfigArgumentError):
+    with pytest.raises(StoreArgumentError):
         Stage.model_validate(
             {
                 "alias": "persisted",

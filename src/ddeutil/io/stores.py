@@ -18,7 +18,7 @@ from pathlib import Path
 from sqlite3 import Connection
 from typing import Any, Union
 
-from .exceptions import ConfigArgumentError
+from .exceptions import StoreArgumentError
 from .files import (
     Fl,
     JsonFl,
@@ -34,14 +34,15 @@ DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
 DEFAULT_EXCLUDED_FMT: TupleStr = (".json", ".toml")
 
 __all__: TupleStr = (
-    "ConfABC",
-    "ConfFl",
-    "ConfSQLite",
+    "BaseStoreFl",
+    "StoreABC",
+    "StoreFl",
+    "StoreSQLite",
 )
 
 
-class ConfABC(abc.ABC):
-    """Config Adapter abstract class for any config sub-class that should
+class StoreABC(abc.ABC):  # pragma: no cove
+    """Store Adapter abstract class for any config sub-class that should
     implement necessary methods for unity usage and dynamic config backend
     changing scenario.
     """
@@ -63,9 +64,10 @@ class ConfABC(abc.ABC):
         raise NotImplementedError()
 
 
-class BaseConfFl:
-    """Base Config File object for getting data with `.yaml` format and mapping
-    environment variables to the content data.
+class BaseStoreFl:
+    """Base Store File object for getting data with `.yaml` format (default
+    format for a config file) and mapping environment variables to the content
+    data.
     """
 
     def __init__(
@@ -80,6 +82,8 @@ class BaseConfFl:
         self.compress: str | None = compress
         self.open_file: type[Fl] = open_file or DEFAULT_OPEN_FILE
         self.excluded_fmt: tuple[str] = excluded_fmt or DEFAULT_EXCLUDED_FMT
+
+        # NOTE: Create parent dir and skip if it already exist
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
@@ -134,26 +138,29 @@ class BaseConfFl:
         yield from filter(
             lambda x: x.is_file(),
             (
-                PathSearch(root=(path or self.path), exclude=excluded).pick(
-                    filename=(name or "*")
-                )
+                PathSearch(
+                    root=(path or self.path),
+                    exclude=excluded,
+                ).pick(filename=(name or "*"))
             ),
         )
 
     def move(self, path: Path, dest: Path) -> None:
-        """Copy filename to destination path."""
+        """Copy filename inside this config path to the destination path.
+
+        :param path: A child path that exists in this config path.
+        :param dest: A destination path.
+        """
         if not dest.parent.exists():
             dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(self.path / path, dest)
 
 
-class ConfFl(BaseConfFl, ConfABC):
-    """Config File Loading Object for get data from configuration and stage.
+class StoreFl(BaseStoreFl, StoreABC):
+    """Store File Loading Object for get data from configuration and stage.
 
     :param path: A path of files to action.
-    :type path: str | Path
     :param compress: A compress type of action file.
-    :type compress: str | None
     """
 
     def __init__(
@@ -258,8 +265,8 @@ class ConfFl(BaseConfFl, ConfABC):
             )
 
 
-class BaseConfSQLite:
-    """Base Config SQLite object for getting data with SQLite database from
+class BaseStoreSQLite:
+    """Base Store SQLite object for getting data with SQLite database from
     file storage."""
 
     def __init__(self, path: Union[str, Path]) -> None:
@@ -276,7 +283,7 @@ class BaseConfSQLite:
             yield _conn
         except sqlite3.Error as err:
             logging.error(err)
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "syntax", f"SQLite syntax error {err}"
             ) from err
         _conn.commit()
@@ -286,23 +293,19 @@ class BaseConfSQLite:
     def dict_factory(cursor, row) -> dict[str, Any]:
         """Result of dictionary factory.
 
-        :note:
-            Another logic of dict factory.
-
-            - dict(
-                [
-                    (col[0], row[idx])
-                    for idx, col in enumerate(cursor.description)
-                ]
-            )
-
-            - dict(zip([col[0] for col in cursor.description], row))
+        See Also:
+            Another logic of the dict factory.
+                *   dict([
+                        (col[0], row[idx])
+                        for idx, col in enumerate(cursor.description)
+                    ])
+                *   dict(zip([col[0] for col in cursor.description], row))
         """
         return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
 
-class ConfSQLite(BaseConfSQLite, ConfABC):
-    """Config SQLite Loading Object for get data from configuration and save
+class StoreSQLite(BaseStoreSQLite, StoreABC):
+    """Store SQLite Loading Object for get data from configuration and save
     stage data to the one table.
     """
 
@@ -312,7 +315,11 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
         default: dict[Any, Any] | None = None,
     ) -> dict[Any, Any]:
         """Return content data from database with table name, default empty
-        dict."""
+        dict.
+
+        :param table:
+        :param default:
+        """
         _db, _table = table.rsplit("/", maxsplit=1)
         with self.connect(_db) as conn:
             cur = conn.cursor()
@@ -365,7 +372,7 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
     ) -> None:
         """Create table in database."""
         if not schemas:
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "schemas",
                 (
                     f"in `create` method of {self.__class__.__name__} "
@@ -382,8 +389,9 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
     def prepare_values(
         values: dict[str, Union[str, int, float]],
     ) -> dict[str, Union[str, int, float]]:
-        """Return prepare value with dictionary type to string
-        to source system.
+        """Return prepare value with dictionary type to string to source system.
+
+        :param values:
         """
         rs: dict[str, Union[str, int, float]] = values.copy()
         for _ in values:
@@ -396,8 +404,10 @@ class ConfSQLite(BaseConfSQLite, ConfABC):
         data: dict[str, Union[str, int, float]],
         key: str | None = None,
     ) -> dict[str, Any]:
-        """Return converted value from string to dictionary
-        from source system.
+        """Return converted value from string to dictionary from source system.
+
+        :param data:
+        :param key:
         """
         _key: str = key or "data"
         rs: dict[str, Any] = data.copy()

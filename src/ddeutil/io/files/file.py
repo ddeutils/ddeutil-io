@@ -282,7 +282,11 @@ class EnvFlMixin:
         """
         return value
 
-    def search_env_replace(self, content: str) -> Any:
+    def search_env_replace(self, content: str) -> str:
+        """Return environment variable replaced content.
+
+        :param content: A content data that want to search and replace env var.
+        """
         return search_env_replace(
             content,
             raise_if_default_not_exists=self.raise_if_not_default,
@@ -309,14 +313,14 @@ class EnvFl(Fl):
         """
         with self.open(mode="r") as f:
             f.seek(0)
-            _result: dict[str, str] = search_env(
+            rs: dict[str, str] = search_env(
                 f.read(),
                 keep_newline=self.keep_newline,
                 default=self.default,
             )
         if update:
-            os.environ.update(**_result)
-        return _result
+            os.environ.update(**rs)
+        return rs
 
     def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
         raise NotImplementedError(
@@ -561,6 +565,7 @@ class CsvPipeFl(CsvFl):
         mode: str | None = None,
         **kwargs,
     ) -> None:
+        """Write data to the CSV file format."""
         if not data:
             raise ValueError("data to write is empty")
 
@@ -588,7 +593,11 @@ class CsvPipeFl(CsvFl):
 
 
 class JSONCommentsDecoder(json.JSONDecoder):
-    def __init__(self, **kwargs):
+    """Override JSON Decoder object for remove comment statement inside data
+    content that not remove by default json built-in module.
+    """
+
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
     def decode(self, s: str, _w=None):

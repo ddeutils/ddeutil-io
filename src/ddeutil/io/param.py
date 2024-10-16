@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, ValidationInfo
 from pydantic.functional_validators import field_validator
 from typing_extensions import Self
 
-from .exceptions import ConfigArgumentError
+from .exceptions import StoreArgumentError
 from .files import YamlEnvFl
 
 TupleStr = tuple[str, ...]
@@ -83,7 +83,7 @@ class Stage(BaseModel):
                 value,
             )
         ):
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "format",
                 (
                     f'This `{info.data["alias"]}` stage format dose not '
@@ -93,7 +93,7 @@ class Stage(BaseModel):
 
         # NOTE: Validate the name in format string should exist in `FMT_NAMES`.
         if any((_search[0] not in FMT_NAMES) for _search in _searches):
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "format",
                 "This stage have an unsupported format name.",
             )
@@ -106,7 +106,7 @@ class Stage(BaseModel):
             if getattr(info.data.get("rules", {}), validator, None) and (
                 validator not in value
             ):
-                raise ConfigArgumentError(
+                raise StoreArgumentError(
                     (
                         "format",
                         validator,
@@ -198,7 +198,7 @@ class Params(BaseModel, validate_assignment=True):
                 }
             )
         elif name not in self.stages:
-            raise ConfigArgumentError(
+            raise StoreArgumentError(
                 "stage",
                 f"Cannot get stage: {name!r} cause it does not exists",
             )

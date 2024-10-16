@@ -4,15 +4,10 @@ from .conf import (
     UPDATE_KEY,
     VERSION_KEY,
 )
-from .config import (
-    ConfABC,
-    ConfFl,
-    ConfSQLite,
-)
 from .exceptions import (
-    ConfigArgumentError,
-    ConfigNotFound,
     IOBaseError,
+    StoreArgumentError,
+    StoreNotFound,
 )
 from .files import (
     PathSearch,
@@ -50,6 +45,10 @@ from .param import (
     Stage,
 )
 from .register import Register
+from .stores import (
+    StoreFl,
+    StoreSQLite,
+)
 from .utils import (
     map_func,
     template_func,

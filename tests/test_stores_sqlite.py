@@ -2,8 +2,8 @@ import shutil
 from collections.abc import Generator
 from pathlib import Path
 
-import ddeutil.io.config as conf
 import pytest
+from ddeutil.io.stores import StoreSQLite
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +27,7 @@ def test_base_conf_read_file(sqlite_path: Path):
         "author": "varchar(512) not null",
     }
 
-    bc_sql = conf.ConfSQLite(sqlite_path)
+    bc_sql = StoreSQLite(sqlite_path)
     bc_sql.create(table="demo.db/temp_table", schemas=_schemas)
 
     assert (sqlite_path / "demo.db").exists()

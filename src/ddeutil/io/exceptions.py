@@ -16,11 +16,11 @@ class IOBaseError(BaseError):
     """Core Base Error object"""
 
 
-class ConfigNotFound(IOBaseError):
+class StoreNotFound(IOBaseError):
     """Error raise for a method not found the config file or data."""
 
 
-class ConfigArgumentError(IOBaseError):  # pragma: no cover
+class StoreArgumentError(IOBaseError):  # pragma: no cover
     """Error raise for a wrong configuration argument."""
 
     def __init__(self, argument: str | tuple, message: str) -> None:

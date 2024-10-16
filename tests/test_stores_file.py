@@ -2,9 +2,9 @@ import shutil
 from collections.abc import Generator
 from pathlib import Path
 
-import ddeutil.io.config as conf
 import pytest
 import yaml
+from ddeutil.io.stores import BaseStoreFl, StoreFl
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +26,7 @@ def target_path(test_path) -> Generator[Path, None, None]:
 
 
 def test_base_conf_read_file(target_path):
-    bcf = conf.BaseConfFl(target_path)
+    bcf = BaseStoreFl(target_path)
 
     assert {
         "alias": "conn_local_file",
@@ -39,7 +39,7 @@ def test_base_conf_read_file(target_path):
         dest=target_path / "connections/test_01_conn.yaml",
     )
 
-    bcf_temp = conf.BaseConfFl(target_path)
+    bcf_temp = BaseStoreFl(target_path)
     assert {
         "alias": "conn_local_file",
         "endpoint": "file:///null/tests/examples/dummy",
@@ -50,7 +50,7 @@ def test_base_conf_read_file(target_path):
 
 
 def test_conf_read_file(target_path):
-    cf = conf.ConfFl(target_path)
+    cf = StoreFl(target_path)
     cf.move(
         path="test_01_conn.yaml",
         dest=target_path / "connections/test_01_conn.yaml",
