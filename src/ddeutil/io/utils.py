@@ -17,16 +17,13 @@ T = TypeVar("T")
 def template_secret(value: T, secrets: dict[str, str]) -> T:
     """Map the secret value to a any input data.
 
-    :param value: A data that want to map secrets
-    :param secrets: A mapping of secrets
+    :param value: An input value that want to map secrets
+    :param secrets: A mapping of value secrets that use to replace.
     :type secrets: dict[str, str]
 
     Examples:
-        >>> template_secret(
-        ...     "Value include secrets: s3://@secrets{foo}",
-        ...     secrets={"foo": "bar"},
-        ... )
-        'Value include secrets: s3://bar'
+        >>> template_secret("s3://@secrets{foo}", secrets={"foo": "bar"})
+        's3://bar'
     """
     if isinstance(value, dict):
         return {k: template_secret(value[k], secrets) for k in value}
@@ -54,7 +51,7 @@ def template_func(value: T) -> T:
 
     Examples:
         >>> template_func(
-        ...     "Test @function{ddeutil.io.__base.add_newline:'a',newline='|'}"
+        ...     "Test @function{ddeutil.io.files.add_newline:'a',newline='|'}"
         ... )
         'Test a|'
     """

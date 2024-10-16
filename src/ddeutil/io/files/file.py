@@ -25,7 +25,6 @@ from typing import (
     ClassVar,
     Literal,
     Protocol,
-    Union,
     get_args,
 )
 
@@ -147,8 +146,7 @@ class Fl(FlABC):
 
     Examples:
         >>> with Fl(
-        ...     path='./<path>/<filename>.gz.txt',
-        ...     compress='gzip',
+        ...     path='./<path>/<filename>.gz.txt', compress='gzip'
         ... ).open() as f:
         ...     data = f.readline()
     """
@@ -558,7 +556,7 @@ class CsvPipeFl(CsvFl):
 
     def write(
         self,
-        data: Union[list[Any], dict[Any, Any]],
+        data: list[Any] | dict[Any, Any],
         *,
         mode: str | None = None,
         **kwargs,
@@ -623,7 +621,7 @@ class JsonFl(Fl):
     (.json).
     """
 
-    def read(self) -> Union[dict[Any, Any], list[Any]]:
+    def read(self) -> dict[Any, Any] | list[Any]:
         with self.open(mode="r") as f:
             try:
                 return json.loads(f.read(), cls=JSONCommentsDecoder)
@@ -644,7 +642,7 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
     parsing with json package.
     """
 
-    def read(self) -> Union[dict[Any, Any], list[Any]]:
+    def read(self) -> dict[Any, Any] | list[Any]:
         with self.open(mode="rt") as f:
             try:
                 return json.loads(

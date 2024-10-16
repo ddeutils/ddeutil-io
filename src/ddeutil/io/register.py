@@ -138,7 +138,7 @@ class BaseRegister:
 
 
 class Register(BaseRegister):
-    """Register Object that contain configuration loading methods and metadata
+    """Register Object that contain configuration config methods and metadata
     management. This object work with stage input argument, that set all
     properties in the `parameter.yaml` file.
     """
@@ -353,12 +353,12 @@ class Register(BaseRegister):
     def __stage_files(
         self,
         stage: str,
-        loading: ConfFl,
+        config: ConfFl,
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
         results: dict[int, StageFiles] = {}
         for index, file in enumerate(
-            (_f.name for _f in loading.files()),
+            (_f.name for _f in config.files()),
             start=1,
         ):
             try:
@@ -387,21 +387,21 @@ class Register(BaseRegister):
                 open_file_stg=self.loader_stg,
             ).load(name=self.name, order=order)
 
-        loading = ConfFl(
+        config = ConfFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
 
-        if results := self.__stage_files(stage, loading):
+        if results := self.__stage_files(stage, config):
             max_data: list = sorted(
                 results.items(),
                 key=lambda x: (x[1]["parse"],),
                 reverse=reverse,
             )
-            return loading.load_stage(
-                path=(loading.path / max_data[-order][1]["file"])
+            return config.load_stage(
+                path=(config.path / max_data[-order][1]["file"])
             )
         return {}
 
@@ -413,7 +413,7 @@ class Register(BaseRegister):
         retention: bool = True,
     ) -> Register:
         """Move file to the target stage."""
-        loading: ConfFl = ConfFl(
+        config: ConfFl = ConfFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -432,13 +432,13 @@ class Register(BaseRegister):
             _filename: str = self.fmt().format(
                 f"{self.params.get_stage(name=stage).format}.json",
             )
-            if (loading.path / _filename).exists():
+            if (config.path / _filename).exists():
                 # TODO: generate serial number if file exists
                 logging.warning(
                     f"File {_filename!r} already exists in {stage!r} stage."
                 )
-            loading.save_stage(
-                path=(loading.path / _filename),
+            config.save_stage(
+                path=(config.path / _filename),
                 data=merge.merge_dict(
                     self.data(),
                     {
@@ -474,13 +474,13 @@ class Register(BaseRegister):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        loading: ConfFl = ConfFl(
+        config: ConfFl = ConfFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, loading)
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, config)
         max_file: FormatterGroup = max(
             rs.items(),
             key=lambda x: (x[1]["parse"],),
@@ -498,7 +498,7 @@ class Register(BaseRegister):
                 rs.items(),
             ):
                 _file: str = data["file"]
-                rm(loading.path / _file)
+                rm(config.path / _file)
 
     def deploy(self, stop: Optional[str] = None) -> Register:
         """Deploy data that move from base to final stage.
@@ -528,7 +528,7 @@ class Register(BaseRegister):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading: ConfFl = ConfFl(
+        config: ConfFl = ConfFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -536,9 +536,9 @@ class Register(BaseRegister):
 
         # Remove all files from the stage.
         data: StageFiles
-        for _, data in self.__stage_files(_stage, loading).items():
+        for _, data in self.__stage_files(_stage, config).items():
             _file: str = data["file"]
-            rm(loading.path / _file)
+            rm(config.path / _file)
 
 
 class FullRegister(Register):
@@ -551,13 +551,13 @@ class FullRegister(Register):
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        loading: ConfFl = ConfFl(
+        config: ConfFl = ConfFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, loading)
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, config)
         max_file: FormatterGroup = max(
             rs.items(),
             key=lambda x: (x[1]["parse"],),
@@ -579,11 +579,11 @@ class FullRegister(Register):
                 _ac_path: str = (
                     f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                 )
-                loading.move(
+                config.move(
                     _file,
                     dest=self.params.paths.data / ".archive" / _ac_path,
                 )
-                rm(loading.path / _file)
+                rm(config.path / _file)
 
     def remove(self, stage: Optional[str] = None) -> None:
         """Remove config file from the stage storage.
@@ -595,7 +595,7 @@ class FullRegister(Register):
         assert (
             _stage != "base"
         ), "The remove method can not process on the 'base' stage."
-        loading: ConfFl = ConfFl(
+        config: ConfFl = ConfFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -603,12 +603,12 @@ class FullRegister(Register):
 
         # NOTE: Remove all files from the stage.
         data: StageFiles
-        for _, data in self.__stage_files(_stage, loading).items():
+        for _, data in self.__stage_files(_stage, config).items():
             _file: str = data["file"]
             # NOTE: Archive step
             _ac_path: str = f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
-            loading.move(
+            config.move(
                 _file,
                 dest=self.params.paths.data / ".archive" / _ac_path,
             )
-            rm(loading.path / _file)
+            rm(config.path / _file)

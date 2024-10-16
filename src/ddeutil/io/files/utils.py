@@ -14,6 +14,13 @@ except ImportError:  # pragma: no cover
     from conf import RegexConf
 
 
+__all__: tuple[str, ...] = (
+    "add_newline",
+    "search_env_replace",
+    "search_env",
+)
+
+
 def add_newline(text: str, newline: str | None = None) -> str:
     """Add newline to a text value.
 
@@ -144,7 +151,7 @@ def search_env(
         value: str = _value if keep_newline else "".join(_value.splitlines())
         quoted: str | None = None
 
-        # Remove surrounding quotes
+        # NOTE: Remove surrounding quotes
         if m2 := RegexConf.RE_ENV_VALUE_QUOTED.match(value):
             quoted: str = m2.group("quoted")
             value: str = m2.group("value")
@@ -153,11 +160,11 @@ def search_env(
             env[name] = value
             continue
         elif quoted == '"':
-            # Unescape all chars except $ so variables
-            # can be escaped properly
+            # NOTE: Unescape all chars except $ so variables
+            #   can be escaped properly
             value: str = RegexConf.RE_ENV_ESCAPE.sub(r"\1", value)
 
-        # Substitute variables in a value
+        # NOTE: Substitute variables in a value
         env[name] = __search_var(value, env, default=_default)
     return env
 
@@ -196,7 +203,7 @@ def __search_var(
     for sub_content in RegexConf.RE_DOTENV_VAR.findall(value):
         replace: str = "".join(sub_content[1:-1])
         if sub_content[0] != "\\":
-            # Replace it with the value from the environment
+            # NOTE: Replace it with the value from the environment
             replace: str = env.get(
                 sub_content[-1],
                 os.environ.get(sub_content[-1], _default),

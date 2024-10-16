@@ -152,7 +152,8 @@ class ConfFl(BaseConfFl, ConfABC):
 
     :param path: A path of files to action.
     :type path: str | Path
-    :param compress: str | None : A compress type of action file.
+    :param compress: A compress type of action file.
+    :type compress: str | None
     """
 
     def __init__(
@@ -163,7 +164,7 @@ class ConfFl(BaseConfFl, ConfABC):
         open_file: type[Fl] | None = None,
         excluded_fmt: list[str] | None = None,
         open_file_stg: type[Fl] | None = None,
-    ):
+    ) -> None:
         """Main initialize of config file loading object."""
         super().__init__(
             path,
@@ -261,10 +262,7 @@ class BaseConfSQLite:
     """Base Config SQLite object for getting data with SQLite database from
     file storage."""
 
-    def __init__(
-        self,
-        path: Union[str, Path],
-    ) -> None:
+    def __init__(self, path: Union[str, Path]) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         if not self.path.exists():
             self.path.mkdir(parents=True)

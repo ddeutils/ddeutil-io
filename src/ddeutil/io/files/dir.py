@@ -13,7 +13,6 @@ from typing import (
     Any,
     Literal,
     Protocol,
-    Union,
 )
 
 from ddeutil.core import splitter
@@ -57,7 +56,7 @@ class Dir:
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         *,
         compress: str,
     ) -> None:
