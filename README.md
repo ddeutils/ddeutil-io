@@ -49,7 +49,7 @@ The features of this package is Input/Output data transport utility objects.
 
 | Module     |     Name      | Description                                                                                     | Remark   |
 |------------|:-------------:|-------------------------------------------------------------------------------------------------|----------|
-| files.base |  PathSearch   |                                                                                                 |          |
+| files      |  PathSearch   |                                                                                                 |          |
 |            |   RegexConf   |                                                                                                 |          |
 | files.file |      Fl       | Open File object that use to open any normal or compression file from current local file system |          |
 |            |  EnvFlMixin   |                                                                                                 |          |
@@ -60,7 +60,7 @@ The features of this package is Input/Output data transport utility objects.
 |            |   JsonEnvFl   |                                                                                                 |          |
 |            |    JsonFl     |                                                                                                 |          |
 |            |     CsvFl     |                                                                                                 |          |
-|            |   CsvPipeFl   | CSV open file object with pipe (\| ) seperator charactor.                                       |          |
+|            |   CsvPipeFl   | CSV open file object with pipe (`\|`) seperator charactor.                                      |          |
 |            |   TomlEnvFl   |                                                                                                 |          |
 |            |    TomlFl     |                                                                                                 |          |
 |            |   PickleFl    |                                                                                                 | no cover |
@@ -105,10 +105,10 @@ input dir path like `load`, `save`, `load_stage`, `save_stage`, or `files`.
 from pathlib import Path
 from ddeutil.io.stores import StoreFl
 
-config: StoreFl = StoreFl(path=Path('./conf'), compress="gzip")
+store: StoreFl = StoreFl(path=Path('./conf'), compress="gzip")
 
-data = config.load('config_file.yaml')
-config.save_stage('./stage/file.json', data)
+data = store.get(name='config_file.yaml')
+store.save('./stage/file.json', data)
 ```
 
 ### Register

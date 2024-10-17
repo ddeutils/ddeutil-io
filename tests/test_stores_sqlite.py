@@ -27,8 +27,8 @@ def test_base_conf_read_file(sqlite_path: Path):
         "author": "varchar(512) not null",
     }
 
-    bc_sql = StoreSQLite(sqlite_path)
-    bc_sql.create(table="demo.db/temp_table", schemas=_schemas)
+    store = StoreSQLite(sqlite_path)
+    store.create(table="demo.db/temp_table", schemas=_schemas)
 
     assert (sqlite_path / "demo.db").exists()
 
@@ -44,5 +44,5 @@ def test_base_conf_read_file(sqlite_path: Path):
         },
     }
 
-    bc_sql.save_stage(table="demo.db/temp_table", data=_data)
-    assert _data == bc_sql.load_stage(table="demo.db/temp_table")
+    store.save(table="demo.db/temp_table", data=_data)
+    assert _data == store.load(table="demo.db/temp_table")

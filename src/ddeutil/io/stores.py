@@ -3,6 +3,16 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
+"""Store objects that use to keep context configuration data with different
+versions. This module will provide standard and abstraction objects for your
+customize usage.
+
+    *   StoreFl     : Store with open file object like json, yaml etc.
+    *   StoreSQLite : Store with SQLite database (binary file).
+
+    Store will keep data with 2 stages, that mean data have data layer and stage
+layer.
+"""
 from __future__ import annotations
 
 import abc
@@ -12,7 +22,7 @@ import json
 import logging
 import shutil
 import sqlite3
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
 from sqlite3 import Connection
@@ -48,15 +58,15 @@ class StoreABC(abc.ABC):  # pragma: no cove
     """
 
     @abc.abstractmethod
-    def load_stage(self, name: str) -> dict[str, Any]:
+    def load(self, name: str) -> dict[str, Any]:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def save_stage(self, name: str, data: dict, merge: bool = False) -> None:
+    def save(self, name: str, data: dict, merge: bool = False) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def remove_stage(self, name: str, data_name: str) -> None:
+    def remove(self, name: str, data_name: str) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -87,7 +97,7 @@ class BaseStoreFl:
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
-    def load(self, name: str, *, order: int = 1) -> dict[str, Any]:
+    def get(self, name: str, *, order: int = 1) -> dict[str, Any]:
         """Return configuration data from name of the config.
 
         :param name: A name of config key that want to search in the path.
@@ -103,7 +113,7 @@ class BaseStoreFl:
         rs: list[dict[Any, Any]]
         if rs := [
             {"alias": name} | data
-            for file in self.files(excluded=self.excluded_fmt)
+            for file in self.ls(excluded=self.excluded_fmt)
             if (
                 data := self.open_file(path=file, compress=self.compress)
                 .read()
@@ -127,14 +137,20 @@ class BaseStoreFl:
                 )
         return {}
 
-    def files(
+    def ls(
         self,
         path: str | None = None,
         name: str | None = None,
         *,
         excluded: list[str] | None = None,
     ) -> Iterator[Path]:
-        """Return all files that exists in the loading path."""
+        """Return all files that already exist in the store path.
+
+        :param path: A specific root path that want to list.
+        :param name: A filename pattern that want to list.
+        :param excluded: A list of excluded filenames.
+        :rtype: Iterator[Path]
+        """
         yield from filter(
             lambda x: x.is_file(),
             (
@@ -181,7 +197,7 @@ class StoreFl(BaseStoreFl, StoreABC):
         )
         self.open_file_stg: type[Fl] = open_file_stg or DEFAULT_OPEN_FILE_STG
 
-    def load_stage(
+    def load(
         self,
         path: str | Path,
         *,
@@ -196,7 +212,7 @@ class StoreFl(BaseStoreFl, StoreABC):
         except FileNotFoundError:
             return default if (default is not None) else {}
 
-    def save_stage(
+    def save(
         self,
         path: str | Path,
         data: Union[dict[Any, Any], list[Any]],
@@ -223,16 +239,19 @@ class StoreFl(BaseStoreFl, StoreABC):
             )
             return
 
-        all_data: Union[dict, list] = self.load_stage(path=path)
+        all_data: Union[dict, list] = self.load(path=path)
         try:
             if isinstance(all_data, list):
                 _merge_data: Union[dict, list] = all_data
-                if isinstance(data, dict):
+                (
                     _merge_data.append(data)
-                else:
-                    _merge_data.extend(data)
+                    if isinstance(data, dict)
+                    else _merge_data.extend(data)
+                )
             else:
                 _merge_data: dict = all_data | data
+
+            # NOTE: Writing data to the stage layer
             self.open_file_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
             rm(path=path)
@@ -242,9 +261,9 @@ class StoreFl(BaseStoreFl, StoreABC):
                 )
             raise err
 
-    def remove_stage(self, path: str, name: str) -> None:
+    def remove(self, path: str, name: str) -> None:
         """Remove data by name insided the staging file with filename."""
-        if all_data := self.load_stage(path=path):
+        if all_data := self.load(path=path):
             all_data.pop(name, None)
             self.open_file_stg(path, compress=self.compress).write(
                 all_data,
@@ -258,7 +277,7 @@ class StoreFl(BaseStoreFl, StoreABC):
     ) -> None:
         """Create filename in path."""
         if not path.exists():
-            self.save_stage(
+            self.save(
                 path=path,
                 data=({} if initial_data is None else initial_data),
                 merge=False,
@@ -267,7 +286,8 @@ class StoreFl(BaseStoreFl, StoreABC):
 
 class BaseStoreSQLite:
     """Base Store SQLite object for getting data with SQLite database from
-    file storage."""
+    file storage.
+    """
 
     def __init__(self, path: Union[str, Path]) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
@@ -275,9 +295,16 @@ class BaseStoreSQLite:
             self.path.mkdir(parents=True)
 
     @contextlib.contextmanager
-    def connect(self, database: str) -> Generator[Connection, None, None]:
+    def connect(
+        self,
+        database: str,
+        *,
+        timeout: int = 5,
+    ) -> Iterator[Connection]:
         """Return SQLite Connection context."""
-        _conn: Connection = sqlite3.connect(self.path / database, timeout=3)
+        _conn: Connection = sqlite3.connect(
+            self.path / database, timeout=timeout
+        )
         _conn.row_factory = self.dict_factory
         try:
             yield _conn
@@ -291,7 +318,8 @@ class BaseStoreSQLite:
 
     @staticmethod
     def dict_factory(cursor, row) -> dict[str, Any]:
-        """Result of dictionary factory.
+        """Return result of dictionary factory that getting from the SQLite
+        cursor object.
 
         See Also:
             Another logic of the dict factory.
@@ -309,7 +337,7 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
     stage data to the one table.
     """
 
-    def load_stage(
+    def load(
         self,
         table: str,
         default: dict[Any, Any] | None = None,
@@ -328,22 +356,27 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
                 return {_["name"]: self.convert_type(_) for _ in result}
             return default if (default is not None) else {}
 
-    def save_stage(
+    def save(
         self,
         table: str,
         data: dict[str, Any],
-        merge: bool = False,
+        *,
+        use_merge: bool = False,
     ) -> None:
         """Write content data to database with table name. If merge is true, it
         will update or insert the data content.
+
+        :param table:
+        :param data:
+        :param use_merge:
         """
         _db, _table = table.rsplit("/", maxsplit=1)
         _data: dict = self.prepare_values(data.get(list(data.keys())[0]))
         with self.connect(_db) as conn:
             cur = conn.cursor()
             doing: str = "nothing"
-            if merge:
-                _doing_list = [
+            if use_merge:
+                _doing_list: list[str] = [
                     f"{_} = excluded.{_}" for _ in _data if _ != "name"
                 ]
                 doing: str = f'update set {", ".join(_doing_list)}'
@@ -354,7 +387,7 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
             )
             cur.execute(query, _data)
 
-    def remove_stage(
+    def remove(
         self,
         table: str,
         data_name: str,
@@ -370,7 +403,11 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
         table: str,
         schemas: dict[str, str] | None = None,
     ) -> None:
-        """Create table in database."""
+        """Create table in the target SQLite database.
+
+        :param table:
+        :param schemas:
+        """
         if not schemas:
             raise StoreArgumentError(
                 "schemas",

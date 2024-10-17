@@ -357,10 +357,7 @@ class Register(BaseRegister):
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
         results: dict[int, StageFiles] = {}
-        for index, file in enumerate(
-            (_f.name for _f in config.files()),
-            start=1,
-        ):
+        for index, file in enumerate((_f.name for _f in config.ls()), start=1):
             try:
                 results[index]: dict = {
                     "parse": self.fmt_group.parse(
@@ -385,7 +382,7 @@ class Register(BaseRegister):
                 path=(self.params.paths.conf / self.domain),
                 open_file=self.loader,
                 open_file_stg=self.loader_stg,
-            ).load(name=self.name, order=order)
+            ).get(name=self.name, order=order)
 
         config = StoreFl(
             path=self.params.paths.data / stage,
@@ -400,9 +397,7 @@ class Register(BaseRegister):
                 key=lambda x: (x[1]["parse"],),
                 reverse=reverse,
             )
-            return config.load_stage(
-                path=(config.path / max_data[-order][1]["file"])
-            )
+            return config.load(path=(config.path / max_data[-order][1]["file"]))
         return {}
 
     def move(
@@ -437,7 +432,7 @@ class Register(BaseRegister):
                 logging.warning(
                     f"File {_filename!r} already exists in {stage!r} stage."
                 )
-            config.save_stage(
+            config.save(
                 path=(config.path / _filename),
                 data=merge.merge_dict(
                     self.data(),
