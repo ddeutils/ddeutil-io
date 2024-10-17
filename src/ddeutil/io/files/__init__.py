@@ -18,6 +18,7 @@ from __future__ import annotations
 import fnmatch
 import os
 import shutil
+from collections.abc import Collection
 from pathlib import Path
 
 from .conf import RegexConf
@@ -130,7 +131,8 @@ class PathSearch:
         self.real_level: int = max(level, self.real_level)
         file_list.sort(key=lambda f: (path / f).is_file())
         for idx, sub_path in enumerate(file_list):
-            if any(exc == sub_path.name for exc in self.exclude):
+
+            if any(fnmatch.fnmatch(sub_path.name, exc) for exc in self.exclude):
                 continue
 
             full_path: Path = path / sub_path
@@ -152,11 +154,17 @@ class PathSearch:
                 self.output_buf.append(f"{prefix}{idc}{sub_path}")
                 self.files.append(full_path)
 
-    def pick(self, filename: str) -> list[Path]:
+    def pick(self, filename: str | Collection[str]) -> list[Path]:
         """Return filename with match with input argument."""
+        patterns = (filename,) if isinstance(filename, str) else filename
         return list(
             filter(
-                lambda f: fnmatch.fnmatch(f, f"*/{filename}"),
+                (
+                    lambda f: any(
+                        fnmatch.fnmatch(f, f"*/{pattern}")
+                        for pattern in patterns
+                    )
+                ),
                 self.files,
             )
         )

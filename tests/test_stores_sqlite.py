@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -16,23 +18,23 @@ def sqlite_path(test_path) -> Generator[Path, None, None]:
         shutil.rmtree(sqlite_path)
 
 
-def test_base_conf_read_file(sqlite_path: Path):
-    _schemas: dict[str, str] = {
-        "name": "varchar(256) primary key",
-        "shortname": "varchar(64) not null",
-        "fullname": "varchar(256) not null",
-        "data": "json not null",
-        "updt": "datetime not null",
-        "rtdt": "datetime not null",
-        "author": "varchar(512) not null",
-    }
-
+def test_base_store_read_file(sqlite_path: Path):
     store = StoreSQLite(sqlite_path)
-    store.create(table="demo.db/temp_table", schemas=_schemas)
-
+    store.create(
+        table="demo.db/temp_table",
+        schemas={
+            "name": "varchar(256) primary key",
+            "shortname": "varchar(64) not null",
+            "fullname": "varchar(256) not null",
+            "data": "json not null",
+            "updt": "datetime not null",
+            "rtdt": "datetime not null",
+            "author": "varchar(512) not null",
+        },
+    )
     assert (sqlite_path / "demo.db").exists()
 
-    _data = {
+    data = {
         "conn_local_data_landing": {
             "name": "conn_local_data_landing",
             "shortname": "cldl",
@@ -44,5 +46,5 @@ def test_base_conf_read_file(sqlite_path: Path):
         },
     }
 
-    store.save(table="demo.db/temp_table", data=_data)
-    assert _data == store.load(table="demo.db/temp_table")
+    store.save(table="demo.db/temp_table", data=data)
+    assert data == store.load(table="demo.db/temp_table")

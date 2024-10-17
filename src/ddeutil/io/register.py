@@ -45,9 +45,12 @@ __all__: tuple[str, ...] = (
 
 
 METADATA: dict[str, Any] = {}
+BASE_STAGE_DEFAULT: str = "base"
 
 
 class StageFiles(TypedDict):
+    """Stage files dict typing for the mypy checker step."""
+
     parse: FormatterGroup
     file: str
 
@@ -163,6 +166,7 @@ class Register(BaseRegister):
         """
         for stage in params.stages:
             try:
+                # NOTE: Start reset (remove) on the target stage area.
                 cls(name, stage=stage, params=params).remove()
             except StoreNotFound:
                 continue
@@ -188,7 +192,7 @@ class Register(BaseRegister):
                 "This register instance can not do any actions because config "
                 "param does not set."
             )
-        self.stage: str = stage or "base"
+        self.stage: str = stage or BASE_STAGE_DEFAULT
         self.loader: Optional[type[Fl]] = loader
         self.loader_stg: Optional[type[Fl]] = loader_stg
         self.params: Optional[Params] = params
@@ -255,10 +259,14 @@ class Register(BaseRegister):
         return NotImplemented
 
     def data(self, hashing: bool = False) -> dict[str, Any]:
-        """Return the data with the configuration name."""
-        _data = self.__data
-        if not self.stage or (self.stage == "base"):
-            _data = {
+        """Return the data with the configuration name.
+
+        :param hashing: A hashing flag that allow use hash function on the
+            context data.
+        """
+        _data: dict[str, Any] = self.__data
+        if not self.stage or (self.stage == BASE_STAGE_DEFAULT):
+            _data: dict[str, Any] = {
                 k: v
                 for k, v in (self.meta.get(self.stage, {}).items())
                 if k in (UPDATE_KEY, VERSION_KEY)
@@ -274,7 +282,7 @@ class Register(BaseRegister):
         """Return the current timestamp value of config data. If timestamp value
         does not exist. this property will return timestamp of initialize.
 
-        :return: datetime
+        :rtype: datetime
         """
         if self.changed > 0:
             return self.updt
@@ -289,7 +297,7 @@ class Register(BaseRegister):
         from configuration data between metadata and the latest data in the
         stage, the _next will be generated.
 
-        :return: VerPackage
+        :rtype: VerPackage
         """
         _vs = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
         if not _next or self.changed == 0:
@@ -309,15 +317,13 @@ class Register(BaseRegister):
             }
         )
 
-    def compare_data(
-        self,
-        target: dict[Any, Any],
-    ) -> int:
+    def compare_data(self, target: dict[Any, Any]) -> int:
         """Return difference column from dictionary comparison method which use
         the `deepdiff` library.
 
         :param target: dict : The target dictionary for compare with current
-                configuration data.
+            configuration data.
+        :rtype: int
         """
         if not target:
             return 99
@@ -377,7 +383,8 @@ class Register(BaseRegister):
         order: Optional[int] = 1,
         reverse: bool = False,
     ) -> dict[str, Any]:
-        if (stage is None) or (stage == "base"):
+        """Return the context data from the specific stage area."""
+        if (stage is None) or (stage == BASE_STAGE_DEFAULT):
             return StoreFl(
                 path=(self.params.paths.conf / self.domain),
                 open_file=self.loader,
@@ -521,7 +528,7 @@ class Register(BaseRegister):
         """
         _stage: str = stage or self.stage
         assert (
-            _stage != "base"
+            _stage != BASE_STAGE_DEFAULT
         ), "The remove method can not process on the 'base' stage."
         config: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,
@@ -588,7 +595,7 @@ class FullRegister(Register):
         """
         _stage: str = stage or self.stage
         assert (
-            _stage != "base"
+            _stage != BASE_STAGE_DEFAULT
         ), "The remove method can not process on the 'base' stage."
         config: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,

@@ -28,6 +28,7 @@ from pathlib import Path
 from sqlite3 import Connection
 from typing import Any, Union
 
+from .conf import VERSION_DEFAULT
 from .exceptions import StoreArgumentError
 from .files import (
     Fl,
@@ -38,10 +39,13 @@ from .files import (
 )
 
 TupleStr = tuple[str, ...]
+AnyData = Union[str, int, float, bool, None]
+DictData = dict[str, Union[AnyData, dict[str, AnyData], list[AnyData]]]
 
 DEFAULT_OPEN_FILE: type[Fl] = YamlEnvFl
 DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
-DEFAULT_EXCLUDED_FMT: TupleStr = (".json", ".toml")
+DEFAULT_INCLUDED_FMT: TupleStr = ("*.yml", "*.yaml")
+DEFAULT_EXCLUDED_FMT: TupleStr = ("*.json", "*.toml")
 
 __all__: TupleStr = (
     "BaseStoreFl",
@@ -62,7 +66,7 @@ class StoreABC(abc.ABC):  # pragma: no cove
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def save(self, name: str, data: dict, merge: bool = False) -> None:
+    def save(self, name: str, data: dict, *, merge: bool = False) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -78,6 +82,11 @@ class BaseStoreFl:
     """Base Store File object for getting data with `.yaml` format (default
     format for a config file) and mapping environment variables to the content
     data.
+
+    :param path:
+    :param compress:
+    :param open_file:
+    :param excluded_file_fmt:
     """
 
     def __init__(
@@ -86,56 +95,68 @@ class BaseStoreFl:
         *,
         compress: str | None = None,
         open_file: type[Fl] | None = None,
-        excluded_fmt: TupleStr | None = None,
+        included_file_fmt: TupleStr | None = None,
+        excluded_file_fmt: TupleStr | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: str | None = compress
         self.open_file: type[Fl] = open_file or DEFAULT_OPEN_FILE
-        self.excluded_fmt: tuple[str] = excluded_fmt or DEFAULT_EXCLUDED_FMT
+        self.included_fmt: TupleStr = included_file_fmt or DEFAULT_INCLUDED_FMT
+        self.excluded_fmt: TupleStr = excluded_file_fmt or DEFAULT_EXCLUDED_FMT
 
         # NOTE: Create parent dir and skip if it already exist
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
-    def get(self, name: str, *, order: int = 1) -> dict[str, Any]:
-        """Return configuration data from name of the config.
+    def get(self, name: str, *, order: int = 1) -> DictData:
+        """Return configuration data from name of the config that already adding
+        `alias` key with this input name.
 
         :param name: A name of config key that want to search in the path.
         :type name: str
         :param order: An order number that want to get from ordered list
             of duplicate data.
-        :type order: int(=1)
+        :type order: int (Default=1)
 
-        :rtype: dict[str, Any]
-        :returns: A loaded data from open file object that already adding
-            `alias` key with a config name.
+        :rtype: DictData
+        :returns: The loaded context data from the open file read method.
         """
         rs: list[dict[Any, Any]]
-        if rs := [
-            {"alias": name} | data
-            for file in self.ls(excluded=self.excluded_fmt)
-            if (
-                data := self.open_file(path=file, compress=self.compress)
-                .read()
-                .get(name)
-            )
-        ]:
-            try:
-                if order > len(rs):
-                    raise IndexError
-                return sorted(
-                    rs,
-                    key=lambda x: (
-                        datetime.fromisoformat(x.get("version", "1990-01-01")),
-                        len(x),
-                    ),
-                    reverse=False,
-                )[-order]
-            except IndexError:
-                logging.warning(
-                    f"Does not load config {name!r} with order: -{order}"
+        if not (
+            rs := [
+                {"alias": name} | data
+                for file in self.ls(excluded=self.excluded_fmt)
+                if (
+                    data := (
+                        self.open_file(path=file, compress=self.compress)
+                        .read()
+                        .get(name)
+                    )
                 )
-        return {}
+            ]
+        ):
+            return {}
+
+        try:
+            if order > len(rs):
+                raise IndexError(
+                    "Order argument should be less or equal than len of "
+                    "data that exist in the store path."
+                )
+            return sorted(
+                rs,
+                key=lambda x: (
+                    datetime.fromisoformat(x.get("version", VERSION_DEFAULT)),
+                    len(x),
+                ),
+                reverse=False,
+            )[-order]
+        except IndexError:
+            logging.warning(
+                f"Does not get config data {name!r} with passing order: "
+                f"-{order}"
+            )
+            return {}
 
     def ls(
         self,
@@ -164,7 +185,7 @@ class BaseStoreFl:
     def move(self, path: Path, dest: Path) -> None:
         """Copy filename inside this config path to the destination path.
 
-        :param path: A child path that exists in this config path.
+        :param path: A child path that exists in this store path.
         :param dest: A destination path.
         """
         if not dest.parent.exists():
@@ -185,7 +206,8 @@ class StoreFl(BaseStoreFl, StoreABC):
         *,
         compress: str | None = None,
         open_file: type[Fl] | None = None,
-        excluded_fmt: list[str] | None = None,
+        included_file_fmt: TupleStr | None = None,
+        excluded_file_fmt: TupleStr | None = None,
         open_file_stg: type[Fl] | None = None,
     ) -> None:
         """Main initialize of config file loading object."""
@@ -193,7 +215,8 @@ class StoreFl(BaseStoreFl, StoreABC):
             path,
             compress=compress,
             open_file=open_file,
-            excluded_fmt=excluded_fmt,
+            included_file_fmt=included_file_fmt,
+            excluded_file_fmt=excluded_file_fmt,
         )
         self.open_file_stg: type[Fl] = open_file_stg or DEFAULT_OPEN_FILE_STG
 
@@ -264,10 +287,9 @@ class StoreFl(BaseStoreFl, StoreABC):
     def remove(self, path: str, name: str) -> None:
         """Remove data by name insided the staging file with filename."""
         if all_data := self.load(path=path):
+            # NOTE: Remove data with the input name key.
             all_data.pop(name, None)
-            self.open_file_stg(path, compress=self.compress).write(
-                all_data,
-            )
+            (self.open_file_stg(path, compress=self.compress).write(all_data))
 
     def create(
         self,
@@ -275,7 +297,12 @@ class StoreFl(BaseStoreFl, StoreABC):
         *,
         initial_data: Any = None,
     ) -> None:
-        """Create filename in path."""
+        """Create file with an input filename to the store path. This method
+        allow to create with initial data.
+
+        :param path:
+        :param initial_data:
+        """
         if not path.exists():
             self.save(
                 path=path,
@@ -340,13 +367,14 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
     def load(
         self,
         table: str,
+        *,
         default: dict[Any, Any] | None = None,
     ) -> dict[Any, Any]:
         """Return content data from database with table name, default empty
         dict.
 
         :param table:
-        :param default:
+        :param default: A default data if getting data from store do not exists.
         """
         _db, _table = table.rsplit("/", maxsplit=1)
         with self.connect(_db) as conn:
@@ -392,7 +420,11 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
         table: str,
         data_name: str,
     ) -> None:
-        """Remove data by name from table in database with table name."""
+        """Remove data by name from table in database with table name.
+
+        :param table:
+        :param data_name:
+        """
         _db, _table = table.rsplit("/", maxsplit=1)
         with self.connect(_db) as conn:
             cur = conn.cursor()
