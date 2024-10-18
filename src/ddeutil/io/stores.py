@@ -243,8 +243,8 @@ class StoreFl(BaseStoreFl, StoreABC):
         merge: bool = False,
     ) -> None:
         """Write content data to file with filename. If merge is true, it will
-        load current data from file and merge the data content together
-        before write.
+        load the current data from saving file and merge the incoming data
+        together before re-write the file.
         """
         if not merge:
             self.open_file_stg(path, compress=self.compress).write(data)
@@ -255,10 +255,7 @@ class StoreFl(BaseStoreFl, StoreABC):
             in inspect.getfullargspec(self.open_file_stg.write).annotations
         ):
             self.open_file_stg(path, compress=self.compress).write(
-                **{
-                    "data": data,
-                    "mode": "a",
-                }
+                **{"data": data, "mode": "a"}
             )
             return
 
@@ -277,6 +274,7 @@ class StoreFl(BaseStoreFl, StoreABC):
             # NOTE: Writing data to the stage layer
             self.open_file_stg(path, compress=self.compress).write(_merge_data)
         except TypeError as err:
+            # NOTE: Remove the previous saving file path for rollback.
             rm(path=path)
             if all_data:
                 self.open_file_stg(path, compress=self.compress).write(
@@ -285,7 +283,11 @@ class StoreFl(BaseStoreFl, StoreABC):
             raise err
 
     def remove(self, path: str, name: str) -> None:
-        """Remove data by name insided the staging file with filename."""
+        """Remove data by name insided the staging file with filename.
+
+        :param path:
+        :param name:
+        """
         if all_data := self.load(path=path):
             # NOTE: Remove data with the input name key.
             all_data.pop(name, None)
@@ -306,7 +308,7 @@ class StoreFl(BaseStoreFl, StoreABC):
         if not path.exists():
             self.save(
                 path=path,
-                data=({} if initial_data is None else initial_data),
+                data=(initial_data or {}),
                 merge=False,
             )
 

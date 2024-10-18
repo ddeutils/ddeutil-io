@@ -134,7 +134,7 @@ def test_store_csv_stage(target_path):
     )
 
 
-def test_store_read_file(target_path):
+def test_store(target_path):
     store = StoreFl(target_path)
     store.move(
         path="test_01_conn.yaml",
@@ -177,3 +177,46 @@ def test_store_read_file(target_path):
         "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
     } == store.load(path=stage_path)
+
+    store.remove(
+        target_path / "connections/test_01_conn_stage_not_fount.json",
+        name="first",
+    )
+
+
+def test_store_save(target_path):
+    store = StoreFl(target_path)
+    stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    stage_path.parent.mkdir(parents=True, exist_ok=True)
+    store.save(
+        path=stage_path,
+        data={"first": store.get("conn_local_file")} | {"version": 1},
+        merge=True,
+    )
+    store.save(
+        path=stage_path,
+        data={"second": store.get("conn_local_file")} | {"version": 2},
+        merge=True,
+    )
+
+    assert 2 == store.load(path=stage_path).get("version")
+
+
+def test_store_save_raise(target_path):
+    store = StoreFl(target_path)
+    stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    stage_path.parent.mkdir(parents=True, exist_ok=True)
+    store.save(
+        path=stage_path,
+        data={"first": store.get("conn_local_file")} | {"version": 1},
+        merge=True,
+    )
+
+    with pytest.raises(TypeError):
+        store.save(
+            path=stage_path,
+            data="conn_local_file",
+            merge=True,
+        )
+
+    store.remove(stage_path, name="first")
