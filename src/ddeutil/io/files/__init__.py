@@ -47,7 +47,7 @@ from .utils import (
 )
 
 
-def rm(path: str, is_dir: bool = False) -> None:  # no cove
+def rm(path: str, is_dir: bool = False) -> None:  # pragma: no cover
     """Remove a file or dir from a input path.
 
     :param path: A path of file or dir that want to remove.
@@ -63,7 +63,7 @@ def rm(path: str, is_dir: bool = False) -> None:  # no cove
         )
 
 
-def touch(filename: str, times=None) -> None:  # no cove
+def touch(filename: str, times=None) -> None:  # pragma: no cover
     """Create an empty file with specific name and modified time of path it an
     input times was set.
     """
@@ -150,7 +150,7 @@ class PathSearch:
                 self.__recurse(
                     full_path, list(full_path.iterdir()), tmp_prefix, level + 1
                 )
-            elif full_path.is_file():  # no cove
+            elif full_path.is_file():  # pragma: no cover
                 self.output_buf.append(f"{prefix}{idc}{sub_path}")
                 self.files.append(full_path)
 
@@ -169,7 +169,7 @@ class PathSearch:
             )
         )
 
-    def tree(self, newline: str | None = None) -> str:  # no cove
+    def tree(self, newline: str | None = None) -> str:  # pragma: no cover
         """Return path tree of root path."""
         return (newline or "\n").join(self.output_buf)
 

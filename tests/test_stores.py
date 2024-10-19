@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 from ddeutil.io.files import CsvPipeFl, JsonEnvFl
-from ddeutil.io.stores import BaseStoreFl, StoreFl
+from ddeutil.io.stores import Store
 
 
 @pytest.fixture(scope="module")
@@ -51,41 +51,41 @@ def new_path(test_path: Path) -> Iterator[Path]:
     shutil.rmtree(new_path)
 
 
-def test_base_store_init(new_path):
-    base_store = BaseStoreFl(new_path)
-    assert new_path == base_store.path
-    assert base_store.path.exists()
+def test_store_init(new_path):
+    store = Store(new_path)
+    assert new_path == store.path
+    assert store.path.exists()
 
 
-def test_base_store_get(target_path):
-    base_store = BaseStoreFl(target_path)
-
-    assert {
-        "alias": "conn_local_file",
-        "endpoint": "file:///null/tests/examples/dummy",
-        "type": "connection.LocalFileStorage",
-    } == base_store.get(name="conn_local_file")
+def test_store_get(target_path):
+    store = Store(target_path)
 
     assert {
         "alias": "conn_local_file",
         "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
-    } == base_store.get(name="conn_local_file", order=1)
+    } == store.get(name="conn_local_file")
 
-    assert {} == base_store.get(name="conn_local_file_not_found")
-    assert {} == base_store.get(name="conn_local_file", order=2)
-    assert {} == base_store.get(name="conn_local_file", order=10)
+    assert {
+        "alias": "conn_local_file",
+        "endpoint": "file:///null/tests/examples/dummy",
+        "type": "connection.LocalFileStorage",
+    } == store.get(name="conn_local_file", order=1)
+
+    assert {} == store.get(name="conn_local_file_not_found")
+    assert {} == store.get(name="conn_local_file", order=2)
+    assert {} == store.get(name="conn_local_file", order=10)
 
 
-def test_base_store_move(target_path):
-    base_store = BaseStoreFl(target_path)
-    base_store.move(
+def test_store_move(target_path):
+    store = Store(target_path)
+    store.move(
         "test_01_conn.yaml",
         dest=target_path / "connections/test_01_conn_new.yaml",
     )
     assert (target_path / "connections/test_01_conn_new.yaml").exists()
 
-    base_store_temp = BaseStoreFl(target_path)
+    base_store_temp = Store(target_path)
     assert {
         "alias": "conn_local_file",
         "endpoint": "file:///null/tests/examples/dummy",
@@ -98,8 +98,8 @@ def test_base_store_move(target_path):
     } == base_store_temp.get(name="conn_local_file", order=2)
 
 
-def test_base_store_json(target_path):
-    base_store = BaseStoreFl(
+def test_store_json(target_path):
+    store = Store(
         target_path,
         open_file=JsonEnvFl,
         included_file_fmt=("*.json",),
@@ -109,11 +109,11 @@ def test_base_store_json(target_path):
         "alias": "conn_local_file",
         "endpoint": "file:///null/tests/examples/dummy",
         "type": "connection.LocalFileStorage",
-    } == base_store.get(name="conn_local_file")
+    } == store.get(name="conn_local_file")
 
 
 def test_store_csv_stage(target_path):
-    store = StoreFl(
+    store = Store(
         target_path,
         open_file=JsonEnvFl,
         open_file_stg=CsvPipeFl,
@@ -135,7 +135,7 @@ def test_store_csv_stage(target_path):
 
 
 def test_store(target_path):
-    store = StoreFl(target_path)
+    store = Store(target_path)
     store.move(
         path="test_01_conn.yaml",
         dest=target_path / "connections/test_01_conn.yaml",
@@ -185,7 +185,7 @@ def test_store(target_path):
 
 
 def test_store_save(target_path):
-    store = StoreFl(target_path)
+    store = Store(target_path)
     stage_path: Path = target_path / "connections/test_01_conn_stage.json"
     stage_path.parent.mkdir(parents=True, exist_ok=True)
     store.save(
@@ -203,7 +203,7 @@ def test_store_save(target_path):
 
 
 def test_store_save_raise(target_path):
-    store = StoreFl(target_path)
+    store = Store(target_path)
     stage_path: Path = target_path / "connections/test_01_conn_stage.json"
     stage_path.parent.mkdir(parents=True, exist_ok=True)
     store.save(

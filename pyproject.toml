@@ -76,7 +76,7 @@ relative_files = true
 [tool.coverage.report]
 exclude_lines = [
     "raise NotImplementedError",
-    "no cove",
+    "pragma: no cover",
 ]
 
 [tool.pytest.ini_options]

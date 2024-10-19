@@ -41,7 +41,7 @@ from .files.utils import (
     search_env_replace,
 )
 from .register import ArchiveRegister, Register
-from .stores import StoreFl
+from .stores import BaseStore, Store
 from .utils import (
     map_func,
     template_func,

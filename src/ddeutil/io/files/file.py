@@ -53,7 +53,7 @@ except ImportError:  # pragma: no cover
 
 try:
     import tomllib
-except ModuleNotFoundError:  # pragma: no cove
+except ModuleNotFoundError:  # pragma: no cover
     import pip._vendor.tomli as tomllib
 
 from .utils import search_env, search_env_replace
@@ -511,7 +511,7 @@ class CsvFl(Fl):
                 return False
 
 
-class CsvDynamicFl(CsvFl):  # pragma: no cove
+class CsvDynamicFl(CsvFl):  # pragma: no cover
     """CSV open file object with dynamic dialect reader."""
 
     def read(self, pre_load: int = 128) -> list[dict[str | int, Any]]:

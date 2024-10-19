@@ -42,41 +42,21 @@ DEFAULT_INCLUDED_FMT: TupleStr = ("*.yml", "*.yaml")
 DEFAULT_EXCLUDED_FMT: TupleStr = ("*.json", "*.toml")
 
 __all__: TupleStr = (
-    "BaseStoreFl",
-    "StoreABC",
-    "StoreFl",
+    "BaseStore",
+    "Store",
 )
 
 
-class StoreABC(abc.ABC):  # pragma: no cove
-    """Store Adapter abstract class for any config sub-class that should
-    implement necessary methods for unity usage and dynamic config backend
-    changing scenario.
-    """
-
-    @abc.abstractmethod
-    def load(self, name: str) -> dict[str, Any]:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def save(self, name: str, data: dict, *, merge: bool = False) -> None:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def remove(self, name: str, data_name: str) -> None:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def create(self, name: str, **kwargs) -> None:
-        raise NotImplementedError()
-
-
-class BaseStoreFl:
+class BaseStore(abc.ABC):
     """Base Store File object for getting data with `.yaml` format (default
     format for a config file) and mapping environment variables to the content
     data.
 
         This object implement only source file without stage open file.
+
+        Base Store Adapter abstract class for any config sub-class that should
+    implement necessary methods for unity usage and dynamic config backend
+    changing scenario.
 
     :param path:
     :param compress:
@@ -187,8 +167,26 @@ class BaseStoreFl:
             dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(self.path / path, dest)
 
+    @abc.abstractmethod
+    def load(self, name: str) -> dict[str, Any]:  # pragma: no cover
+        raise NotImplementedError()
 
-class StoreFl(BaseStoreFl, StoreABC):
+    @abc.abstractmethod
+    def save(
+        self, name: str, data: dict, *, merge: bool = False
+    ) -> None:  # pragma: no cover
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def remove(self, name: str, data_name: str) -> None:  # pragma: no cover
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def create(self, name: str, **kwargs) -> None:  # pragma: no cover
+        raise NotImplementedError()
+
+
+class Store(BaseStore):
     """Store File Loading Object for get data from configuration and stage.
 
     :param path: A path of files to action.
@@ -292,12 +290,7 @@ class StoreFl(BaseStoreFl, StoreABC):
             all_data.pop(name, None)
             (self.open_file_stg(path, compress=self.compress).write(all_data))
 
-    def create(
-        self,
-        path: Path,
-        *,
-        initial_data: Any = None,
-    ) -> None:
+    def create(self, path: Path, *, initial_data: Any = None) -> None:
         """Create file with an input filename to the store path. This method
         allow to create with initial data.
 
