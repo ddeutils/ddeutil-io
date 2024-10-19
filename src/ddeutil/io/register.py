@@ -28,10 +28,9 @@ from fmtutil import (
 )
 from typing_extensions import Self
 
-from .conf import DATE_FMT, UPDATE_KEY, VERSION_KEY
+from .config import DATE_FMT, UPDATE_KEY, VERSION_KEY, Params
 from .exceptions import RegisterArgumentError, StoreNotFound
 from .files import Fl, rm
-from .param import Params
 from .stores import StoreFl
 
 logger = logging.getLogger("ddeutil.io")
@@ -397,7 +396,7 @@ class Register(BaseRegister):
 
         store = StoreFl(
             path=self.params.paths.data / stage,
-            compress=self.params.get_stage(stage).rules.compress,
+            compress=self.params.get_stage(stage).rule.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
@@ -421,7 +420,7 @@ class Register(BaseRegister):
         """Move file to the target stage."""
         store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
-            compress=self.params.get_stage(stage).rules.compress,
+            compress=self.params.get_stage(stage).rule.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
@@ -478,7 +477,7 @@ class Register(BaseRegister):
         setting.
         """
         _stage: str = stage or self.stage
-        if not (_rules := self.params.get_stage(_stage).rules):
+        if not (_rules := self.params.get_stage(_stage).rule):
             return
         store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
@@ -557,7 +556,7 @@ class FullRegister(Register):
         :param stage: a stage value that want to purge.
         """
         _stage: str = stage or self.stage
-        if not (_rules := self.params.get_stage(_stage).rules):
+        if not (_rules := self.params.get_stage(_stage).rule):
             return
         store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,

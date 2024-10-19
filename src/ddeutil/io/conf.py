@@ -1,5 +1,0 @@
-UPDATE_KEY: str = "__updt"
-VERSION_KEY: str = "__version"
-VERSION_DEFAULT: str = "1990-01-01"
-DATE_FMT: str = "%Y-%m-%d %H:%M:%S"
-DATE_LOG_FMT: str = "%Y%m%d%H%M%S"

@@ -1,15 +1,15 @@
 import shutil
-from collections.abc import Generator
+from collections.abc import Iterator
 from pathlib import Path
 
 import ddeutil.io.register as rgt
 import pytest
 import yaml
-from ddeutil.io.param import Params
+from ddeutil.io.config import Params
 
 
 @pytest.fixture(scope="module")
-def target_path(test_path) -> Generator[Path, None, None]:
+def target_path(test_path) -> Iterator[Path]:
     tgt_path: Path = test_path / "register_temp"
     tgt_path.mkdir(exist_ok=True)
     (tgt_path / "conf/demo").mkdir(parents=True)
@@ -29,12 +29,11 @@ def target_path(test_path) -> Generator[Path, None, None]:
 
 @pytest.fixture(scope="module")
 def params(target_path, root_path) -> Params:
-    return Params.model_validate(
-        {
+    return Params(
+        **{
             "paths": {
                 "conf": target_path / "conf",
                 "data": root_path / "data",
-                "archive": root_path / "/data/.archive",
             },
             "stages": {
                 "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},

@@ -1,8 +1,12 @@
 from . import files as base
 from .__about__ import __version__
-from .conf import (
+from .config import (
     UPDATE_KEY,
     VERSION_KEY,
+    Params,
+    Paths,
+    Rule,
+    Stage,
 )
 from .exceptions import (
     IOBaseError,
@@ -37,12 +41,6 @@ from .files.file import (
 from .files.utils import (
     search_env,
     search_env_replace,
-)
-from .param import (
-    Params,
-    PathData,
-    Rule,
-    Stage,
 )
 from .register import Register
 from .stores import (

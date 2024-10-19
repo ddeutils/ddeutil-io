@@ -16,6 +16,10 @@ class IOBaseError(BaseError):
     """Core Base Error object"""
 
 
+class ConfigArgumentError(IOBaseError):
+    """Error raise for arguments that passing to config object not valid."""
+
+
 class StoreNotFound(IOBaseError):
     """Error raise for a method not found the config file or data."""
 

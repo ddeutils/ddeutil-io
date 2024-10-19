@@ -28,7 +28,7 @@ from pathlib import Path
 from sqlite3 import Connection
 from typing import Any, Union
 
-from .conf import VERSION_DEFAULT
+from .config import VERSION_DEFAULT
 from .exceptions import StoreArgumentError
 from .files import (
     Fl,
