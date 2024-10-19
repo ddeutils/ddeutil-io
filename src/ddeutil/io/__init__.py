@@ -42,7 +42,7 @@ from .files.utils import (
     search_env,
     search_env_replace,
 )
-from .register import Register
+from .register import ArchiveRegister, Register
 from .stores import (
     StoreFl,
     StoreSQLite,

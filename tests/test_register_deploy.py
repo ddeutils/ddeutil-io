@@ -1,6 +1,8 @@
 import shutil
 from collections.abc import Generator
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -31,24 +33,33 @@ def target_path(test_path) -> Generator[Path, None, None]:
 def params(target_path, root_path) -> Params:
     return Params(
         **{
-            "paths": {
-                "conf": target_path / "conf",
-                "data": root_path / "data",
-            },
+            "paths": {"root": target_path},
             "stages": {
                 "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
                 "staging": {"format": "{naming:%s}.{version:v%m.%n.%c}"},
                 "persisted": {
                     "format": "{domain:%s}_{naming:%s}.{compress:%-g}",
-                    "rule": {
-                        "compress": "gzip",
-                    },
+                    "rule": {"compress": "gzip"},
                 },
             },
         }
     )
 
 
-def test_register_deployment(params):
-    rs = Register(name="demo:conn_local_file", params=params).deploy()
-    assert "(demo:conn_local_file, persisted)" == str(rs)
+@pytest.fixture(scope="module")
+def mock_get_date():
+    with patch(
+        target="ddeutil.io.register.get_date",
+        return_value=datetime(2024, 1, 1, 1),
+    ) as mock:
+        yield mock
+
+
+def test_register_deployment(params, target_path, mock_get_date):
+    assert mock_get_date.mocked
+
+    data_path = target_path / "data"
+    Register(name="demo:conn_local_file", params=params).deploy()
+    assert (data_path / "staging/conn_local_file.v0.0.1.json").exists()
+    assert (data_path / "raw/conn_local_file.20240101_010000.json").exists()
+    assert (data_path / "persisted/demo_conn_local_file.gz.json").exists()

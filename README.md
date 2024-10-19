@@ -47,29 +47,29 @@ pip install -U ddeutil-io
 
 The features of this package is Input/Output data transport utility objects.
 
-| Module     |     Name      | Description                                                                                     | Remark   |
-|------------|:-------------:|-------------------------------------------------------------------------------------------------|----------|
-| files      |  PathSearch   |                                                                                                 |          |
-|            |   RegexConf   |                                                                                                 |          |
-| files.file |      Fl       | Open File object that use to open any normal or compression file from current local file system |          |
-|            |  EnvFlMixin   |                                                                                                 |          |
-|            |     EnvFl     |                                                                                                 |          |
-|            |   YamlEnvFl   |                                                                                                 |          |
-|            |    YamlFl     |                                                                                                 |          |
-|            | YamlFlResolve |                                                                                                 |          |
-|            |   JsonEnvFl   |                                                                                                 |          |
-|            |    JsonFl     |                                                                                                 |          |
-|            |     CsvFl     |                                                                                                 |          |
-|            |   CsvPipeFl   | CSV open file object with pipe (`\|`) seperator charactor.                                      |          |
-|            |   TomlEnvFl   |                                                                                                 |          |
-|            |    TomlFl     |                                                                                                 |          |
-|            |   PickleFl    |                                                                                                 | no cover |
-|            |   MarshalFl   |                                                                                                 | no cover |
-|            |   MsgpackFl   |                                                                                                 | no cover |
-| stores     |    StoreFl    |                                                                                                 |          |
-|            |  StoreSQLite  |                                                                                                 |          |
-| register   |   Register    | Register Object that contain configuration loading methods and metadata management.             |          |
-|            | FullRegister  |                                                                                                 |          |
+| Module     |       Name       | Description                                                                                     | Remark   |
+|------------|:----------------:|-------------------------------------------------------------------------------------------------|----------|
+| files      |    PathSearch    |                                                                                                 |          |
+|            |    RegexConf     |                                                                                                 |          |
+| files.file |        Fl        | Open File object that use to open any normal or compression file from current local file system |          |
+|            |    EnvFlMixin    |                                                                                                 |          |
+|            |      EnvFl       |                                                                                                 |          |
+|            |    YamlEnvFl     |                                                                                                 |          |
+|            |      YamlFl      |                                                                                                 |          |
+|            |  YamlFlResolve   |                                                                                                 |          |
+|            |    JsonEnvFl     |                                                                                                 |          |
+|            |      JsonFl      |                                                                                                 |          |
+|            |      CsvFl       |                                                                                                 |          |
+|            |    CsvPipeFl     | CSV open file object with pipe (`\|`) seperator charactor.                                      |          |
+|            |    TomlEnvFl     |                                                                                                 |          |
+|            |      TomlFl      |                                                                                                 |          |
+|            |     PickleFl     |                                                                                                 | no cover |
+|            |    MarshalFl     |                                                                                                 | no cover |
+|            |    MsgpackFl     |                                                                                                 | no cover |
+| stores     |     StoreFl      |                                                                                                 |          |
+|            |   StoreSQLite    |                                                                                                 |          |
+| register   |     Register     | Register Object that contain configuration loading methods and metadata management.             |          |
+|            | ArchiveRegister  |                                                                                                 |          |
 
 ## :beers: Usages
 

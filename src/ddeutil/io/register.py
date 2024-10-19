@@ -41,7 +41,7 @@ BASE_STAGE_DEFAULT: str = "base"
 
 __all__: tuple[str, ...] = (
     "Register",
-    "FullRegister",
+    "ArchiveRegister",
 )
 
 
@@ -208,7 +208,10 @@ class Register(BaseRegister):
         self.__manage_metadata()
 
     def __manage_metadata(self):
-        self.meta: dict[str, Any] = METADATA.get(self.fullname, {})
+        if self.fullname not in METADATA:
+            METADATA[self.fullname] = {}
+
+        self.meta: dict[str, Any] = METADATA.get(self.fullname)
 
         # NOTE: Compare data from current stage and latest version in metadata.
         self.changed: int = self.compare_data(
@@ -218,26 +221,16 @@ class Register(BaseRegister):
         # NOTE:
         #   Update metadata if the configuration data does not exist, or it has
         #   any changes.
-        if self.changed == 99:
-            logger.debug(
-                f"Data in stage: {self.stage!r} does not exists in metadata"
-            )
-            # FIXME: Create metadata for caching value before compare data next
-            #   time. (It can be table on database or sqlite file.
-            # METADATA.update({"self.fullname": self.__data})
-        elif self.changed > 0:
-            logger.debug(
-                f"Should update metadata because diff level is {self.changed}."
-            )
-
-        # FIXME: Remove this line when develop metadata feature in the next
-        #   release.
-        METADATA.pop(self.fullname, None)
-
-    def __hash__(self) -> int:
-        return hash.hash_all(
-            self.fullname + self.stage + f"{self.timestamp:{DATE_FMT}}"
-        )
+        if self.changed > 0:
+            if self.changed == 99:
+                logger.debug(
+                    f"Data in stage: {self.stage!r} does not exists in metadata"
+                )
+            else:
+                logger.debug(
+                    f"Should update metadata because diff level is {self.changed}."
+                )
+            self.meta.update({self.stage: self.data(hashing=True)})
 
     def __str__(self) -> str:
         return f"({self.fullname}, {self.stage})"
@@ -248,7 +241,7 @@ class Register(BaseRegister):
             f"{f'stage={self.stage!r}' if self.stage != 'base' else ''})>"
         )
 
-    def __eq__(self, other: Register) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return (
                 self.fullname == other.fullname
@@ -528,6 +521,7 @@ class Register(BaseRegister):
         assert (
             _stop in self.params.stages
         ), "a `stop` argument should exists in stages data on Param config."
+
         for stage in self.params.stages:
             _base: Register = _base.move(stage)
             if _stop and (stage == _stop):
@@ -557,14 +551,17 @@ class Register(BaseRegister):
             rm(store.path / _file)
 
 
-class FullRegister(Register):
-    """Full register that implement archiving step on base Register."""
+class ArchiveRegister(Register):
+    """Cycle Register object that implement archiving management on the Register
+    object such as ``self.purge``, and ``self.remove`` methods.
+    """
 
     def purge(self, stage: str | None = None) -> None:
         """Purge configuration files that match with any rules in the stage
         setting.
 
         :param stage: a stage value that want to purge.
+        :type stage: str | None
         """
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rule):

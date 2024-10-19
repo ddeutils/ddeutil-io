@@ -1,6 +1,8 @@
 import shutil
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -44,18 +46,32 @@ def params(target_path, root_path) -> Params:
     )
 
 
-def test_register(params: Params):
+@pytest.fixture(scope="module")
+def mock_get_date():
+    with patch(
+        target="ddeutil.io.register.get_date",
+        return_value=datetime(2024, 1, 1, 1),
+    ) as mock:
+        yield mock
+
+
+def test_register(params: Params, mock_get_date):
+    assert mock_get_date.mocked
+
     register = Register(name="demo:conn_local_file", params=params)
 
-    assert "base" == register.stage
-    assert "clf" == register.shortname
-    assert "demo:conn_local_file" == register.fullname
+    assert str(register) == "(demo:conn_local_file, base)"
+    assert repr(register) == "<Register(name='demo:conn_local_file')>"
+    assert register.stage == "base"
+    assert register.shortname == "clf"
+    assert register.fullname == "demo:conn_local_file"
 
     assert {
         "alias": "conn_local_file",
         "type": "connection.LocalFileStorage",
         "endpoint": "file:///null/tests/examples/dummy",
     } == register.data()
+
     assert {
         "alias": "62d877a16819c672578d7bded7f5903c",
         "type": "cece9f1b3f4791a04ec3d695cb5ba1a9",
@@ -81,6 +97,15 @@ def test_register(params: Params):
     Register.reset(name="demo:conn_local_file", params=params)
 
 
+def test_register_compare(params, mock_get_date):
+    assert mock_get_date.mocked
+
+    register_01 = Register(name="demo:conn_local_file", params=params)
+    register_02 = Register(name="demo:conn_local_file", params=params)
+    assert register_01 == register_02
+    assert register_01 != "demo:conn_local_file"
+
+
 def test_register_reset(params: Params):
     Register.reset(name="demo:conn_local_file", params=params)
 
@@ -89,7 +114,25 @@ def test_register_raise():
     with pytest.raises(RegisterArgumentError):
         Register(name="demo.conn_local_file")
 
-
-def test_register_without_params():
     with pytest.raises(NotImplementedError):
         Register(name="demo:conn_local_file")
+
+
+def test_register_change_data(params, target_path):
+    register = Register(name="demo:conn_local_file", params=params)
+    register.move(stage="raw")
+    register = Register(name="demo:conn_local_file", params=params)
+    assert register.changed == 0
+
+    with open(target_path / "conf/demo/test_01_conn.yaml", mode="w") as f:
+        yaml.dump(
+            {
+                "conn_local_file": {
+                    "type": "connection.LocalFileStorage",
+                    "endpoint": "file:///${APP_PATH}/tests/examples/new",
+                }
+            },
+            f,
+        )
+    register = Register(name="demo:conn_local_file", params=params)
+    assert register.changed == 1
