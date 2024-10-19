@@ -19,9 +19,7 @@ from .files import (
     rm,
     touch,
 )
-from .files.dir import (
-    Dir,
-)
+from .files.dir import Dir
 from .files.file import (
     CsvFl,
     CsvPipeFl,
@@ -43,10 +41,7 @@ from .files.utils import (
     search_env_replace,
 )
 from .register import ArchiveRegister, Register
-from .stores import (
-    StoreFl,
-    StoreSQLite,
-)
+from .stores import StoreFl
 from .utils import (
     map_func,
     template_func,

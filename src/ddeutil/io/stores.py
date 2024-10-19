@@ -8,7 +8,6 @@ versions. This module will provide standard and abstraction objects for your
 customize usage.
 
     *   StoreFl     : Store with open file object like json, yaml etc.
-    *   StoreSQLite : Store with SQLite database (binary file).
 
     Store will keep data with 2 stages, that mean data have data layer and stage
 layer.
@@ -16,20 +15,15 @@ layer.
 from __future__ import annotations
 
 import abc
-import contextlib
 import inspect
-import json
 import logging
 import shutil
-import sqlite3
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from sqlite3 import Connection
 from typing import Any, Union
 
 from .config import VERSION_DEFAULT
-from .exceptions import StoreArgumentError
 from .files import (
     Fl,
     JsonFl,
@@ -51,7 +45,6 @@ __all__: TupleStr = (
     "BaseStoreFl",
     "StoreABC",
     "StoreFl",
-    "StoreSQLite",
 )
 
 
@@ -83,6 +76,8 @@ class BaseStoreFl:
     format for a config file) and mapping environment variables to the content
     data.
 
+        This object implement only source file without stage open file.
+
     :param path:
     :param compress:
     :param open_file:
@@ -91,7 +86,7 @@ class BaseStoreFl:
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         *,
         compress: str | None = None,
         open_file: type[Fl] | None = None,
@@ -209,9 +204,9 @@ class StoreFl(BaseStoreFl, StoreABC):
         path: str | Path,
         *,
         compress: str | None = None,
-        open_file: type[Fl] | None = None,
         included_file_fmt: TupleStr | None = None,
         excluded_file_fmt: TupleStr | None = None,
+        open_file: type[Fl] | None = None,
         open_file_stg: type[Fl] | None = None,
     ) -> None:
         """Main initialize of config file loading object."""
@@ -315,171 +310,3 @@ class StoreFl(BaseStoreFl, StoreABC):
                 data=(initial_data or {}),
                 merge=False,
             )
-
-
-class BaseStoreSQLite:
-    """Base Store SQLite object for getting data with SQLite database from
-    file storage.
-    """
-
-    def __init__(self, path: Union[str, Path]) -> None:
-        self.path: Path = Path(path) if isinstance(path, str) else path
-        if not self.path.exists():
-            self.path.mkdir(parents=True)
-
-    @contextlib.contextmanager
-    def connect(
-        self,
-        database: str,
-        *,
-        timeout: int = 5,
-    ) -> Iterator[Connection]:
-        """Return SQLite Connection context."""
-        _conn: Connection = sqlite3.connect(
-            self.path / database, timeout=timeout
-        )
-        _conn.row_factory = self.dict_factory
-        try:
-            yield _conn
-        except sqlite3.Error as err:
-            logging.error(err)
-            raise StoreArgumentError(f"SQLite syntax error {err}") from err
-        _conn.commit()
-        _conn.close()
-
-    @staticmethod
-    def dict_factory(cursor, row) -> dict[str, Any]:
-        """Return result of dictionary factory that getting from the SQLite
-        cursor object.
-
-        See Also:
-            Another logic of the dict factory.
-                *   dict([
-                        (col[0], row[idx])
-                        for idx, col in enumerate(cursor.description)
-                    ])
-                *   dict(zip([col[0] for col in cursor.description], row))
-        """
-        return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
-
-
-class StoreSQLite(BaseStoreSQLite, StoreABC):
-    """Store SQLite Loading Object for get data from configuration and save
-    stage data to the one table.
-    """
-
-    def load(
-        self,
-        table: str,
-        *,
-        default: dict[Any, Any] | None = None,
-    ) -> dict[Any, Any]:
-        """Return content data from database with table name, default empty
-        dict.
-
-        :param table:
-        :param default: A default data if getting data from store do not exists.
-        """
-        _db, _table = table.rsplit("/", maxsplit=1)
-        with self.connect(_db) as conn:
-            cur = conn.cursor()
-            cur.execute(f"select * from {_table};")
-            if result := cur.fetchall():
-                return {_["name"]: self.convert_type(_) for _ in result}
-            return default if (default is not None) else {}
-
-    def save(
-        self,
-        table: str,
-        data: dict[str, Any],
-        *,
-        use_merge: bool = False,
-    ) -> None:
-        """Write content data to database with table name. If merge is true, it
-        will update or insert the data content.
-
-        :param table:
-        :param data:
-        :param use_merge:
-        """
-        _db, _table = table.rsplit("/", maxsplit=1)
-        _data: dict = self.prepare_values(data.get(list(data.keys())[0]))
-        with self.connect(_db) as conn:
-            cur = conn.cursor()
-            doing: str = "nothing"
-            if use_merge:
-                _doing_list: list[str] = [
-                    f"{_} = excluded.{_}" for _ in _data if _ != "name"
-                ]
-                doing: str = f'update set {", ".join(_doing_list)}'
-            query: str = (
-                f'insert into {_table} ({", ".join(_data.keys())}) values '
-                f'({":" + ", :".join(_data.keys())}) '
-                f"on conflict ( name ) do {doing};"
-            )
-            cur.execute(query, _data)
-
-    def remove(
-        self,
-        table: str,
-        data_name: str,
-    ) -> None:
-        """Remove data by name from table in database with table name.
-
-        :param table:
-        :param data_name:
-        """
-        _db, _table = table.rsplit("/", maxsplit=1)
-        with self.connect(_db) as conn:
-            cur = conn.cursor()
-            cur.execute(f"delete from {_table} where name = '{data_name}';")
-
-    def create(
-        self,
-        table: str,
-        schemas: dict[str, str] | None = None,
-    ) -> None:
-        """Create table in the target SQLite database.
-
-        :param table:
-        :param schemas:
-        """
-        if not schemas:
-            raise StoreArgumentError(
-                f"The `schemas` in `create` method of the "
-                f"{self.__class__.__name__} object was required"
-            )
-        _schemas: str = ", ".join([f"{k} {v}" for k, v in schemas.items()])
-        _db, _table = table.rsplit("/", maxsplit=1)
-        with self.connect(_db) as conn:
-            cur = conn.cursor()
-            cur.execute(f"create table if not exists {_table} ({_schemas})")
-
-    @staticmethod
-    def prepare_values(
-        values: dict[str, Union[str, int, float]],
-    ) -> dict[str, Union[str, int, float]]:
-        """Return prepare value with dictionary type to string to source system.
-
-        :param values:
-        """
-        rs: dict[str, Union[str, int, float]] = values.copy()
-        for _ in values:
-            if isinstance(values[_], dict):
-                rs[_] = json.dumps(values[_])
-        return rs
-
-    @staticmethod
-    def convert_type(
-        data: dict[str, Union[str, int, float]],
-        key: str | None = None,
-    ) -> dict[str, Any]:
-        """Return converted value from string to dictionary from source system.
-
-        :param data:
-        :param key:
-        """
-        _key: str = key or "data"
-        rs: dict[str, Any] = data.copy()
-        rs[_key] = json.loads(data[_key])
-        return rs

@@ -92,9 +92,13 @@ import os
 from ddeutil.io import YamlEnvFl
 
 os.environ["HELLO"] = "WORLD"
-content = YamlEnvFl('./.pre-commit-config.yaml').read(safe=True)
+content = YamlEnvFl('./source.yaml').read(safe=True)
 assert content['data']['get'] == "HELLO WORLD"
 ```
+
+> [!NOTE]
+> This module do not implement special function on IO like the build-in ``open``
+> function. It also make standard ``read`` and ``write`` file objects.
 
 ### Store
 
@@ -102,13 +106,20 @@ Store object is the storing dir system handler object that manage any files in
 that dir path with `get`, `move`, `load`, `save`, or `ls` operations.
 
 ```python
-from pathlib import Path
 from ddeutil.io.stores import StoreFl
 
-store: StoreFl = StoreFl(path=Path('./conf'), compress="gzip")
+store: StoreFl = StoreFl(path='./conf', compress="gzip")
 
 data = store.get(name='config_file.yaml')
 store.save('./stage/file.json', data)
+```
+
+```text
+conf/
+  examples/
+    config_file.yaml
+  stage/
+    file.json
 ```
 
 ### Register
