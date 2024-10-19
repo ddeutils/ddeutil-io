@@ -98,11 +98,7 @@ def test_store_move(target_path):
 
 
 def test_store_json(target_path):
-    store = Store(
-        target_path,
-        included_file_fmt=("*.json",),
-        excluded_file_fmt=("*.yml", "*.yaml", "*.toml"),
-    )
+    store = StoreJsonToCsv(path=target_path)
     assert {
         "alias": "conn_local_file",
         "endpoint": "file:///null/tests/examples/dummy",
@@ -111,11 +107,7 @@ def test_store_json(target_path):
 
 
 def test_store_csv_stage(target_path):
-    store = StoreJsonToCsv(
-        target_path,
-        included_file_fmt=("*.json",),
-        excluded_file_fmt=("*.yml", "*.yaml", "*.toml"),
-    )
+    store = StoreJsonToCsv(path=target_path)
     store.move(
         path="test_01_conn.json",
         dest=target_path / "connections/test_01_conn.json",

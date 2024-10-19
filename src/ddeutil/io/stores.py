@@ -7,7 +7,8 @@
 versions. This module will provide standard and abstraction objects for your
 customize usage.
 
-    *   StoreFl     : Store with open file object like json, yaml etc.
+    *   Store           : Store with Yaml open file and use stage with Json.
+    *   StoreJsonToCsv  : Store with Json open file and use stage with Yaml.
 
     Store will keep data with 2 stages, that mean data have data layer and stage
 layer.
@@ -38,11 +39,6 @@ TupleStr = tuple[str, ...]
 AnyData = Union[str, int, float, bool, None]
 DictData = dict[str, Union[AnyData, dict[str, AnyData], list[AnyData]]]
 
-DEFAULT_OPEN_FILE: type[Fl] = YamlEnvFl
-DEFAULT_OPEN_FILE_STG: type[Fl] = JsonFl
-DEFAULT_INCLUDED_FMT: TupleStr = ("*.yml", "*.yaml")
-DEFAULT_EXCLUDED_FMT: TupleStr = ("*.json", "*.toml")
-
 __all__: TupleStr = (
     "BaseStore",
     "Store",
@@ -63,23 +59,20 @@ class BaseStore(abc.ABC):
 
     :param path:
     :param compress:
-    :param excluded_file_fmt:
     """
 
     open_file: ClassVar[type[Fl]] = YamlEnvFl
+    included_file_fmt: ClassVar[TupleStr] = ("*.yml", "*.yaml")
+    excluded_file_fmt: ClassVar[TupleStr] = ("*.json", "*.toml")
 
     def __init__(
         self,
         path: str | Path,
         *,
         compress: str | None = None,
-        included_file_fmt: TupleStr | None = None,
-        excluded_file_fmt: TupleStr | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: str | None = compress
-        self.included_fmt: TupleStr = included_file_fmt or DEFAULT_INCLUDED_FMT
-        self.excluded_fmt: TupleStr = excluded_file_fmt or DEFAULT_EXCLUDED_FMT
 
         # NOTE: Create parent dir and skip if it already exist
         if not self.path.exists():
@@ -102,7 +95,7 @@ class BaseStore(abc.ABC):
         if not (
             rs := [
                 {"alias": name} | data
-                for file in self.ls(excluded=self.excluded_fmt)
+                for file in self.ls(excluded=self.excluded_file_fmt)
                 if (
                     data := (
                         self.open_file(path=file, compress=self.compress)
@@ -193,8 +186,6 @@ class Store(BaseStore):
 
     :param path: A path of files to action.
     :param compress: A compress type of action file.
-    :param included_file_fmt:
-    :param excluded_file_fmt:
     """
 
     open_file: ClassVar[type[Fl]] = YamlEnvFl
@@ -205,16 +196,9 @@ class Store(BaseStore):
         path: str | Path,
         *,
         compress: str | None = None,
-        included_file_fmt: TupleStr | None = None,
-        excluded_file_fmt: TupleStr | None = None,
     ) -> None:
         """Main initialize of config file loading object."""
-        super().__init__(
-            path,
-            compress=compress,
-            included_file_fmt=included_file_fmt,
-            excluded_file_fmt=excluded_file_fmt,
-        )
+        super().__init__(path, compress=compress)
 
     def load(
         self,
@@ -224,10 +208,7 @@ class Store(BaseStore):
     ) -> Union[dict[Any, Any], list[Any]]:
         """Return content data from file with filename, default empty dict."""
         try:
-            return self.open_file_stg(
-                path=path,
-                compress=self.compress,
-            ).read()
+            return self.open_file_stg(path=path, compress=self.compress).read()
         except FileNotFoundError:
             return default if (default is not None) else {}
 
@@ -278,18 +259,18 @@ class Store(BaseStore):
                 )
             raise err
 
-    def remove(self, path: str, name: str) -> None:
+    def remove(self, path: str | Path, name: str) -> None:
         """Remove data by name insided the staging file with filename.
 
         :param path:
         :param name:
         """
+        # NOTE: Remove data with the input name key if it exists.
         if all_data := self.load(path=path):
-            # NOTE: Remove data with the input name key.
             all_data.pop(name, None)
             (self.open_file_stg(path, compress=self.compress).write(all_data))
 
-    def create(self, path: Path, *, initial_data: Any = None) -> None:
+    def create(self, path: str | Path, *, initial_data: Any = None) -> None:
         """Create file with an input filename to the store path. This method
         allow to create with initial data.
 
@@ -305,5 +286,11 @@ class Store(BaseStore):
 
 
 class StoreJsonToCsv(Store):
+    """Store object that getting the Json context data and save it to stage with
+    YAML file format.
+    """
+
     open_file: ClassVar[type[Fl]] = JsonEnvFl
     open_file_stg: ClassVar[type[Fl]] = CsvPipeFl
+    included_file_fmt: ClassVar[TupleStr] = ("*.json",)
+    excluded_file_fmt: ClassVar[TupleStr] = ("*.yml", "*.yaml", "*.toml")

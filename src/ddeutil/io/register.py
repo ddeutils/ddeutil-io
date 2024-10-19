@@ -28,7 +28,7 @@ from fmtutil import (
 )
 from typing_extensions import Self
 
-from .config import DATE_FMT, UPDATE_KEY, VERSION_KEY, Params
+from .config import DATE_FMT, DATE_LOG_FMT, UPDATE_KEY, VERSION_KEY, Params
 from .exceptions import RegisterArgumentError, StoreNotFound
 from .files import rm
 from .stores import Store
@@ -43,7 +43,7 @@ __all__: tuple[str, ...] = (
 )
 
 
-class StageFiles(TypedDict):
+class StageFl(TypedDict):
     """Stage files dict typing for the mypy checker step."""
 
     parse: FormatterGroup
@@ -347,17 +347,17 @@ class Register(BaseRegister):
         self,
         stage: str,
         store: Store,
-    ) -> dict[int, StageFiles]:
-        """Return mapping of StageFiles data.
+    ) -> dict[int, StageFl]:
+        """Return mapping of StageFl data.
 
         :param stage: A stage
         :param store: A store object that passing path with stage path.
-        :rtype: dict[int, StageFiles]
+        :rtype: dict[int, StageFl]
         """
-        rs: dict[int, StageFiles] = {}
+        rs: dict[int, StageFl] = {}
         for index, file in enumerate((_f.name for _f in store.ls()), start=1):
             try:
-                rs[index]: StageFiles = {
+                rs[index]: StageFl = {
                     "parse": self._fmt_group.parse(
                         value=file,
                         fmt=rf"{self.params.get_stage(stage).format}\.json",
@@ -468,7 +468,7 @@ class Register(BaseRegister):
             path=self.params.paths.data / stage,
             compress=_rules.compress,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
+        rs: dict[int, StageFl] = self.__stage_files(_stage, store)
 
         upper_bound: FormatterGroup | None = None
         if _rtt_ts := _rules.timestamp:
@@ -516,15 +516,16 @@ class Register(BaseRegister):
         :type stage: str | None
         """
         _stage: str = stage or self.stage
-        assert (
-            _stage != BASE_STAGE_DEFAULT
-        ), "The remove method can not process on the 'base' stage."
-        store: Store = Store(
-            path=self.params.paths.data / _stage,
-        )
+
+        if _stage == BASE_STAGE_DEFAULT:
+            raise RegisterArgumentError(
+                "The remove method can not process with the 'base' stage."
+            )
+
+        store: Store = Store(path=self.params.paths.data / _stage)
 
         # Remove all files from the stage.
-        data: StageFiles
+        data: StageFl
         for _, data in self.__stage_files(_stage, store).items():
             _file: str = data["file"]
             rm(store.path / _file)
@@ -549,14 +550,14 @@ class ArchiveRegister(Register):
             path=self.params.paths.data / stage,
             compress=_rules.compress,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
-        max_file: FormatterGroup = max(
-            rs.items(),
-            key=lambda x: (x[1]["parse"],),
-        )[1]["parse"]
+        rs: dict[int, StageFl] = self.__stage_files(_stage, store)
 
         upper_bound: FormatterGroup | None = None
         if _rtt_ts := _rules.timestamp:
+            max_file: FormatterGroup = max(
+                rs.items(),
+                key=lambda x: (x[1]["parse"],),
+            )[1]["parse"]
             upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**_rtt_ts)}
             )
@@ -569,7 +570,7 @@ class ArchiveRegister(Register):
                 _file: str = data["file"]
                 # NOTE: Archive step
                 _ac_path: str = (
-                    f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
+                    f"{stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{_file}"
                 )
                 store.move(
                     _file,
@@ -584,19 +585,22 @@ class ArchiveRegister(Register):
         :type stage: str | None
         """
         _stage: str = stage or self.stage
-        assert (
-            _stage != BASE_STAGE_DEFAULT
-        ), "The remove method can not process on the 'base' stage."
+        if _stage == BASE_STAGE_DEFAULT:
+            raise RegisterArgumentError(
+                "The remove method can not process with the 'base' stage."
+            )
+
         store: Store = Store(path=self.params.paths.data / _stage)
 
         # NOTE: Remove all files from the stage.
-        data: StageFiles
         for _, data in self.__stage_files(_stage, store).items():
             _file: str = data["file"]
-            # NOTE: Archive step
-            _ac_path: str = f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
             store.move(
                 _file,
-                dest=self.params.paths.data / ".archive" / _ac_path,
+                dest=(
+                    self.params.paths.data
+                    / ".archive"
+                    / f"{_stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{_file}"
+                ),
             )
             rm(store.path / _file)
