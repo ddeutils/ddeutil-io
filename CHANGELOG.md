@@ -2,6 +2,22 @@
 
 ## Latest Changes
 
+## 0.2.2
+
+### :sparkles: Features
+
+- :dart: feat: remove loading argument from register object. (_2024-10-19_)
+
+### :black_nib: Code Changes
+
+- :art: styled: change code format on register module. (_2024-10-19_)
+- :test_tube: tests: update testcase for register module. (_2024-10-19_)
+
+### :bug: Fix Bugs
+
+- :gear: fixed: remove store sqlite object. (_2024-10-19_)
+- :gear: fixed: split metadata management from init to method. (_2024-10-19_)
+
 ## 0.2.1
 
 ### :sparkles: Features
