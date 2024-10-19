@@ -2,6 +2,29 @@
 
 ## Latest Changes
 
+## 0.2.1
+
+### :sparkles: Features
+
+- :dart: feat: change params from pydantic model to dataclass. (_2024-10-19_)
+- :dart: feat: change config object to store object. (_2024-10-17_)
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: update testcase for config module. (_2024-10-19_)
+- :art: styled: change argument and variable name of store in register module. (_2024-10-19_)
+- :test_tube: tests: update testcase for stores module. (_2024-10-18_)
+- :construction: refactored: change method name in the stores module. (_2024-10-17_)
+- :art: styled: change varible name on register module. (_2024-10-16_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file. (_2024-10-19_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update version ddeutil[all]==0.4.3. (_2024-10-17_)
+
 ## 0.2.0
 
 ### :sparkles: Features
