@@ -40,6 +40,11 @@ RULE_NECESSARY_KEYS: TupleStr = (
 
 
 def get_root_path() -> Path:
+    """Return the root path for this package that receive env var with
+    ``IO_REGISTER_ROOT_PATH`` key.
+
+    :rtype: Path
+    """
     if (root := os.getenv("IO_REGISTER_ROOT_PATH")) is not None:
         return Path(root)
     return Path()
@@ -112,8 +117,8 @@ class Stage:
                 not re.search(rf"{rule_key}", self.format)
             ):
                 raise ConfigArgumentError(
-                    f"This stage rule was set `{rule_key}` property but does not"
-                    f"have a `{rule_key}` format name in the format."
+                    f"This stage rule was set `{rule_key}` property but does "
+                    f"not have a `{rule_key}` format name in the format."
                 )
         return self
 
@@ -203,6 +208,9 @@ class Params:
                 layer: int = stage.layer or index
                 stage.alias = k
                 stage.layer = layer
+                self.stages[k] = stage
+            else:
+                raise ConfigArgumentError(f"The stage: {k} does not valid type")
 
         if isinstance(self.paths, dict):
             self.paths: Paths = Paths(**self.paths)

@@ -195,7 +195,7 @@ class Register(BaseRegister):
         self.params: Params | None = params
 
         # NOTE: Load latest version of data from data lake or data store of
-        # configuration files
+        #   configuration files
         self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
             raise StoreNotFound(
@@ -256,12 +256,12 @@ class Register(BaseRegister):
         return NotImplemented
 
     def data(self, hashing: bool = False) -> dict[str, Any]:
-        """Return the data with the configuration name.
+        """Return the context data with the specific name of data.
 
         :param hashing: A hashing flag that allow use hash function on the
             context data.
         """
-        _data: dict[str, Any] = self.__data
+        _data: dict[str, Any] = self.__data.copy()
         if not self.stage or (self.stage == BASE_STAGE_DEFAULT):
             _data: dict[str, Any] = {
                 k: v
@@ -283,8 +283,8 @@ class Register(BaseRegister):
         """
         if self.changed > 0:
             return self.updt
-        elif _dt := self.data().get(UPDATE_KEY):
-            return datetime.strptime(_dt, DATE_FMT)
+        elif dt := self.data().get(UPDATE_KEY):
+            return datetime.strptime(dt, DATE_FMT)
         return self.updt
 
     def version(self, _next: bool = False) -> VerPackage:
@@ -296,14 +296,14 @@ class Register(BaseRegister):
 
         :rtype: VerPackage
         """
-        _vs = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
+        version = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
         if not _next or self.changed == 0:
-            return _vs
+            return version
         elif self.changed >= 3:
-            return _vs.bump_major()
+            return version.bump_major()
         elif self.changed == 2:
-            return _vs.bump_minor()
-        return _vs.bump_patch()
+            return version.bump_minor()
+        return version.bump_patch()
 
     def fmt(self, update: dict[str, Any] | None = None) -> FormatterGroup:
         return self.fmt_group(
@@ -325,7 +325,7 @@ class Register(BaseRegister):
         if not target:
             return 99
 
-        results = DeepDiff(
+        rs = DeepDiff(
             self.data(hashing=True),
             target,
             ignore_order=True,
@@ -334,7 +334,7 @@ class Register(BaseRegister):
             },
         )
         if any(
-            _ in results
+            _ in rs
             for _ in (
                 "dictionary_item_added",
                 "dictionary_item_removed",
@@ -344,7 +344,7 @@ class Register(BaseRegister):
         ):
             return 2
         elif any(
-            _ in results
+            _ in rs
             for _ in (
                 "values_changed",
                 "type_changes",

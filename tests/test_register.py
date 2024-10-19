@@ -2,10 +2,11 @@ import shutil
 from collections.abc import Iterator
 from pathlib import Path
 
-import ddeutil.io.register as rgt
 import pytest
 import yaml
 from ddeutil.io.config import Params
+from ddeutil.io.exceptions import RegisterArgumentError
+from ddeutil.io.register import Register
 
 
 @pytest.fixture(scope="module")
@@ -43,10 +44,13 @@ def params(target_path, root_path) -> Params:
     )
 
 
-def test_register_init(params: Params):
-    register = rgt.Register(name="demo:conn_local_file", params=params)
+def test_register(params: Params):
+    register = Register(name="demo:conn_local_file", params=params)
 
     assert "base" == register.stage
+    assert "clf" == register.shortname
+    assert "demo:conn_local_file" == register.fullname
+
     assert {
         "alias": "conn_local_file",
         "type": "connection.LocalFileStorage",
@@ -58,7 +62,6 @@ def test_register_init(params: Params):
         "endpoint": "0d1db48bb2425db014fc66734508098f",
     } == register.data(hashing=True)
 
-    print("\nChange compare from metadata:", register.changed)
     assert register.changed == 99
 
     rsg_raw = register.move(stage="raw")
@@ -75,9 +78,18 @@ def test_register_init(params: Params):
         "62d877a16819c672578d7bded7f5903c"
         == rsg_persisted.data(hashing=True)["alias"]
     )
-    rgt.Register.reset(name="demo:conn_local_file", params=params)
+    Register.reset(name="demo:conn_local_file", params=params)
+
+
+def test_register_reset(params: Params):
+    Register.reset(name="demo:conn_local_file", params=params)
+
+
+def test_register_raise():
+    with pytest.raises(RegisterArgumentError):
+        Register(name="demo.conn_local_file")
 
 
 def test_register_without_params():
     with pytest.raises(NotImplementedError):
-        rgt.Register(name="demo:conn_local_file")
+        Register(name="demo:conn_local_file")

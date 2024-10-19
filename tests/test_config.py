@@ -190,6 +190,18 @@ def test_config_params():
         },
     } == asdict(params)
 
+    assert params.stage_first == "raw"
+    assert params.stage_final == "curated"
+    assert params.get_stage(name="base").alias == "base"
+
+    with pytest.raises(ConfigArgumentError):
+        params.get_stage("not_found")
+
+
+def test_config_params_raise():
+    with pytest.raises(ConfigArgumentError):
+        Params(**{"stages": {"raw": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"}})
+
 
 def test_config_params_toml(toml_conf_path):
     params = Params.from_toml(toml_conf_path)
@@ -223,7 +235,7 @@ def test_config_params_toml(toml_conf_path):
             "data": Path("data"),
             "root": Path("."),
         },
-    } == asdict(params)
+    } == params.to_dict()
 
 
 def test_config_params_yaml(yaml_conf_path):
