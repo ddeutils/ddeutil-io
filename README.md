@@ -98,8 +98,8 @@ assert content['data']['get'] == "HELLO WORLD"
 
 ### Store
 
-Store Object is the dir system handler object that manage any files in that
-input dir path like `load`, `save`, `load_stage`, `save_stage`, or `files`.
+Store object is the storing dir system handler object that manage any files in
+that dir path with `get`, `move`, `load`, `save`, or `ls` operations.
 
 ```python
 from pathlib import Path
@@ -119,11 +119,11 @@ in any stage storage and generate its metadata to you.
 
 ```python
 from ddeutil.io.register import Register
-from ddeutil.io.param import Params
+from ddeutil.io.config import Params
 
 registry: Register = Register(
     name='examples:conn_data_local_file',
-    params=Params.model_validate({
+    params=Params(**{
         "stages": {
             "raw": {"format": "{naming:%s}.{timestamp:%Y%m%d_%H%M%S}"},
         },
