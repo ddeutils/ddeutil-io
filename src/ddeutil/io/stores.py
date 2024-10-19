@@ -21,11 +21,13 @@ import shutil
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, ClassVar, Union
 
 from .config import VERSION_DEFAULT
 from .files import (
+    CsvPipeFl,
     Fl,
+    JsonEnvFl,
     JsonFl,
     PathSearch,
     YamlEnvFl,
@@ -44,6 +46,7 @@ DEFAULT_EXCLUDED_FMT: TupleStr = ("*.json", "*.toml")
 __all__: TupleStr = (
     "BaseStore",
     "Store",
+    "StoreJsonToCsv",
 )
 
 
@@ -60,22 +63,21 @@ class BaseStore(abc.ABC):
 
     :param path:
     :param compress:
-    :param open_file:
     :param excluded_file_fmt:
     """
+
+    open_file: ClassVar[type[Fl]] = YamlEnvFl
 
     def __init__(
         self,
         path: str | Path,
         *,
         compress: str | None = None,
-        open_file: type[Fl] | None = None,
         included_file_fmt: TupleStr | None = None,
         excluded_file_fmt: TupleStr | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: str | None = compress
-        self.open_file: type[Fl] = open_file or DEFAULT_OPEN_FILE
         self.included_fmt: TupleStr = included_file_fmt or DEFAULT_INCLUDED_FMT
         self.excluded_fmt: TupleStr = excluded_file_fmt or DEFAULT_EXCLUDED_FMT
 
@@ -191,11 +193,12 @@ class Store(BaseStore):
 
     :param path: A path of files to action.
     :param compress: A compress type of action file.
-    :param open_file:
     :param included_file_fmt:
     :param excluded_file_fmt:
-    :param open_file_stg:
     """
+
+    open_file: ClassVar[type[Fl]] = YamlEnvFl
+    open_file_stg: ClassVar[type[Fl]] = JsonFl
 
     def __init__(
         self,
@@ -204,18 +207,14 @@ class Store(BaseStore):
         compress: str | None = None,
         included_file_fmt: TupleStr | None = None,
         excluded_file_fmt: TupleStr | None = None,
-        open_file: type[Fl] | None = None,
-        open_file_stg: type[Fl] | None = None,
     ) -> None:
         """Main initialize of config file loading object."""
         super().__init__(
             path,
             compress=compress,
-            open_file=open_file,
             included_file_fmt=included_file_fmt,
             excluded_file_fmt=excluded_file_fmt,
         )
-        self.open_file_stg: type[Fl] = open_file_stg or DEFAULT_OPEN_FILE_STG
 
     def load(
         self,
@@ -303,3 +302,8 @@ class Store(BaseStore):
                 data=(initial_data or {}),
                 merge=False,
             )
+
+
+class StoreJsonToCsv(Store):
+    open_file: ClassVar[type[Fl]] = JsonEnvFl
+    open_file_stg: ClassVar[type[Fl]] = CsvPipeFl

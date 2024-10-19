@@ -30,12 +30,10 @@ from typing_extensions import Self
 
 from .config import DATE_FMT, UPDATE_KEY, VERSION_KEY, Params
 from .exceptions import RegisterArgumentError, StoreNotFound
-from .files import Fl, rm
+from .files import rm
 from .stores import Store
 
 logger = logging.getLogger("ddeutil.io")
-
-# TODO: Metadata should be store in target storing path.
 METADATA: dict[str, Any] = {}
 BASE_STAGE_DEFAULT: str = "base"
 
@@ -168,8 +166,7 @@ class Register(BaseRegister):
         stage: str | None = None,
         *,
         params: Params | None = None,
-        loader: type[Fl] | None = None,
-        loader_stg: type[Fl] | None = None,
+        store: type[Store] | None = None,
     ) -> None:
         _domain, _name = splitter.must_rsplit(
             base.concat(name.split()),
@@ -183,8 +180,7 @@ class Register(BaseRegister):
                 "param does not set."
             )
         self.stage: str = stage or BASE_STAGE_DEFAULT
-        self.loader: type[Fl] | None = loader
-        self.loader_stg: type[Fl] | None = loader_stg
+        self.store: type[Store] | None = store
         self.params: Params | None = params
 
         # NOTE: Load latest version of data from data lake or data store of
@@ -354,12 +350,14 @@ class Register(BaseRegister):
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data.
 
+        :param stage: A stage
+        :param store: A store object that passing path with stage path.
         :rtype: dict[int, StageFiles]
         """
-        results: dict[int, StageFiles] = {}
+        rs: dict[int, StageFiles] = {}
         for index, file in enumerate((_f.name for _f in store.ls()), start=1):
             try:
-                results[index]: dict = {
+                rs[index]: StageFiles = {
                     "parse": self._fmt_group.parse(
                         value=file,
                         fmt=rf"{self.params.get_stage(stage).format}\.json",
@@ -368,7 +366,7 @@ class Register(BaseRegister):
                 }
             except FormatterArgumentError:
                 continue
-        return results
+        return rs
 
     def pick(
         self,
@@ -382,25 +380,21 @@ class Register(BaseRegister):
 
         :param stage: A stage value that want to get context data.
         :param order:
-        :param reverse: A reverse flag.
+        :param reverse: A reverse flag that use to pick stage file.
         """
         if (stage is None) or (stage == BASE_STAGE_DEFAULT):
-            return Store(
-                path=(self.params.paths.conf / self.domain),
-                open_file=self.loader,
-                open_file_stg=self.loader_stg,
-            ).get(name=self.name, order=order)
+            return Store(path=(self.params.paths.conf / self.domain)).get(
+                name=self.name, order=order
+            )
 
         store = Store(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rule.compress,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
         )
 
-        if results := self.__stage_files(stage, store):
+        if rs := self.__stage_files(stage, store):
             max_data: list = sorted(
-                results.items(),
+                rs.items(),
                 key=lambda x: (x[1]["parse"],),
                 reverse=reverse,
             )
@@ -418,8 +412,6 @@ class Register(BaseRegister):
         store: Store = Store(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rule.compress,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
         )
         if (
             self.compare_data(
@@ -475,17 +467,16 @@ class Register(BaseRegister):
         store: Store = Store(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
         )
         rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
-        max_file: FormatterGroup = max(
-            rs.items(),
-            key=lambda x: (x[1]["parse"],),
-        )[1]["parse"]
 
         upper_bound: FormatterGroup | None = None
         if _rtt_ts := _rules.timestamp:
+            max_file: FormatterGroup = max(
+                rs.items(),
+                key=lambda x: (x[1]["parse"],),
+            )[1]["parse"]
+
             upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**_rtt_ts)}
             )
@@ -530,8 +521,6 @@ class Register(BaseRegister):
         ), "The remove method can not process on the 'base' stage."
         store: Store = Store(
             path=self.params.paths.data / _stage,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
         )
 
         # Remove all files from the stage.
@@ -559,8 +548,6 @@ class ArchiveRegister(Register):
         store: Store = Store(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
         )
         rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
         max_file: FormatterGroup = max(
@@ -600,11 +587,7 @@ class ArchiveRegister(Register):
         assert (
             _stage != BASE_STAGE_DEFAULT
         ), "The remove method can not process on the 'base' stage."
-        store: Store = Store(
-            path=self.params.paths.data / _stage,
-            open_file=self.loader,
-            open_file_stg=self.loader_stg,
-        )
+        store: Store = Store(path=self.params.paths.data / _stage)
 
         # NOTE: Remove all files from the stage.
         data: StageFiles

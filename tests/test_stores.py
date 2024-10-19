@@ -7,8 +7,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from ddeutil.io.files import CsvPipeFl, JsonEnvFl
-from ddeutil.io.stores import Store
+from ddeutil.io.stores import Store, StoreJsonToCsv
 
 
 @pytest.fixture(scope="module")
@@ -101,7 +100,6 @@ def test_store_move(target_path):
 def test_store_json(target_path):
     store = Store(
         target_path,
-        open_file=JsonEnvFl,
         included_file_fmt=("*.json",),
         excluded_file_fmt=("*.yml", "*.yaml", "*.toml"),
     )
@@ -113,10 +111,8 @@ def test_store_json(target_path):
 
 
 def test_store_csv_stage(target_path):
-    store = Store(
+    store = StoreJsonToCsv(
         target_path,
-        open_file=JsonEnvFl,
-        open_file_stg=CsvPipeFl,
         included_file_fmt=("*.json",),
         excluded_file_fmt=("*.yml", "*.yaml", "*.toml"),
     )
