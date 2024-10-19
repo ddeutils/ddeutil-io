@@ -199,15 +199,18 @@ class Register(BaseRegister):
         self.__data: dict[str, Any] = self.pick(stage=self.stage)
         if not self.__data:
             raise StoreNotFound(
-                f"Config {self.name!r} "
+                f"Register name {self.name!r} "
                 f"{f'in domain {self.domain!r} ' if self.domain else ' '}"
-                f"does not exist in stage {self.stage!r}."
+                f"does not find data in stage: {self.stage!r}."
             )
 
+        # NOTE: Running metadata tracking cache.
+        self.__manage_metadata()
+
+    def __manage_metadata(self):
         self.meta: dict[str, Any] = METADATA.get(self.fullname, {})
 
-        # NOTE:
-        #   Compare data from current stage and latest version in metadata.
+        # NOTE: Compare data from current stage and latest version in metadata.
         self.changed: int = self.compare_data(
             target=self.meta.get(self.stage, {})
         )
@@ -216,19 +219,18 @@ class Register(BaseRegister):
         #   Update metadata if the configuration data does not exist, or it has
         #   any changes.
         if self.changed == 99:
-            logger.info(
-                f"Configuration data with stage: {self.stage!r} does not "
-                f"exists in metadata ..."
+            logger.debug(
+                f"Data in stage: {self.stage!r} does not exists in metadata"
             )
-            # TODO: Create metadata for caching value before compare data next
+            # FIXME: Create metadata for caching value before compare data next
             #   time. (It can be table on database or sqlite file.
             # METADATA.update({"self.fullname": self.__data})
         elif self.changed > 0:
-            logger.info(
+            logger.debug(
                 f"Should update metadata because diff level is {self.changed}."
             )
 
-        # TODO: Remove this line when develop metadata feature in the next
+        # FIXME: Remove this line when develop metadata feature in the next
         #   release.
         METADATA.pop(self.fullname, None)
 
@@ -260,6 +262,7 @@ class Register(BaseRegister):
 
         :param hashing: A hashing flag that allow use hash function on the
             context data.
+        :rtype: dict[str, Any]
         """
         _data: dict[str, Any] = self.__data.copy()
         if not self.stage or (self.stage == BASE_STAGE_DEFAULT):
@@ -306,6 +309,11 @@ class Register(BaseRegister):
         return version.bump_patch()
 
     def fmt(self, update: dict[str, Any] | None = None) -> FormatterGroup:
+        """Return FormatterGroup object that passing ``self.timestamp`` and
+        ``self.version`` values.
+
+        :rtype: FormatterGroup
+        """
         return self.fmt_group(
             {
                 "timestamp": self.timestamp,
@@ -358,7 +366,10 @@ class Register(BaseRegister):
         stage: str,
         store: StoreFl,
     ) -> dict[int, StageFiles]:
-        """Return mapping of StageFiles data."""
+        """Return mapping of StageFiles data.
+
+        :rtype: dict[int, StageFiles]
+        """
         results: dict[int, StageFiles] = {}
         for index, file in enumerate((_f.name for _f in store.ls()), start=1):
             try:
