@@ -8,11 +8,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import (
-    Any,
-    Optional,
-    TypedDict,
-)
+from typing import Any, TypedDict
 
 from dateutil.relativedelta import relativedelta
 from ddeutil.core import base, hash, merge, splitter
@@ -33,19 +29,21 @@ from fmtutil import (
 from typing_extensions import Self
 
 from .conf import DATE_FMT, UPDATE_KEY, VERSION_KEY
-from .exceptions import StoreArgumentError, StoreNotFound
+from .exceptions import RegisterArgumentError, StoreNotFound
 from .files import Fl, rm
 from .param import Params
 from .stores import StoreFl
+
+logger = logging.getLogger("ddeutil.io")
+
+# TODO: Metadata should be store in target storing path.
+METADATA: dict[str, Any] = {}
+BASE_STAGE_DEFAULT: str = "base"
 
 __all__: tuple[str, ...] = (
     "Register",
     "FullRegister",
 )
-
-
-METADATA: dict[str, Any] = {}
-BASE_STAGE_DEFAULT: str = "base"
 
 
 class StageFiles(TypedDict):
@@ -79,8 +77,8 @@ FileExtensionConst: ConstantType = make_const(
 
 
 class BaseRegister:
-    """Base Register object that is not implement any features for register
-    config data.
+    """Base Register object that is not implement any features without base
+    properties.
 
     :param name:
     :param domain:
@@ -90,7 +88,7 @@ class BaseRegister:
         self,
         name: str,
         *,
-        domain: Optional[str] = None,
+        domain: str | None = None,
     ) -> None:
         self.name: str = name
         self.updt: datetime = get_date("datetime")
@@ -98,9 +96,9 @@ class BaseRegister:
             domain.replace(os.sep, "/").strip("/").lower() if domain else ""
         )
         if any(sep in self.name for sep in (",", ".")):
-            raise StoreArgumentError(
-                "name",
-                "Config name should not contain `,` or `.` char",
+            raise RegisterArgumentError(
+                "The register name should not contain any `,` or `.` "
+                "characters."
             )
 
     @property
@@ -193,9 +191,9 @@ class Register(BaseRegister):
                 "param does not set."
             )
         self.stage: str = stage or BASE_STAGE_DEFAULT
-        self.loader: Optional[type[Fl]] = loader
-        self.loader_stg: Optional[type[Fl]] = loader_stg
-        self.params: Optional[Params] = params
+        self.loader: type[Fl] | None = loader
+        self.loader_stg: type[Fl] | None = loader_stg
+        self.params: Params | None = params
 
         # NOTE: Load latest version of data from data lake or data store of
         # configuration files
@@ -219,7 +217,7 @@ class Register(BaseRegister):
         #   Update metadata if the configuration data does not exist, or it has
         #   any changes.
         if self.changed == 99:
-            logging.info(
+            logger.info(
                 f"Configuration data with stage: {self.stage!r} does not "
                 f"exists in metadata ..."
             )
@@ -227,7 +225,7 @@ class Register(BaseRegister):
             #   time. (It can be table on database or sqlite file.
             # METADATA.update({"self.fullname": self.__data})
         elif self.changed > 0:
-            logging.info(
+            logger.info(
                 f"Should update metadata because diff level is {self.changed}."
             )
 
@@ -308,7 +306,7 @@ class Register(BaseRegister):
             return _vs.bump_minor()
         return _vs.bump_patch()
 
-    def fmt(self, update: Optional[dict[str, Any]] = None) -> FormatterGroup:
+    def fmt(self, update: dict[str, Any] | None = None) -> FormatterGroup:
         return self.fmt_group(
             {
                 "timestamp": self.timestamp,
@@ -359,11 +357,11 @@ class Register(BaseRegister):
     def __stage_files(
         self,
         stage: str,
-        config: StoreFl,
+        store: StoreFl,
     ) -> dict[int, StageFiles]:
         """Return mapping of StageFiles data."""
         results: dict[int, StageFiles] = {}
-        for index, file in enumerate((_f.name for _f in config.ls()), start=1):
+        for index, file in enumerate((_f.name for _f in store.ls()), start=1):
             try:
                 results[index]: dict = {
                     "parse": self.fmt_group.parse(
@@ -378,12 +376,18 @@ class Register(BaseRegister):
 
     def pick(
         self,
-        stage: Optional[str] = None,
+        stage: str | None = None,
         *,
-        order: Optional[int] = 1,
+        order: int | None = 1,
         reverse: bool = False,
     ) -> dict[str, Any]:
-        """Return the context data from the specific stage area."""
+        """Get the context data from the specific stage value (use 'base' if the
+        stage do not pass on this method).
+
+        :param stage: A stage value that want to get context data.
+        :param order:
+        :param reverse: A reverse flag.
+        """
         if (stage is None) or (stage == BASE_STAGE_DEFAULT):
             return StoreFl(
                 path=(self.params.paths.conf / self.domain),
@@ -391,20 +395,20 @@ class Register(BaseRegister):
                 open_file_stg=self.loader_stg,
             ).get(name=self.name, order=order)
 
-        config = StoreFl(
+        store = StoreFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
 
-        if results := self.__stage_files(stage, config):
+        if results := self.__stage_files(stage, store):
             max_data: list = sorted(
                 results.items(),
                 key=lambda x: (x[1]["parse"],),
                 reverse=reverse,
             )
-            return config.load(path=(config.path / max_data[-order][1]["file"]))
+            return store.load(path=(store.path / max_data[-order][1]["file"]))
         return {}
 
     def move(
@@ -415,7 +419,7 @@ class Register(BaseRegister):
         retention: bool = True,
     ) -> Register:
         """Move file to the target stage."""
-        config: StoreFl = StoreFl(
+        store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rules.compress,
             open_file=self.loader,
@@ -434,13 +438,13 @@ class Register(BaseRegister):
             _filename: str = self.fmt().format(
                 f"{self.params.get_stage(name=stage).format}.json",
             )
-            if (config.path / _filename).exists():
+            if (store.path / _filename).exists():
                 # TODO: generate serial number if file exists
-                logging.warning(
+                logger.warning(
                     f"File {_filename!r} already exists in {stage!r} stage."
                 )
-            config.save(
-                path=(config.path / _filename),
+            store.save(
+                path=(store.path / _filename),
                 data=merge.merge_dict(
                     self.data(),
                     {
@@ -454,7 +458,7 @@ class Register(BaseRegister):
             if retention:
                 self.purge(stage=stage)
         else:
-            logging.warning(
+            logger.warning(
                 f"Config {self.name!r} cannot move {self.stage!r} -> "
                 f"{stage!r} cause the data does not has any change or "
                 f"force moving flag does not set."
@@ -469,26 +473,26 @@ class Register(BaseRegister):
             params=self.params,
         )
 
-    def purge(self, stage: Optional[str] = None) -> None:
+    def purge(self, stage: str | None = None) -> None:
         """Purge configuration files that match with any rules in the stage
         setting.
         """
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        config: StoreFl = StoreFl(
+        store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, config)
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
         max_file: FormatterGroup = max(
             rs.items(),
             key=lambda x: (x[1]["parse"],),
         )[1]["parse"]
 
-        upper_bound: Optional[FormatterGroup] = None
+        upper_bound: FormatterGroup | None = None
         if _rtt_ts := _rules.timestamp:
             upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**_rtt_ts)}
@@ -500,12 +504,12 @@ class Register(BaseRegister):
                 rs.items(),
             ):
                 _file: str = data["file"]
-                rm(config.path / _file)
+                rm(store.path / _file)
 
-    def deploy(self, stop: Optional[str] = None) -> Register:
+    def deploy(self, stop: str | None = None) -> Register:
         """Deploy data that move from base to final stage.
 
-        :param stop: A stage name for stop when move config from base stage
+        :param stop: A stage name for stop when move store from base stage
             to final stage.
         :type stop: str
         """
@@ -520,17 +524,17 @@ class Register(BaseRegister):
                 break
         return _base
 
-    def remove(self, stage: Optional[str] = None) -> None:
+    def remove(self, stage: str | None = None) -> None:
         """Remove config file from the stage storage.
 
         :param stage: a stage value that want to remove.
-        :type stage: Optional[str]
+        :type stage: str | None
         """
         _stage: str = stage or self.stage
         assert (
             _stage != BASE_STAGE_DEFAULT
         ), "The remove method can not process on the 'base' stage."
-        config: StoreFl = StoreFl(
+        store: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -538,34 +542,36 @@ class Register(BaseRegister):
 
         # Remove all files from the stage.
         data: StageFiles
-        for _, data in self.__stage_files(_stage, config).items():
+        for _, data in self.__stage_files(_stage, store).items():
             _file: str = data["file"]
-            rm(config.path / _file)
+            rm(store.path / _file)
 
 
 class FullRegister(Register):
     """Full register that implement archiving step on base Register."""
 
-    def purge(self, stage: Optional[str] = None) -> None:
+    def purge(self, stage: str | None = None) -> None:
         """Purge configuration files that match with any rules in the stage
         setting.
+
+        :param stage: a stage value that want to purge.
         """
         _stage: str = stage or self.stage
         if not (_rules := self.params.get_stage(_stage).rules):
             return
-        config: StoreFl = StoreFl(
+        store: StoreFl = StoreFl(
             path=self.params.paths.data / stage,
             compress=_rules.compress,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
         )
-        rs: dict[int, StageFiles] = self.__stage_files(_stage, config)
+        rs: dict[int, StageFiles] = self.__stage_files(_stage, store)
         max_file: FormatterGroup = max(
             rs.items(),
             key=lambda x: (x[1]["parse"],),
         )[1]["parse"]
 
-        upper_bound: Optional[FormatterGroup] = None
+        upper_bound: FormatterGroup | None = None
         if _rtt_ts := _rules.timestamp:
             upper_bound = max_file.adjust(
                 {"timestamp": relativedelta(**_rtt_ts)}
@@ -581,23 +587,23 @@ class FullRegister(Register):
                 _ac_path: str = (
                     f"{stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
                 )
-                config.move(
+                store.move(
                     _file,
                     dest=self.params.paths.data / ".archive" / _ac_path,
                 )
-                rm(config.path / _file)
+                rm(store.path / _file)
 
-    def remove(self, stage: Optional[str] = None) -> None:
-        """Remove config file from the stage storage.
+    def remove(self, stage: str | None = None) -> None:
+        """Remove store file from the stage storage.
 
         :param stage: a stage value that want to remove.
-        :type stage: Optional[str]
+        :type stage: str | None
         """
         _stage: str = stage or self.stage
         assert (
             _stage != BASE_STAGE_DEFAULT
         ), "The remove method can not process on the 'base' stage."
-        config: StoreFl = StoreFl(
+        store: StoreFl = StoreFl(
             path=self.params.paths.data / _stage,
             open_file=self.loader,
             open_file_stg=self.loader_stg,
@@ -605,12 +611,12 @@ class FullRegister(Register):
 
         # NOTE: Remove all files from the stage.
         data: StageFiles
-        for _, data in self.__stage_files(_stage, config).items():
+        for _, data in self.__stage_files(_stage, store).items():
             _file: str = data["file"]
             # NOTE: Archive step
             _ac_path: str = f"{_stage.lower()}_{self.updt:%Y%m%d%H%M%S}_{_file}"
-            config.move(
+            store.move(
                 _file,
                 dest=self.params.paths.data / ".archive" / _ac_path,
             )
-            rm(config.path / _file)
+            rm(store.path / _file)

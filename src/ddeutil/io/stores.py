@@ -198,6 +198,10 @@ class StoreFl(BaseStoreFl, StoreABC):
 
     :param path: A path of files to action.
     :param compress: A compress type of action file.
+    :param open_file:
+    :param included_file_fmt:
+    :param excluded_file_fmt:
+    :param open_file_stg:
     """
 
     def __init__(
@@ -339,9 +343,7 @@ class BaseStoreSQLite:
             yield _conn
         except sqlite3.Error as err:
             logging.error(err)
-            raise StoreArgumentError(
-                "syntax", f"SQLite syntax error {err}"
-            ) from err
+            raise StoreArgumentError(f"SQLite syntax error {err}") from err
         _conn.commit()
         _conn.close()
 
@@ -444,11 +446,8 @@ class StoreSQLite(BaseStoreSQLite, StoreABC):
         """
         if not schemas:
             raise StoreArgumentError(
-                "schemas",
-                (
-                    f"in `create` method of {self.__class__.__name__} "
-                    f"was required"
-                ),
+                f"The `schemas` in `create` method of the "
+                f"{self.__class__.__name__} object was required"
             )
         _schemas: str = ", ".join([f"{k} {v}" for k, v in schemas.items()])
         _db, _table = table.rsplit("/", maxsplit=1)
