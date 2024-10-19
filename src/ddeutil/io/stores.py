@@ -36,8 +36,8 @@ from .files import (
 )
 
 TupleStr = tuple[str, ...]
-AnyData = Union[str, int, float, bool, None]
-DictData = dict[str, Union[AnyData, dict[str, AnyData], list[AnyData]]]
+AnyValue = Union[str, int, float, bool, None]
+AnyData = Union[AnyValue, dict[str, AnyValue], list[AnyValue]]
 
 __all__: TupleStr = (
     "BaseStore",
@@ -78,7 +78,7 @@ class BaseStore(abc.ABC):
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
-    def get(self, name: str, *, order: int = 1) -> DictData:
+    def get(self, name: str, *, order: int = 1) -> AnyData:
         """Return configuration data from name of the config that already adding
         `alias` key with this input name.
 
@@ -88,7 +88,7 @@ class BaseStore(abc.ABC):
             of duplicate data.
         :type order: int (Default=1)
 
-        :rtype: DictData
+        :rtype: AnyData
         :returns: The loaded context data from the open file read method.
         """
         rs: list[dict[Any, Any]]
@@ -200,13 +200,11 @@ class Store(BaseStore):
         """Main initialize of config file loading object."""
         super().__init__(path, compress=compress)
 
-    def load(
-        self,
-        path: str | Path,
-        *,
-        default: Any = None,
-    ) -> Union[dict[Any, Any], list[Any]]:
-        """Return content data from file with filename, default empty dict."""
+    def load(self, path: str | Path, *, default: AnyData = None) -> AnyData:
+        """Return content data from file with filename, default empty dict.
+
+        :rtype: AnyData
+        """
         try:
             return self.open_file_stg(path=path, compress=self.compress).read()
         except FileNotFoundError:
@@ -215,13 +213,17 @@ class Store(BaseStore):
     def save(
         self,
         path: str | Path,
-        data: Union[dict[Any, Any], list[Any]],
+        data: AnyData,
         *,
         merge: bool = False,
     ) -> None:
         """Write content data to file with filename. If merge is true, it will
         load the current data from saving file and merge the incoming data
         together before re-write the file.
+
+        :param path:
+        :param data:
+        :param merge:
         """
         if not merge:
             self.open_file_stg(path, compress=self.compress).write(data)
@@ -236,7 +238,7 @@ class Store(BaseStore):
             )
             return
 
-        all_data: Union[dict, list] = self.load(path=path)
+        all_data: AnyData = self.load(path=path)
         try:
             if isinstance(all_data, list):
                 _merge_data: Union[dict, list] = all_data
@@ -270,12 +272,14 @@ class Store(BaseStore):
             all_data.pop(name, None)
             (self.open_file_stg(path, compress=self.compress).write(all_data))
 
-    def create(self, path: str | Path, *, initial_data: Any = None) -> None:
+    def create(self, path: str | Path, *, initial_data: AnyData = None) -> None:
         """Create file with an input filename to the store path. This method
         allow to create with initial data.
 
         :param path:
         :param initial_data:
+        :type initial_data: AnyData
+        :rtype: None
         """
         if not path.exists():
             self.save(

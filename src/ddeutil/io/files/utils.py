@@ -129,7 +129,6 @@ def search_env(
     fit with my package. (https://github.com/theskumar/python-dotenv)
 
     Examples:
-
         >>> search_env("Data='demo'\\nfoo=bar")
         {'Data': 'demo', 'foo': 'bar'}
         >>> search_env("Data='demo'\\n# foo=bar\\nhello=${Data}-2")
