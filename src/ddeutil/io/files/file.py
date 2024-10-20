@@ -668,6 +668,40 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
         )
 
 
+class JsonLine(Fl):
+    """Json open file object that read data context from Json file format
+    (.json) with a newline seperator.
+    """
+
+    def read(self) -> list[Any]:
+        rs: list[Any] = []
+        with self.open(mode="rt") as f:
+            for line in f:
+                try:
+                    rs.append(json.loads(line, cls=JSONCommentsDecoder))
+                except json.decoder.JSONDecodeError as err:
+                    logger.exception(err)
+                    raise
+        return rs
+
+    def write(self, data, *, mode: str | None = None) -> None:
+        if not data:
+            raise ValueError("data to write is empty")
+
+        mode: str = mode or "w"
+        assert mode in {
+            "a",
+            "w",
+        }, "save mode must contain only value `a` nor `w`."
+
+        with self.open(mode=mode) as f:
+            if isinstance(data, list):
+                for d in data:
+                    f.write(json.dumps(d, default=str) + "\n")
+            else:
+                f.write(json.dumps(data, default=str) + "\n")
+
+
 class TomlFl(Fl):
     def read(self):
         with self.open(mode="rt") as f:

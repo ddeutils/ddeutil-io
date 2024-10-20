@@ -3,6 +3,15 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
+"""Register module provide the Register object for manage configuration file
+with multiple storing stages. That mean if you have original config file with
+YAML file format and want to save memory to reading in your any application
+you will convert it to JSON file or some binary file and always reuse it if the
+original config file does not change context data inside.
+
+    So, this module will help you handle this scenario with Register object.
+This object can dynamic stage with your params config.
+"""
 from __future__ import annotations
 
 import logging

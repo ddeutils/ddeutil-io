@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import os
-from typing import Callable
+from collections.abc import Iterator
+from typing import IO, AnyStr, Callable
 
 try:
     from .conf import RegexConf
@@ -209,3 +210,45 @@ def __search_var(
             )
         value: str = value.replace("".join(sub_content[:-1]), replace)
     return value
+
+
+def reverse_readline(f: IO, buf_size: int = 8192) -> Iterator[AnyStr]:
+    """A generator that returns the lines of a file in reverse order
+
+    Reference:
+        - https://stackoverflow.com/questions/2301789/ -
+            how-to-read-a-file-in-reverse-order
+        - https://stackoverflow.com/a/23646049/8776239
+    """
+    segment: AnyStr | None = None
+    offset: int = 0
+    f.seek(0, os.SEEK_END)
+    file_size = remaining_size = f.tell()
+
+    while remaining_size > 0:
+        offset = min(file_size, offset + buf_size)
+        f.seek(file_size - offset)
+        buffer: AnyStr = f.read(min(remaining_size, buf_size))
+        remaining_size -= buf_size
+        lines: AnyStr = buffer.splitlines(True)
+
+        # NOTE: the first line of the buffer is probably not a complete line so
+        #   we'll save it and append it to the last line of the next buffer
+        #   we read
+        if segment is not None:
+
+            # NOTE: if the previous chunk starts right from the beginning of
+            #   line do not concat the segment to the last line of new chunk
+            #   instead, yield the segment first
+            if buffer[-1] == "\n":
+                yield segment
+            else:
+                lines[-1] += segment
+        segment: AnyStr = lines[0]
+        for index in range(len(lines) - 1, 0, -1):
+            if len(lines[index]):
+                yield lines[index]
+
+    # WARNING: Don't yield None if the file was empty
+    if segment is not None:
+        yield segment
