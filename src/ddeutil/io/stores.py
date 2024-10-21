@@ -62,7 +62,7 @@ class BaseStore(abc.ABC):
 
     open_file: ClassVar[type[Fl]] = YamlEnvFl
     included_file_fmt: ClassVar[TupleStr] = ("*.yml", "*.yaml")
-    excluded_file_fmt: ClassVar[TupleStr] = ("*.json", "*.toml")
+    excluded_file_fmt: ClassVar[TupleStr] = ("*.json", "*.toml", "*.csv")
 
     def __init__(
         self,
@@ -91,6 +91,7 @@ class BaseStore(abc.ABC):
         :returns: The loaded context data from the open file read method.
         """
         rs: list[dict[Any, Any]]
+        print(list(self.ls(excluded=self.excluded_file_fmt)))
         if not (
             rs := [
                 {"alias": name} | data
@@ -247,14 +248,14 @@ class Store(BaseStore):
 
             # NOTE: Writing data to the stage layer
             self.open_file_stg(path, compress=self.compress).write(rs)
-        except TypeError as err:
+        except TypeError:
             # NOTE: Remove the previous saving file path for rollback.
-            rm(path=path)
+            rm(path=path, force_raise=False)
             if all_data:
                 self.open_file_stg(path, compress=self.compress).write(
                     all_data,
                 )
-            raise err
+            raise
 
     def delete(self, path: str | Path, name: str) -> None:
         """Remove data by name insided the staging file with filename.
@@ -292,7 +293,12 @@ class StoreJsonToCsv(Store):
     open_file: ClassVar[type[Fl]] = JsonEnvFl
     open_file_stg: ClassVar[type[Fl]] = CsvPipeFl
     included_file_fmt: ClassVar[TupleStr] = ("*.json",)
-    excluded_file_fmt: ClassVar[TupleStr] = ("*.yml", "*.yaml", "*.toml")
+    excluded_file_fmt: ClassVar[TupleStr] = (
+        "*.yml",
+        "*.yaml",
+        "*.toml",
+        "*.csv",
+    )
 
 
 class StoreToJsonLine(Store):

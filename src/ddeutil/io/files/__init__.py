@@ -49,20 +49,27 @@ from .utils import (
 )
 
 
-def rm(path: str, is_dir: bool = False) -> None:  # pragma: no cover
+def rm(
+    path: str,
+    is_dir: bool = False,
+    force_raise: bool = True,
+) -> None:  # pragma: no cover
     """Remove a file or dir from a input path.
 
     :param path: A path of file or dir that want to remove.
     :param is_dir: A flag that tell this input path is dir or not.
+    :param force_raise: A flag that disable raise error if it not remove.
     """
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
     elif os.path.isdir(path) and is_dir:
         shutil.rmtree(path)
     else:
-        raise ValueError(
-            f"file {path!r} is not a file{' or dir' if is_dir else ''}."
-        )
+        if force_raise:
+            raise ValueError(
+                f"Path {path!r} is not a file{' or dir' if is_dir else ''}."
+            )
+        return
 
 
 def touch(path: str, times=None) -> None:  # pragma: no cover

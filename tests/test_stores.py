@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
@@ -17,7 +18,7 @@ def target_path(test_path) -> Iterator[Path]:
     test getting and moving.
     """
     tgt_path: Path = test_path / "store_file"
-    tgt_path.mkdir(exist_ok=True)
+    tgt_path.mkdir(parents=True, exist_ok=True)
     with open(tgt_path / "test_01_conn.yaml", mode="w") as f:
         yaml.dump(
             {
@@ -40,6 +41,7 @@ def target_path(test_path) -> Iterator[Path]:
             f,
         )
     yield tgt_path
+
     shutil.rmtree(tgt_path)
 
 
@@ -56,6 +58,7 @@ def test_store_init(new_path):
     assert store.path.exists()
 
     store.create(new_path / "touch.json", initial_data={"foo": "bar"})
+    store.create(new_path / "touch.json")
 
 
 def test_store_get(target_path):
@@ -112,26 +115,31 @@ def test_store_csv_stage(target_path):
     store = StoreJsonToCsv(path=target_path)
     store.move(
         path="test_01_conn.json",
-        dest=target_path / "connections/test_01_conn.json",
+        dest=target_path / "connections/test_01_conn.move.json",
     )
 
-    stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    stage_path: Path = target_path / "connections/test_01_conn_stage.csv"
 
     store.save(
         path=stage_path,
         data={"temp_additional": store.get("conn_local_file")},
         merge=True,
     )
+    os.unlink(stage_path)
 
 
 def test_store(target_path):
-    store = Store(target_path)
+    store: Store = Store(target_path)
     store.move(
         path="test_01_conn.yaml",
         dest=target_path / "connections/test_01_conn.yaml",
     )
 
     stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    stage_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with pytest.raises(TypeError):
+        store.save(path=stage_path, data="second", merge=True)
 
     store.create(path=stage_path)
     assert stage_path.exists()
@@ -172,16 +180,17 @@ def test_store(target_path):
         target_path / "connections/test_01_conn_stage_not_fount.json",
         name="first",
     )
+    os.unlink(stage_path)
 
 
 def test_store_save(target_path):
     store = Store(target_path)
-    stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    stage_path: Path = target_path / "connections/test_01_conn_stage_save.json"
     stage_path.parent.mkdir(parents=True, exist_ok=True)
+
     store.save(
         path=stage_path,
         data={"first": store.get("conn_local_file")} | {"version": 1},
-        merge=True,
     )
     store.save(
         path=stage_path,
@@ -191,10 +200,30 @@ def test_store_save(target_path):
 
     assert 2 == store.load(path=stage_path).get("version")
 
+    try:
+        store.save(path=stage_path, data="second", merge=True)
+    except TypeError:
+        assert stage_path.exists()
+
+    assert 2 == store.load(path=stage_path).get("version")
+    os.unlink(stage_path)
+
+
+def test_store_save_list(target_path):
+    store = Store(target_path)
+    stage_path: Path = target_path / "connections/test_01_conn_stage_list.json"
+    stage_path.parent.mkdir(parents=True, exist_ok=True)
+
+    store.save(path=stage_path, data=[{"foo": "bar"}])
+    store.save(path=stage_path, data=[{"baz": "bar"}], merge=True)
+
+    assert [{"foo": "bar"}, {"baz": "bar"}] == (store.load(path=stage_path))
+    os.unlink(stage_path)
+
 
 def test_store_save_raise(target_path):
-    store = Store(target_path)
-    stage_path: Path = target_path / "connections/test_01_conn_stage.json"
+    store: Store = Store(target_path)
+    stage_path: Path = target_path / "connections/test_01_conn_stage_raise.json"
     stage_path.parent.mkdir(parents=True, exist_ok=True)
     store.save(
         path=stage_path,
@@ -210,6 +239,7 @@ def test_store_save_raise(target_path):
         )
 
     store.delete(stage_path, name="first")
+    os.unlink(stage_path)
 
 
 def test_store_json_line(target_path):
@@ -221,3 +251,4 @@ def test_store_json_line(target_path):
         data={"first": store.get("conn_local_file")} | {"version": 1},
         merge=True,
     )
+    os.unlink(stage_path)

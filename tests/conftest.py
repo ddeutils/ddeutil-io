@@ -20,7 +20,7 @@ def encoding() -> str:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def drop_data(root_path: Path):
+def drop_data_path(root_path: Path):
     yield
 
     if (root_path / "data").exists():
