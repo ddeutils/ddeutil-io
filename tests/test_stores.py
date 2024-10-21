@@ -155,7 +155,7 @@ def test_store(target_path):
         merge=True,
     )
 
-    store.remove(
+    store.delete(
         path=stage_path,
         name="temp_additional",
     )
@@ -166,7 +166,7 @@ def test_store(target_path):
         "type": "connection.LocalFileStorage",
     } == store.load(path=stage_path)
 
-    store.remove(
+    store.delete(
         target_path / "connections/test_01_conn_stage_not_fount.json",
         name="first",
     )
@@ -207,4 +207,4 @@ def test_store_save_raise(target_path):
             merge=True,
         )
 
-    store.remove(stage_path, name="first")
+    store.delete(stage_path, name="first")

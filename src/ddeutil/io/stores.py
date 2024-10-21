@@ -173,7 +173,7 @@ class BaseStore(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def remove(self, name: str, data_name: str) -> None:  # pragma: no cover
+    def delete(self, name: str, data_name: str) -> None:  # pragma: no cover
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -261,7 +261,7 @@ class Store(BaseStore):
                 )
             raise err
 
-    def remove(self, path: str | Path, name: str) -> None:
+    def delete(self, path: str | Path, name: str) -> None:
         """Remove data by name insided the staging file with filename.
 
         :param path:

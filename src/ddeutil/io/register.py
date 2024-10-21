@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import Any, TypedDict
+from typing import Any, ClassVar, Literal, TypedDict
 
 from dateutil.relativedelta import relativedelta
 from ddeutil.core import base, hash, merge, splitter
@@ -42,11 +42,26 @@ from .exceptions import RegisterArgumentError, StoreNotFound
 from .files import rm
 from .stores import Store
 
-logger = logging.getLogger("ddeutil.io")
-METADATA: dict[str, Any] = {}
-BASE_STAGE_DEFAULT: str = "base"
+TupleStr = tuple[str, ...]
 
-__all__: tuple[str, ...] = (
+logger = logging.getLogger("ddeutil.io")
+
+METADATA: dict[str, Any] = {}
+REGISTER_BASE_STAGE_DEFAULT: str = "base"
+REGISTER_DIFF_LEVEL: dict[int, TupleStr] = {
+    1: (
+        "values_changed",
+        "type_changes",
+    ),
+    2: (
+        "dictionary_item_added",
+        "dictionary_item_removed",
+        "iterable_item_added",
+        "iterable_item_removed",
+    ),
+}
+
+__all__: TupleStr = (
     "Register",
     "ArchiveRegister",
 )
@@ -86,8 +101,8 @@ class BaseRegister:
     """Base Register object that is not implement any features without base
     properties.
 
-    :param name:
-    :param domain:
+    :param name: A name of key of config data that want to register.
+    :param domain: A dir path of config files that use to search a name of data.
     """
 
     def __init__(self, name: str, *, domain: str | None = None) -> None:
@@ -123,9 +138,9 @@ class BaseRegister:
         return base.concat(word[0] for word in self.name.split("_"))
 
     @property
-    def _fmt_group(self) -> FormatterGroupType:  # pragma: no cove
-        """Generate the formatter group that include constant formatters from
-        ``self.name`` and ``self.domain``.
+    def fmt_type(self) -> FormatterGroupType:  # pragma: no cove
+        """Return the generated formatter group that include constant formatters
+        from ``self.name`` and ``self.domain``.
 
         :rtype: FormatterGroupType
         """
@@ -145,6 +160,12 @@ class Register(BaseRegister):
     """Register Object that contain configuration config methods and metadata
     management. This object work with stage input argument, that set all
     properties in the `parameter.yaml` file.
+
+    :param name: A fullname of register data that able to split domain and name
+        before passing to parent base register object with ``:``.
+    :param stage: A stage name that want to get data with an input name.
+    :param params:
+    :param store:
     """
 
     @classmethod
@@ -159,7 +180,9 @@ class Register(BaseRegister):
         :type name: str
         :param params:
         :type params: Params
+
         :rtype: Self
+        :return: itself object that passing the fullname to initialize step.
         """
         for stage in params.stages:
             try:
@@ -177,25 +200,25 @@ class Register(BaseRegister):
         params: Params | None = None,
         store: type[Store] | None = None,
     ) -> None:
-        _domain, _name = splitter.must_rsplit(
+        domain, name = splitter.must_rsplit(
             base.concat(name.split()),
             sep=":",
             maxsplit=1,
         )
-        super().__init__(name=_name, domain=_domain)
+        super().__init__(name=name, domain=domain)
         if not params:
             raise NotImplementedError(
                 "This register instance can not do any actions because config "
                 "param does not set."
             )
-        self.stage: str = stage or BASE_STAGE_DEFAULT
-        self.store: type[Store] | None = store
         self.params: Params | None = params
+        self.stage: str = stage or REGISTER_BASE_STAGE_DEFAULT
+        self.store: type[Store] | None = store
 
         # NOTE: Load latest version of data from data lake or data store of
-        #   configuration files
-        self.__data: dict[str, Any] = self.pick(stage=self.stage)
-        if not self.__data:
+        #   configuration files.
+        self.__raw_data: dict[str, Any] = self.get(stage=self.stage)
+        if not self.__raw_data:
             raise StoreNotFound(
                 f"Register name {self.name!r} "
                 f"{f'in domain {self.domain!r} ' if self.domain else ' '}"
@@ -206,7 +229,9 @@ class Register(BaseRegister):
         self.__manage_metadata()
 
     def __manage_metadata(self):
-        """Manage cache and context data change with metadata."""
+        """Manage the latest context data for detect change by metadata
+        strategy.
+        """
         if self.fullname not in METADATA:
             METADATA[self.fullname] = {}
 
@@ -253,15 +278,16 @@ class Register(BaseRegister):
 
         :param hashing: A hashing flag that allow use hash function on the
             context data.
+        :type hashing: bool (Default=False)
         :rtype: dict[str, Any]
         """
-        _data: dict[str, Any] = self.__data.copy()
-        if not self.stage or (self.stage == BASE_STAGE_DEFAULT):
+        _data: dict[str, Any] = self.__raw_data.copy()
+        meta: dict[str, Any] = self.meta.get(self.stage, {})
+        if not self.stage or (self.stage == REGISTER_BASE_STAGE_DEFAULT):
             _data: dict[str, Any] = {
-                k: v
-                for k, v in (self.meta.get(self.stage, {}).items())
-                if k in (UPDATE_KEY, VERSION_KEY)
-            } | self.__data
+                k: meta[k] for k in meta if k in (UPDATE_KEY, VERSION_KEY)
+            } | self.__raw_data
+
         return (
             hash.hash_all(_data, exclude={UPDATE_KEY, VERSION_KEY})
             if hashing
@@ -281,17 +307,20 @@ class Register(BaseRegister):
             return datetime.strptime(dt, DATE_FMT)
         return self.updt
 
-    def version(self, _next: bool = False) -> VerPackage:
-        """Generate version value from the pick method. If version value does
+    def version(self, force_next: bool = False) -> VerPackage:
+        """Generate version value from the get method. If version value does
         not exist from configuration data, this property will return the
         default, `v0.0.1`. If the initialization process tracking some change
         from configuration data between metadata and the latest data in the
         stage, the _next will be generated.
 
+        :param force_next: A flag to force path version to next value.
+        :type force_next: bool (Default=False)
+
         :rtype: VerPackage
         """
         version = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
-        if not _next or self.changed == 0:
+        if not force_next or self.changed == 0:
             return version
         elif self.changed >= 3:
             return version.bump_major()
@@ -303,9 +332,11 @@ class Register(BaseRegister):
         """Return FormatterGroup object that passing ``self.timestamp`` and
         ``self.version`` values.
 
+        :param update: An update values on the formatter group object.
+
         :rtype: FormatterGroup
         """
-        return self._fmt_group(
+        return self.fmt_type(
             {
                 "timestamp": self.timestamp,
                 "version": self.version(),
@@ -313,43 +344,27 @@ class Register(BaseRegister):
             }
         )
 
-    def compare_data(self, target: dict[Any, Any]) -> int:
+    def compare_data(self, data: dict[str, Any]) -> Literal[0, 1, 2, 99]:
         """Return difference column from dictionary comparison method which use
         the `deepdiff` library.
 
-        :param target: dict : The target dictionary for compare with current
+        :param data: dict : The data dictionary for compare with current
             configuration data.
-        :rtype: int
+
+        :rtype: Literal[0, 1, 2, 99]
         """
-        if not target:
+        if not data:
             return 99
 
         rs = DeepDiff(
             self.data(hashing=True),
-            target,
+            data,
             ignore_order=True,
-            exclude_paths={
-                f"root[{key!r}]" for key in (UPDATE_KEY, VERSION_KEY)
-            },
+            exclude_paths={f"root[{k!r}]" for k in (UPDATE_KEY, VERSION_KEY)},
         )
-        if any(
-            _ in rs
-            for _ in (
-                "dictionary_item_added",
-                "dictionary_item_removed",
-                "iterable_item_added",
-                "iterable_item_removed",
-            )
-        ):
-            return 2
-        elif any(
-            _ in rs
-            for _ in (
-                "values_changed",
-                "type_changes",
-            )
-        ):
-            return 1
+        for level, diffs in REGISTER_DIFF_LEVEL.items():
+            if any(_ in rs for _ in diffs):
+                return level
         return 0
 
     def __stage_files(
@@ -357,17 +372,18 @@ class Register(BaseRegister):
         stage: str,
         store: Store,
     ) -> dict[int, StageFl]:
-        """Return mapping of StageFl data.
+        """Return the mapping of StageFl data from target stage area.
 
-        :param stage: A stage
+        :param stage: A stage value that want to search files.
         :param store: A store object that passing path with stage path.
+
         :rtype: dict[int, StageFl]
         """
         rs: dict[int, StageFl] = {}
         for index, file in enumerate((_f.name for _f in store.ls()), start=1):
             try:
                 rs[index]: StageFl = {
-                    "parse": self._fmt_group.parse(
+                    "parse": self.fmt_type.parse(
                         value=file,
                         fmt=rf"{self.params.get_stage(stage).format}\.json",
                     ),
@@ -377,7 +393,7 @@ class Register(BaseRegister):
                 continue
         return rs
 
-    def pick(
+    def get(
         self,
         stage: str | None = None,
         *,
@@ -389,9 +405,9 @@ class Register(BaseRegister):
 
         :param stage: A stage value that want to get context data.
         :param order:
-        :param reverse: A reverse flag that use to pick stage file.
+        :param reverse: A reverse flag that use to get stage file.
         """
-        if (stage is None) or (stage == BASE_STAGE_DEFAULT):
+        if (stage is None) or (stage == REGISTER_BASE_STAGE_DEFAULT):
             return Store(path=(self.params.paths.conf / self.domain)).get(
                 name=self.name, order=order
             )
@@ -416,8 +432,15 @@ class Register(BaseRegister):
         *,
         force: bool = False,
         retention: bool = True,
-    ) -> Register:
-        """Move the data file to the target stage."""
+    ) -> Self:
+        """Move the config data file to the target stage.
+
+        :param stage:
+        :param force:
+        :param retention:
+
+        :rtype: Self
+        """
         store: Store = Store(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rule.compress,
@@ -425,7 +448,7 @@ class Register(BaseRegister):
         if (
             self.compare_data(
                 hash.hash_all(
-                    self.pick(stage=stage), exclude=(UPDATE_KEY, VERSION_KEY)
+                    self.get(stage=stage), exclude=(UPDATE_KEY, VERSION_KEY)
                 )
             )
             > 0
@@ -499,45 +522,54 @@ class Register(BaseRegister):
                 rm(store.path / _file)
 
     def deploy(self, stop: str | None = None) -> Self:
-        """Deploy data that move from base to final stage.
+        """Deploy the config data from the current stage to the final stage or
+        specific an input stop stage.
 
         :param stop: A stage name for stop when move store from base stage
             to final stage.
         :type stop: str
+
+        :raise RegisterArgumentError: If an input stop value does not exists on
+            the stages configuration.
+
         :rtype: Self
         """
         _base: Self = self
         _stop: str = stop or self.params.stage_final
-        assert (
-            _stop in self.params.stages
-        ), "a `stop` argument should exists in stages data on Param config."
+        if _stop not in self.params.stages:
+            raise RegisterArgumentError(
+                "The `stop` argument should exists in the stages data on the "
+                "Params argument."
+            )
 
         for stage in self.params.stages:
             _base: Register = _base.move(stage)
-            if _stop and (stage == _stop):
+            if stage == _stop:
                 break
         return _base
 
     def remove(self, stage: str | None = None) -> None:
-        """Remove config file from the stage storage.
+        """Remove all config files from an input stage store area.
 
-        :param stage: a stage value that want to remove.
+        :param stage: a stage value that want to remove (Use current stage if it
+            does not pass to this method).
         :type stage: str | None
-        """
-        _stage: str = stage or self.stage
 
-        if _stage == BASE_STAGE_DEFAULT:
+        :raise RegisterArgumentError: If current stage be the base stage.
+            Because it do not do anything on origin config files.
+
+        :rtype: NoReturn
+        """
+        stage: str = stage or self.stage
+
+        if stage == REGISTER_BASE_STAGE_DEFAULT:
             raise RegisterArgumentError(
                 "The remove method can not process with the 'base' stage."
             )
 
-        store: Store = Store(path=self.params.paths.data / _stage)
-
-        # Remove all files from the stage.
-        data: StageFl
-        for _, data in self.__stage_files(_stage, store).items():
-            _file: str = data["file"]
-            rm(store.path / _file)
+        store: Store = Store(path=self.params.paths.data / stage)
+        for stage_file in self.__stage_files(stage, store).values():
+            rm(store.path / stage_file["file"])
 
 
 class ArchiveRegister(Register):
@@ -545,9 +577,11 @@ class ArchiveRegister(Register):
     object such as ``self.purge``, and ``self.remove`` methods.
     """
 
+    archiving: ClassVar[str] = ".archive"
+
     def purge(self, stage: str | None = None) -> None:
         """Purge configuration files that match with any rules in the stage
-        setting.
+        setting and move it to archiving area.
 
         :param stage: a stage value that want to purge.
         :type stage: str | None
@@ -583,33 +617,40 @@ class ArchiveRegister(Register):
                 )
                 store.move(
                     _file,
-                    dest=self.params.paths.data / ".archive" / _ac_path,
+                    dest=self.params.paths.data / self.archiving / _ac_path,
                 )
                 rm(store.path / _file)
 
     def remove(self, stage: str | None = None) -> None:
-        """Remove store file from the stage storage.
+        """Remove all config files from an input stage store area and move it to
+        archiving area.
 
-        :param stage: a stage value that want to remove.
+        :param stage: a stage value that want to remove (Use current stage if it
+            does not pass to this method).
         :type stage: str | None
+
+        :raise RegisterArgumentError: If current stage be the base stage.
+            Because it do not do anything on origin config files.
+
+        :rtype: NoReturn
         """
         _stage: str = stage or self.stage
-        if _stage == BASE_STAGE_DEFAULT:
+
+        if _stage == REGISTER_BASE_STAGE_DEFAULT:
             raise RegisterArgumentError(
                 "The remove method can not process with the 'base' stage."
             )
 
         store: Store = Store(path=self.params.paths.data / _stage)
 
-        # NOTE: Remove all files from the stage.
-        for _, data in self.__stage_files(_stage, store).items():
-            _file: str = data["file"]
+        for stage_file in self.__stage_files(_stage, store).values():
+            file: str = stage_file["file"]
             store.move(
-                _file,
+                file,
                 dest=(
                     self.params.paths.data
-                    / ".archive"
-                    / f"{_stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{_file}"
+                    / self.archiving
+                    / f"{_stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{file}"
                 ),
             )
-            rm(store.path / _file)
+            rm(store.path / file)
