@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Any, ClassVar, Literal, TypedDict
 
 from dateutil.relativedelta import relativedelta
@@ -46,7 +47,6 @@ TupleStr = tuple[str, ...]
 
 logger = logging.getLogger("ddeutil.io")
 
-METADATA: dict[str, Any] = {}
 REGISTER_BASE_STAGE_DEFAULT: str = "base"
 REGISTER_DIFF_LEVEL: dict[int, TupleStr] = {
     1: (
@@ -104,6 +104,8 @@ class BaseRegister:
     :param name: A name of key of config data that want to register.
     :param domain: A dir path of config files that use to search a name of data.
     """
+
+    metadata: ClassVar[str] = "__METADATA"
 
     def __init__(self, name: str, *, domain: str | None = None) -> None:
         self.name: str = name
@@ -226,23 +228,27 @@ class Register(BaseRegister):
             )
 
         # NOTE: Running metadata tracking cache.
+        self.meta: dict[str, Any] = {}
         self.__manage_metadata()
 
     def __manage_metadata(self):
         """Manage the latest context data for detect change by metadata
         strategy.
-        """
-        if self.fullname not in METADATA:
-            METADATA[self.fullname] = {}
 
-        self.meta: dict[str, Any] = METADATA.get(self.fullname)
+            The metadata file also keeps on ./data/<self.metadata> dir for all
+        config context data.
+        """
+        store: Store = Store(path=self.params.paths.data / self.metadata)
+        meta_file: Path = (
+            store.path / f"{self.domain or ''}{self.name}.{self.stage}.json"
+        )
+        self.meta: dict[str, Any] = store.load(path=meta_file, default={})
 
         # NOTE: Compare data from current stage and latest version in metadata.
-        self.changed: int = self.compare_data(self.meta.get(self.stage, {}))
+        self.changed: int = self.compare_data(self.meta)
 
-        # NOTE:
-        #   Update metadata if the configuration data does not exist, or it has
-        #   any changes.
+        # NOTE: Update metadata if the configuration data does not exist, or it
+        #   has any changes.
         if self.changed > 0:
             if self.changed == 99:
                 logger.debug(
@@ -253,7 +259,7 @@ class Register(BaseRegister):
                     f"Should update metadata because diff level is "
                     f"{self.changed}."
                 )
-            self.meta.update({self.stage: self.data(hashing=True)})
+            store.save(path=meta_file, data=self.data(hashing=True))
 
     def __str__(self) -> str:
         return f"({self.fullname}, {self.stage})"
@@ -282,10 +288,11 @@ class Register(BaseRegister):
         :rtype: dict[str, Any]
         """
         _data: dict[str, Any] = self.__raw_data.copy()
-        meta: dict[str, Any] = self.meta.get(self.stage, {})
         if not self.stage or (self.stage == REGISTER_BASE_STAGE_DEFAULT):
             _data: dict[str, Any] = {
-                k: meta[k] for k in meta if k in (UPDATE_KEY, VERSION_KEY)
+                k: self.meta[k]
+                for k in self.meta
+                if k in (UPDATE_KEY, VERSION_KEY)
             } | self.__raw_data
 
         return (
@@ -634,23 +641,23 @@ class ArchiveRegister(Register):
 
         :rtype: NoReturn
         """
-        _stage: str = stage or self.stage
+        stage: str = stage or self.stage
 
-        if _stage == REGISTER_BASE_STAGE_DEFAULT:
+        if stage == REGISTER_BASE_STAGE_DEFAULT:
             raise RegisterArgumentError(
                 "The remove method can not process with the 'base' stage."
             )
 
-        store: Store = Store(path=self.params.paths.data / _stage)
+        store: Store = Store(path=self.params.paths.data / stage)
 
-        for stage_file in self.__stage_files(_stage, store).values():
+        for stage_file in self.__stage_files(stage, store).values():
             file: str = stage_file["file"]
             store.move(
                 file,
                 dest=(
                     self.params.paths.data
                     / self.archiving
-                    / f"{_stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{file}"
+                    / f"{stage.lower()}_{self.updt:{DATE_LOG_FMT}}_{file}"
                 ),
             )
             rm(store.path / file)

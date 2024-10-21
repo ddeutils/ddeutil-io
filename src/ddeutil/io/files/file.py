@@ -703,6 +703,10 @@ class JsonLine(Fl):
 
 
 class TomlFl(Fl):
+    """TOML open file object that read data context from TOML file format
+    (.toml).
+    """
+
     def read(self):
         with self.open(mode="rt") as f:
             return tomllib.loads(f.read())
@@ -718,8 +722,8 @@ class TomlFl(Fl):
 
 
 class TomlEnvFl(TomlFl, EnvFlMixin):
-    """Toml open file object which mapping search environment variable before
-    parsing with toml package.
+    """TOML open file object which mapping search environment variable before
+    parsing with toml package from TOML file format (.toml).
     """
 
     def read(self):
@@ -747,6 +751,11 @@ class PickleFl(Fl):  # pragma: no cover
 
 
 class MarshalFl(Fl):  # pragma: no cover
+    """Marshal open file object that read data context from Marshal file format.
+
+    Note: use marshal package
+    """
+
     def read(self):
         with self.open(mode="rb") as f:
             return marshal.loads(f.read())
@@ -757,6 +766,11 @@ class MarshalFl(Fl):  # pragma: no cover
 
 
 class MsgpackFl(Fl):  # pragma: no cover
+    """Msgpack open file object that read data context from Msgpack file format.
+
+    Note: use msgpack package
+    """
+
     def read(self):
         with self.open(mode="rb") as f:
             return msgpack.loads(f.read())

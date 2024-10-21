@@ -15,7 +15,7 @@ from ddeutil.io.register import Register
 def target_path(test_path) -> Iterator[Path]:
     tgt_path: Path = test_path / "register_temp"
     tgt_path.mkdir(exist_ok=True)
-    (tgt_path / "conf/demo").mkdir(parents=True)
+    (tgt_path / "conf/demo").mkdir(parents=True, exist_ok=True)
     with open(tgt_path / "conf/demo/test_01_conn.yaml", mode="w") as f:
         yaml.dump(
             {
