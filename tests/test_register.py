@@ -79,6 +79,7 @@ def test_register(params: Params, mock_get_date):
     } == register.data(hashing=True)
 
     assert register.changed == 99
+    assert str(register.version()) == "0.0.1"
 
     rsg_raw = register.move(stage="raw")
 
@@ -95,6 +96,10 @@ def test_register(params: Params, mock_get_date):
         == rsg_persisted.data(hashing=True)["alias"]
     )
     Register.reset(name="demo:conn_local_file", params=params)
+
+    rsg_raw = register.move(stage="raw")
+    assert rsg_raw.changed == 0
+    assert rsg_raw.timestamp == datetime(2024, 1, 1, 1)
 
 
 def test_register_compare(params, mock_get_date):
@@ -136,3 +141,6 @@ def test_register_change_data(params, target_path):
         )
     register = Register(name="demo:conn_local_file", params=params)
     assert register.changed == 1
+
+    register_raw = register.move(stage="raw")
+    assert register_raw.data()["__version"] == "v0.0.2"

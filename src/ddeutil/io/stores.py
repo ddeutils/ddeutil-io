@@ -91,7 +91,6 @@ class BaseStore(abc.ABC):
         :returns: The loaded context data from the open file read method.
         """
         rs: list[dict[Any, Any]]
-        print(list(self.ls(excluded=self.excluded_file_fmt)))
         if not (
             rs := [
                 {"alias": name} | data

@@ -313,26 +313,24 @@ class Register(BaseRegister):
             return datetime.strptime(dt, DATE_FMT)
         return self.updt
 
-    def version(self, force_next: bool = False) -> VerPackage:
+    def version(self) -> VerPackage:
         """Generate version value from the get method. If version value does
         not exist from configuration data, this property will return the
         default, `v0.0.1`. If the initialization process tracking some change
         from configuration data between metadata and the latest data in the
         stage, the _next will be generated.
 
-        :param force_next: A flag to force path version to next value.
-        :type force_next: bool (Default=False)
-
         :rtype: VerPackage
         """
         version = VerPackage.parse(self.data().get(VERSION_KEY, "v0.0.1"))
-        if not force_next or self.changed == 0:
+        if self.changed == 0 or self.changed == 99:
             return version
-        elif self.changed >= 3:
-            return version.bump_major()
+        elif self.changed == 1:
+            return version.bump_patch()
         elif self.changed == 2:
             return version.bump_minor()
-        return version.bump_patch()
+        else:
+            return version.bump_major()
 
     def fmt(self, update: dict[str, Any] | None = None) -> FormatterGroup:
         """Return FormatterGroup object that passing ``self.timestamp`` and
