@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import pytest
@@ -16,3 +17,10 @@ def root_path(test_path: Path) -> Path:
 @pytest.fixture(scope="session")
 def encoding() -> str:
     return "utf-8"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def drop_data(root_path: Path):
+    yield
+
+    shutil.rmtree(root_path / "data")
