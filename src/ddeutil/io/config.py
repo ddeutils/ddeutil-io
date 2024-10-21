@@ -13,10 +13,9 @@ from typing import Any, Optional
 
 from typing_extensions import Self
 
+from .__type import TupleStr
 from .exceptions import ConfigArgumentError
 from .files import YamlEnvFl
-
-TupleStr = tuple[str, ...]
 
 UPDATE_KEY: str = "__updt"
 VERSION_KEY: str = "__version"

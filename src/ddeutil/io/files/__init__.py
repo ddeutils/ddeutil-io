@@ -19,6 +19,7 @@ import fnmatch
 import os
 import shutil
 from collections.abc import Collection
+from dataclasses import dataclass
 from pathlib import Path
 
 from .conf import RegexConf
@@ -63,15 +64,28 @@ def rm(path: str, is_dir: bool = False) -> None:  # pragma: no cover
         )
 
 
-def touch(filename: str, times=None) -> None:  # pragma: no cover
+def touch(path: str, times=None) -> None:  # pragma: no cover
     """Create an empty file with specific name and modified time of path it an
     input times was set.
+
+    :param path: A file path that want to create.
+    :param times: A time that want to adjust modified time.
     """
-    file_handle = open(filename, mode="a")
+    file_handle = open(path, mode="a")
     try:
-        os.utime(filename, times)
+        os.utime(path, times)
     finally:
         file_handle.close()
+
+
+@dataclass(frozen=True)  # pragma: no cover
+class Icon:
+    normal: str
+    next: str
+    last: str
+
+    def __len__(self) -> int:
+        return max(len(self.normal), len(self.next), len(self.last))
 
 
 class PathSearch:
@@ -98,14 +112,10 @@ class PathSearch:
         self.length: int = length
         self.real_level: int = 0
 
-        # Declare icon arguments
-        self._icon_last: str = self.icons()[icon]["last"]
-        self._icon_next: str = self.icons()[icon]["next"]
-        self._icon: str = self.icons()[icon]["normal"]
-        self._icon_length: int = len(self._icon)
-
+        # NOTE: Define icon argument and check an input length.
+        self.icon: Icon = self.icons()[icon]
         assert (
-            self._icon_length + 1
+            len(self.icon) + 1
         ) < self.length, "a `length` argument must gather than length of icon."
 
         self.output_buf: list = [f"[{self.root.stem}]"]
@@ -130,21 +140,24 @@ class PathSearch:
 
         self.real_level: int = max(level, self.real_level)
         file_list.sort(key=lambda f: (path / f).is_file())
-        for idx, sub_path in enumerate(file_list):
+        for i, sub_path in enumerate(file_list):
 
             if any(fnmatch.fnmatch(sub_path.name, exc) for exc in self.exclude):
                 continue
 
             full_path: Path = path / sub_path
-            idc: str = self.__switch_icon(idx, len(file_list))
+            idc: str = (
+                self.icon.last if i == (len(file_list) - 1) else self.icon.next
+            )
+
             if full_path.is_dir():
                 self.output_buf.append(f"{prefix}{idc}[{sub_path}]")
                 tmp_prefix: str = (
                     (
-                        f"{prefix}{self._icon}"
-                        f'{" " * (self.length - self._icon_length)}'
+                        f"{prefix}{self.icon.normal}"
+                        f'{" " * (self.length - len(self.icon))}'
                     )
-                    if len(file_list) > 1 and idx != len(file_list) - 1
+                    if len(file_list) > 1 and i != len(file_list) - 1
                     else f'{prefix}{" " * self.length}'
                 )
                 self.__recurse(
@@ -173,18 +186,10 @@ class PathSearch:
         """Return path tree of root path."""
         return (newline or "\n").join(self.output_buf)
 
-    def __switch_icon(self, number_now: int, number_all: int):
-        """Private method that use to switch icon mapping."""
-        return (
-            self._icon_last
-            if number_now == (number_all - 1)
-            else self._icon_next
-        )
-
     @staticmethod
-    def icons() -> dict[int, dict[str, str]]:
+    def icons() -> dict[int, Icon]:
         return {
-            1: {"normal": "│", "next": "├─", "last": "└─"},
-            2: {"normal": "┃", "next": "┣━", "last": "┗━"},
-            3: {"normal": "│", "next": "├─", "last": "╰─"},
+            1: Icon(normal="│", next="├─", last="└─"),
+            2: Icon(normal="┃", next="┣━", last="┗━"),
+            3: Icon(normal="│", next="├─", last="╰─"),
         }

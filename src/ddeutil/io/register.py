@@ -38,12 +38,11 @@ from fmtutil import (
 )
 from typing_extensions import Self
 
+from .__type import AnyData, TupleStr
 from .config import DATE_FMT, DATE_LOG_FMT, UPDATE_KEY, VERSION_KEY, Params
 from .exceptions import RegisterArgumentError, StoreNotFound
 from .files import rm
 from .stores import Store
-
-TupleStr = tuple[str, ...]
 
 logger = logging.getLogger("ddeutil.io")
 
@@ -219,7 +218,7 @@ class Register(BaseRegister):
 
         # NOTE: Load latest version of data from data lake or data store of
         #   configuration files.
-        self.__raw_data: dict[str, Any] = self.get(stage=self.stage)
+        self.__raw_data: AnyData = self.get(stage=self.stage)
         if not self.__raw_data:
             raise StoreNotFound(
                 f"Register name {self.name!r} "
@@ -406,20 +405,22 @@ class Register(BaseRegister):
         *,
         order: int | None = 1,
         reverse: bool = False,
-    ) -> dict[str, Any]:
+    ) -> AnyData:
         """Get the context data from the specific stage value (use 'base' if the
         stage do not pass on this method).
 
         :param stage: A stage value that want to get context data.
         :param order:
         :param reverse: A reverse flag that use to get stage file.
+
+        :rtype: AnyData
         """
         if (stage is None) or (stage == REGISTER_BASE_STAGE_DEFAULT):
             return Store(path=(self.params.paths.conf / self.domain)).get(
                 name=self.name, order=order
             )
 
-        store = Store(
+        store: Store = Store(
             path=self.params.paths.data / stage,
             compress=self.params.get_stage(stage).rule.compress,
         )

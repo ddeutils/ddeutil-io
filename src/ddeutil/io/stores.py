@@ -24,6 +24,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar, Union
 
+from .__type import AnyData, TupleStr
 from .config import VERSION_DEFAULT
 from .files import (
     CsvPipeFl,
@@ -34,10 +35,6 @@ from .files import (
     YamlEnvFl,
     rm,
 )
-
-TupleStr = tuple[str, ...]
-AnyValue = Union[str, int, float, bool, None]
-AnyData = Union[AnyValue, dict[str, AnyValue], list[AnyValue]]
 
 __all__: TupleStr = (
     "BaseStore",

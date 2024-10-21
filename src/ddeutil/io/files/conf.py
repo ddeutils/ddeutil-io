@@ -14,7 +14,7 @@ from re import (
 
 
 class RegexConf:
-    """Core Configuration Model"""
+    """Regular expression configuration object for this package."""
 
     # NOTE: Normal regular expression for the secret value.
     # ---
