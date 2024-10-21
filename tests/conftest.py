@@ -23,4 +23,5 @@ def encoding() -> str:
 def drop_data(root_path: Path):
     yield
 
-    shutil.rmtree(root_path / "data")
+    if (root_path / "data").exists():
+        shutil.rmtree(root_path / "data")

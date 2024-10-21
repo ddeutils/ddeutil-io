@@ -33,6 +33,7 @@ from .file import (
     Fl,
     JsonEnvFl,
     JsonFl,
+    JsonLineFl,
     MarshalFl,
     MsgpackFl,
     PickleFl,

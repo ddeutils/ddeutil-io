@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 from .__type import AnyData, TupleStr
 from .config import VERSION_DEFAULT
@@ -31,6 +31,7 @@ from .files import (
     Fl,
     JsonEnvFl,
     JsonFl,
+    JsonLineFl,
     PathSearch,
     YamlEnvFl,
     rm,
@@ -40,6 +41,7 @@ __all__: TupleStr = (
     "BaseStore",
     "Store",
     "StoreJsonToCsv",
+    "StoreToJsonLine",
 )
 
 
@@ -238,17 +240,13 @@ class Store(BaseStore):
         all_data: AnyData = self.load(path=path)
         try:
             if isinstance(all_data, list):
-                _merge_data: Union[dict, list] = all_data
-                (
-                    _merge_data.append(data)
-                    if isinstance(data, dict)
-                    else _merge_data.extend(data)
-                )
+                rs: list[AnyData] = all_data
+                (rs.append(data) if isinstance(data, dict) else rs.extend(data))
             else:
-                _merge_data: dict = all_data | data
+                rs: dict = all_data | data
 
             # NOTE: Writing data to the stage layer
-            self.open_file_stg(path, compress=self.compress).write(_merge_data)
+            self.open_file_stg(path, compress=self.compress).write(rs)
         except TypeError as err:
             # NOTE: Remove the previous saving file path for rollback.
             rm(path=path)
@@ -295,3 +293,11 @@ class StoreJsonToCsv(Store):
     open_file_stg: ClassVar[type[Fl]] = CsvPipeFl
     included_file_fmt: ClassVar[TupleStr] = ("*.json",)
     excluded_file_fmt: ClassVar[TupleStr] = ("*.yml", "*.yaml", "*.toml")
+
+
+class StoreToJsonLine(Store):
+    """Store object that getting the Json context data and save it to stage with
+    YAML file format.
+    """
+
+    open_file_stg: ClassVar[type[Fl]] = JsonLineFl

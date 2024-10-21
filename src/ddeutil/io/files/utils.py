@@ -212,7 +212,10 @@ def __search_var(
     return value
 
 
-def reverse_readline(f: IO, buf_size: int = 8192) -> Iterator[AnyStr]:
+def reverse_readline(
+    f: IO,
+    buf_size: int = 8192,
+) -> Iterator[AnyStr]:  # pragma: no cover
     """A generator that returns the lines of a file in reverse order
 
     Reference:

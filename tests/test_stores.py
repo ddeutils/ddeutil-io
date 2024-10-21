@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from ddeutil.io.stores import Store, StoreJsonToCsv
+from ddeutil.io.stores import Store, StoreJsonToCsv, StoreToJsonLine
 
 
 @pytest.fixture(scope="module")
@@ -54,6 +54,8 @@ def test_store_init(new_path):
     store = Store(new_path)
     assert new_path == store.path
     assert store.path.exists()
+
+    store.create(new_path / "touch.json", initial_data={"foo": "bar"})
 
 
 def test_store_get(target_path):
@@ -208,3 +210,14 @@ def test_store_save_raise(target_path):
         )
 
     store.delete(stage_path, name="first")
+
+
+def test_store_json_line(target_path):
+    store = StoreToJsonLine(target_path)
+    stage_path: Path = target_path / "connections/test_01_conn_stage.line.json"
+    stage_path.parent.mkdir(parents=True, exist_ok=True)
+    store.save(
+        path=stage_path,
+        data={"first": store.get("conn_local_file")} | {"version": 1},
+        merge=True,
+    )

@@ -67,6 +67,7 @@ __all__: tuple[str, ...] = (
     "EnvFl",
     "JsonFl",
     "JsonEnvFl",
+    "JsonLineFl",
     "YamlFl",
     "YamlFlResolve",
     "YamlEnvFl",
@@ -668,7 +669,7 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
         )
 
 
-class JsonLine(Fl):
+class JsonLineFl(Fl):
     """Json open file object that read data context from Json file format
     (.json) with a newline seperator.
     """
