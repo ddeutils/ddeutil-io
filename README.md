@@ -47,29 +47,31 @@ pip install -U ddeutil-io
 
 The features of this package is Input/Output data transport utility objects.
 
-| Module     |       Name       | Description                                                                                     | Remark   |
-|------------|:----------------:|-------------------------------------------------------------------------------------------------|----------|
-| files      |    PathSearch    |                                                                                                 |          |
-|            |    RegexConf     |                                                                                                 |          |
-| files.file |        Fl        | Open File object that use to open any normal or compression file from current local file system |          |
-|            |    EnvFlMixin    |                                                                                                 |          |
-|            |      EnvFl       |                                                                                                 |          |
-|            |    YamlEnvFl     |                                                                                                 |          |
-|            |      YamlFl      |                                                                                                 |          |
-|            |  YamlFlResolve   |                                                                                                 |          |
-|            |    JsonEnvFl     |                                                                                                 |          |
-|            |      JsonFl      |                                                                                                 |          |
-|            |      CsvFl       |                                                                                                 |          |
-|            |    CsvPipeFl     | CSV open file object with pipe (`\|`) seperator charactor.                                      |          |
-|            |    TomlEnvFl     |                                                                                                 |          |
-|            |      TomlFl      |                                                                                                 |          |
-|            |     PickleFl     |                                                                                                 | no cover |
-|            |    MarshalFl     |                                                                                                 | no cover |
-|            |    MsgpackFl     |                                                                                                 | no cover |
-| stores     |     StoreFl      |                                                                                                 |          |
-|            |   StoreSQLite    |                                                                                                 |          |
-| register   |     Register     | Register Object that contain configuration loading methods and metadata management.             |          |
-|            | ArchiveRegister  |                                                                                                 |          |
+| Module     |       Name       | Description                                                                                                                               | Remark   |
+|------------|:----------------:|-------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| files      |    PathSearch    | Path Search object that use to search path tree from an input root path.                                                                  |          |
+|            |    RegexConf     | Regular expression configuration object for this package.                                                                                 |          |
+| files.file |        Fl        | Open File object that use to open any normal or compression file from current local file system                                           |          |
+|            |    EnvFlMixin    | Environment Mapping to read method of open file object mixin.                                                                             |          |
+|            |      EnvFl       | Dot env open file object which mapping search engine to data context that reading from dot env file format (.env).                        |          |
+|            |    YamlEnvFl     | Yaml open file object which mapping search environment variable.                                                                          |          |
+|            |      YamlFl      | Yaml open file object that read data context from Yaml file format (.yml, or .yaml).                                                      |          |
+|            |  YamlFlResolve   | Yaml open file object with resolve boolean convert value problem such as convert 'on' value to true instead a string of 'on' value.       |          |
+|            |    JsonEnvFl     | Json open file object which mapping search environment variable before parsing with json package.                                         |          |
+|            |    JsonLineFl    | Json open file object that read data context from Json file format (.json) with a newline seperator.                                      |          |
+|            |      JsonFl      | Json open file object that read data context from Json file format (.json).                                                               |          |
+|            |      CsvFl       | CSV open file object with comma (`,`) seperator charactor.                                                                                |          |
+|            |    CsvPipeFl     | CSV open file object with pipe (`\|`) seperator charactor.                                                                                |          |
+|            |    TomlEnvFl     | TOML open file object which mapping search environment variable before parsing with toml package from TOML file format (.toml).           |          |
+|            |      TomlFl      | TOML open file object that read data context from TOML file format (.toml).                                                               |          |
+|            |     PickleFl     | Pickle open file object that read data context from Pickle file format (.pickle).                                                         | no cover |
+|            |    MarshalFl     | Marshal open file object that read data context from Marshal file format.                                                                 | no cover |
+|            |    MsgpackFl     | Msgpack open file object that read data context from Msgpack file format.                                                                 | no cover |
+| stores     |      Store       | Store File Loading Object for get data from configuration and stage.                                                                      |          |
+|            |  StoreJsonToCsv  | Store object that getting the Json context data and save it to stage with CSV file format.                                                |          |
+|            | StoreToJsonLine  | Store object that getting the YAML context data and save it to stage with Json line file format.                                          |          |
+| register   |     Register     | Register Object that contain configuration loading methods and metadata management.                                                       |          |
+|            | ArchiveRegister  | Archiving Register object that implement archiving management on the Register object such as ``self.purge``, and ``self.remove`` methods. |          |
 
 ## :beers: Usages
 
@@ -106,9 +108,9 @@ Store object is the storing dir system handler object that manage any files in
 that dir path with `get`, `move`, `load`, `save`, or `ls` operations.
 
 ```python
-from ddeutil.io.stores import StoreFl
+from ddeutil.io.stores import Store
 
-store: StoreFl = StoreFl(path='./conf', compress="gzip")
+store: Store = Store(path='./conf', compress="gzip")
 
 data = store.get(name='config_file.yaml')
 store.save('./stage/file.json', data)
@@ -156,6 +158,9 @@ with the data hashing algorithm.
 
 ```text
 data/
+  __METADATA/
+    exampleconn_data_local_file.base.json
+    exampleconn_data_local_file.raw.json
   raw/
     conn_file_20240101_000000.json
 ```

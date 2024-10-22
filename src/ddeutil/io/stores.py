@@ -286,7 +286,7 @@ class Store(BaseStore):
 
 class StoreJsonToCsv(Store):
     """Store object that getting the Json context data and save it to stage with
-    YAML file format.
+    CSV file format.
     """
 
     open_file: ClassVar[type[Fl]] = JsonEnvFl
@@ -301,8 +301,8 @@ class StoreJsonToCsv(Store):
 
 
 class StoreToJsonLine(Store):
-    """Store object that getting the Json context data and save it to stage with
-    YAML file format.
+    """Store object that getting the YAML context data and save it to stage with
+    Json line file format.
     """
 
     open_file_stg: ClassVar[type[Fl]] = JsonLineFl

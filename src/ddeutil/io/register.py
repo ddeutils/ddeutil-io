@@ -610,8 +610,8 @@ class Register(BaseRegister):
 
 
 class ArchiveRegister(Register):
-    """Cycle Register object that implement archiving management on the Register
-    object such as ``self.purge``, and ``self.remove`` methods.
+    """Archiving Register object that implement archiving management on the
+    Register object such as ``self.purge``, and ``self.remove`` methods.
     """
 
     archiving: ClassVar[str] = ".archive"

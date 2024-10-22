@@ -69,7 +69,6 @@ def rm(
             raise ValueError(
                 f"Path {path!r} is not a file{' or dir' if is_dir else ''}."
             )
-        return
 
 
 def touch(path: str, times=None) -> None:  # pragma: no cover
