@@ -2,6 +2,29 @@
 
 ## Latest Changes
 
+## 0.2.3
+
+### :sparkles: Features
+
+- :dart: feat: add store that support json line on staging. (_2024-10-21_)
+- :dart: feat: move metadata file from python object on mem to file base. (_2024-10-21_)
+- :dart: feat: add archiving variable on archive register object. (_2024-10-21_)
+- :dart: feat: add reverse_readline function on files utils. (_2024-10-20_)
+- :dart: feat: move argument of open file on store module to class argument. (_2024-10-20_)
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: add testcase for cover files module. (_2024-10-22_)
+- :test_tube: tests: add testcase for cover register module. (_2024-10-22_)
+- :test_tube: tests: update testcase for store module. (_2024-10-21_)
+- :art: styled: move typing define to __type file. (_2024-10-21_)
+- :test_tube: tests: add clear data path after testing. (_2024-10-21_)
+- :art: styled: change param type annotation. (_2024-10-20_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update version fmtutil==1.0.11. (_2024-10-21_)
+
 ## 0.2.2
 
 ### :sparkles: Features
