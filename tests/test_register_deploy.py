@@ -1,3 +1,4 @@
+import json
 import shutil
 from collections.abc import Generator
 from datetime import datetime
@@ -55,7 +56,7 @@ def mock_get_date():
         yield mock
 
 
-def test_register_deployment(params, target_path, mock_get_date):
+def test_register_deploy(params, target_path, mock_get_date):
     assert mock_get_date.mocked
 
     data_path = target_path / "data"
@@ -63,3 +64,14 @@ def test_register_deployment(params, target_path, mock_get_date):
     assert (data_path / "staging/conn_local_file.v0.0.1.json").exists()
     assert (data_path / "raw/conn_local_file.20240101_010000.json").exists()
     assert (data_path / "persisted/demo_conn_local_file.gz.json").exists()
+
+
+def test_register_multiple_files(params, target_path, root_path):
+    data_path = target_path / "data"
+    Register(name="demo:conn_local_file", params=params).deploy()
+
+    with open(data_path / "raw/conn_local_file_new.json", mode="w") as f:
+        json.dump({"foo": "bar"}, f)
+
+    register = Register(name="demo:conn_local_file", stage="raw", params=params)
+    assert str(register.version()) == "0.0.1"

@@ -33,7 +33,6 @@ FMT_NAMES: TupleStr = (
 )
 RULE_NECESSARY_KEYS: TupleStr = (
     "timestamp",
-    "version",
     "compress",
 )
 
@@ -62,7 +61,6 @@ class Rule:
     """
 
     timestamp: dict[str, int] = field(default_factory=dict)
-    version: Optional[str] = field(default=None)
     excluded: list = field(default_factory=list)
     compress: Optional[str] = field(default=None)
 

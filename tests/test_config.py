@@ -63,7 +63,6 @@ def yaml_conf_path(test_path):
 def test_config_rule():
     assert {
         "timestamp": {},
-        "version": None,
         "excluded": [],
         "compress": None,
     } == asdict(Rule())
@@ -154,7 +153,6 @@ def test_config_params():
                 "alias": "raw",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -165,7 +163,6 @@ def test_config_params():
                 "alias": "persisted",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -176,7 +173,6 @@ def test_config_params():
                 "alias": "curated",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -212,7 +208,6 @@ def test_config_params_toml(toml_conf_path):
                 "alias": "raw",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -223,7 +218,6 @@ def test_config_params_toml(toml_conf_path):
                 "alias": "persisted",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -247,7 +241,6 @@ def test_config_params_yaml(yaml_conf_path):
                 "alias": "raw",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },
@@ -258,7 +251,6 @@ def test_config_params_yaml(yaml_conf_path):
                 "alias": "persisted",
                 "rule": {
                     "timestamp": {},
-                    "version": None,
                     "excluded": [],
                     "compress": None,
                 },

@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 import yaml
@@ -50,7 +51,7 @@ def params(target_path, root_path) -> Params:
 def mock_get_date():
     with patch(
         target="ddeutil.io.register.get_date",
-        return_value=datetime(2024, 1, 1, 1),
+        return_value=datetime(2024, 1, 1, 1, tzinfo=ZoneInfo("UTC")),
     ) as mock:
         yield mock
 
@@ -98,8 +99,13 @@ def test_register(params: Params, mock_get_date):
     Register.reset(name="demo:conn_local_file", params=params)
 
     rsg_raw = register.move(stage="raw")
-    assert rsg_raw.changed == 0
-    assert rsg_raw.timestamp == datetime(2024, 1, 1, 1)
+    assert rsg_raw.changed == 99
+    assert rsg_raw.timestamp == datetime(2024, 1, 1, 1, tzinfo=ZoneInfo("UTC"))
+
+    register = Register(name="demo:conn_local_file", params=params)
+    register.move(stage="raw")
+
+    Register.reset(name="demo:conn_local_file", params=params)
 
 
 def test_register_compare(params, mock_get_date):
@@ -114,6 +120,10 @@ def test_register_compare(params, mock_get_date):
 def test_register_reset(params: Params):
     Register.reset(name="demo:conn_local_file", params=params)
 
+    register = Register(name="demo:conn_local_file", params=params)
+    register.move("raw")
+    register.reset(name="demo:conn_local_file", params=params)
+
 
 def test_register_raise():
     with pytest.raises(RegisterArgumentError):
@@ -125,9 +135,13 @@ def test_register_raise():
 
 def test_register_change_data(params, target_path):
     register = Register(name="demo:conn_local_file", params=params)
-    register.move(stage="raw")
+    register_raw = register.move(stage="raw", retention=False)
+    origin_updt = register_raw.timestamp
     register = Register(name="demo:conn_local_file", params=params)
     assert register.changed == 0
+
+    register_raw = register.move(stage="raw")
+    assert origin_updt == register_raw.timestamp
 
     with open(target_path / "conf/demo/test_01_conn.yaml", mode="w") as f:
         yaml.dump(
@@ -144,3 +158,21 @@ def test_register_change_data(params, target_path):
 
     register_raw = register.move(stage="raw")
     assert register_raw.data()["__version"] == "v0.0.2"
+
+    with open(target_path / "conf/demo/test_01_conn.yaml", mode="w") as f:
+        yaml.dump(
+            {
+                "conn_local_file": {
+                    "type": "connection.LocalFileStorage",
+                    "endpoint": "file:///${APP_PATH}/tests/examples/new",
+                    "extra": {"foo": "bar"},
+                }
+            },
+            f,
+        )
+
+    register = Register(name="demo:conn_local_file", params=params)
+    assert register.changed == 2
+
+    register_raw = register.move(stage="raw")
+    assert register_raw.data()["__version"] == "v0.1.0"
