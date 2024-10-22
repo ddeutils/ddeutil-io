@@ -7,7 +7,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from ddeutil.io.files import JsonEnvFl, JsonFl
+from ddeutil.io.files import JsonEnvFl, JsonFl, JsonLineFl
 
 
 @pytest.fixture(scope="module")
@@ -64,13 +64,13 @@ def json_path(test_path) -> Iterator[Path]:
     shutil.rmtree(this_path)
 
 
-def test_files_open_json_read(json_path):
+def test_files_open_json(json_path):
     assert {"config": {"value": "foo"}} == JsonFl(
         path=json_path / "test_simple.json"
     ).read()
 
 
-def test_files_open_json_read_raise(json_path):
+def test_files_open_json_raise(json_path):
     with pytest.raises(json.decoder.JSONDecodeError):
         JsonFl(path=json_path / "test_simple_raise.json").read()
 
@@ -106,3 +106,30 @@ def test_files_open_json_env_read(json_path):
 def test_files_open_json_env_read_raise(json_path):
     with pytest.raises(json.decoder.JSONDecodeError):
         JsonEnvFl(path=json_path / "test_simple_raise.json").read()
+
+
+def test_files_open_json_line(json_path):
+    with open(json_path / "test_write.line.json", mode="w") as f:
+        f.write("")
+
+    assert [] == JsonLineFl(path=json_path / "test_write.line.json").read()
+
+    JsonLineFl(path=json_path / "test_write.line.json").write({"line": 1})
+    JsonLineFl(path=json_path / "test_write.line.json").write(
+        [{"line": 2}, {"line": 3}], mode="a"
+    )
+
+    assert [{"line": 1}, {"line": 2}, {"line": 3}] == JsonLineFl(
+        path=json_path / "test_write.line.json"
+    ).read()
+
+
+def test_files_open_json_line_raise(json_path):
+    with open(json_path / "test_write_raise.line.json", mode="w") as f:
+        f.write("\n")
+
+    with pytest.raises(json.decoder.JSONDecodeError):
+        JsonLineFl(path=json_path / "test_write_raise.line.json").read()
+
+    with pytest.raises(ValueError):
+        JsonLineFl(path=json_path / "test_write_raise.line.json").write([])

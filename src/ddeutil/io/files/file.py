@@ -431,12 +431,10 @@ class YamlEnvFl(YamlFl, EnvFlMixin):
             context_env_replace: str = self.search_env_replace(
                 yaml.dump(yaml.load(f.read(), UnsafeLoader))
             )
-        if result := yaml.load(
+        return yaml.load(
             context_env_replace,
             (SafeLoader if safe else UnsafeLoader),
-        ):
-            return result
-        return {}
+        )
 
     def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
         raise NotImplementedError(
@@ -456,12 +454,7 @@ class CsvFl(Fl):
         :rtype: list[dict[str | int, Any]]
         """
         with self.open(mode="r") as f:
-            try:
-                return list(
-                    csv.DictReader(f, delimiter=",", quoting=csv.QUOTE_ALL)
-                )
-            except csv.Error:
-                return []
+            return list(csv.DictReader(f, delimiter=",", quoting=csv.QUOTE_ALL))
 
     def write(
         self,
@@ -524,12 +517,9 @@ class CsvDynamicFl(CsvFl):  # pragma: no cover
         :rtype: list[dict[str | int, Any]]
         """
         with self.open(mode="r") as f:
-            try:
-                dialect = csv.Sniffer().sniff(f.read(pre_load))
-                f.seek(0)
-                return list(csv.DictReader(f, dialect=dialect))
-            except csv.Error:
-                return []
+            dialect = csv.Sniffer().sniff(f.read(pre_load))
+            f.seek(0)
+            return list(csv.DictReader(f, dialect=dialect))
 
 
 class CsvPipeFl(CsvFl):
@@ -552,12 +542,7 @@ class CsvPipeFl(CsvFl):
         :rtype: list[dict[str | int, Any]]
         """
         with self.open(mode="r") as f:
-            try:
-                return list(
-                    csv.DictReader(f, delimiter="|", quoting=csv.QUOTE_ALL)
-                )
-            except csv.Error:
-                return []
+            return list(csv.DictReader(f, delimiter="|", quoting=csv.QUOTE_ALL))
 
     def write(
         self,
