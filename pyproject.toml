@@ -21,10 +21,10 @@ classifiers = [
 ]
 requires-python = ">=3.9.13"
 dependencies = [
-    "ddeutil[all]==0.4.3",
+    "ddeutil[all]==0.4.4",
     "fmtutil==1.0.12",
     "tzdata==2024.2",
-    "deepdiff==8.0.1",
+    "deepdiff==8.1.1",
 ]
 dynamic = ["version"]
 
