@@ -86,10 +86,10 @@ def touch(path: str, times=None) -> None:  # pragma: no cover
 
 class PathSearch:
     """Path Search object that use to search path tree from an input root path.
-    It allow you to adjust recursive level value and exclude dir or file paths
+    It allows you to adjust recursive level value and exclude dir or file paths
     on the searching process.
 
-    :param root: A input root path that want to search.
+    :param root: An input root path that want to search.
     :param exclude: A list of exclude paths.
     """
 
