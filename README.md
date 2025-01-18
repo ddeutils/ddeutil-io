@@ -1,10 +1,10 @@
 # Input/Output Data Transport
 
-[![test](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/korawica/ddeutil-io/actions/workflows/tests.yml)
+[![test](https://github.com/ddeutils/ddeutil-io/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/ddeutils/ddeutil-io/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/ddeutils/ddeutil-io/graph/badge.svg?token=3NDPN2I0H9)](https://codecov.io/gh/ddeutils/ddeutil-io)
 [![pypi version](https://img.shields.io/pypi/v/ddeutil-io)](https://pypi.org/project/ddeutil-io/)
 [![python support version](https://img.shields.io/pypi/pyversions/ddeutil-io)](https://pypi.org/project/ddeutil-io/)
-[![size](https://img.shields.io/github/languages/code-size/korawica/ddeutil-io)](https://github.com/korawica/ddeutil-io)
+[![size](https://img.shields.io/github/languages/code-size/ddeutils/ddeutil-io)](https://github.com/ddeutils/ddeutil-io)
 [![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![type check: mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -35,13 +35,13 @@ pip install -U ddeutil-io
 > This package need to install `ddeutil` first to be core package namespace.
 > You do not need to pip it because I include this package to the required list.
 >
-> For optional dependencies that should to additional install;
+> For optional dependencies that should to additional installation;
 >
-> | Module     | Additional dependencies  |
-> |------------|--------------------------|
-> | YamlFl     | `pip install PyYaml`     |
-> | TomlFl     | `pip install toml`       |
-> | MsgpackFl  | `pip install msgpack`    |
+> | Module      | Installation           | Additional dependencies  |
+> |-------------|------------------------|--------------------------|
+> | `YamlFl`    | `ddeutil-io[yaml]`     | `pip install PyYaml`     |
+> | `TomlFl`    | `ddeutil-io[toml]`     | `pip install toml`       |
+> | `MsgpackFl` | `ddeutil-io[msgpack]`  | `pip install msgpack`    |
 
 ## :dart: Features
 
@@ -77,7 +77,7 @@ The features of this package is Input/Output data transport utility objects.
 
 I will show some usage example of function in this package. If you want to use
 complex or adjust some parameter, please see doc-string or real source code
-(I think it do not complex and you can see how that function work).
+(I think it does not complex, and you can see how that function work).
 
 ### Files
 
@@ -164,3 +164,10 @@ data/
   raw/
     conn_file_20240101_000000.json
 ```
+
+## :speech_balloon: Contribute
+
+I do not think this project will go around the world because it has specific propose,
+and you can create by your coding without this project dependency for long term
+solution. So, on this time, you can open [the GitHub issue on this project:raised_hands:](https://github.com/ddeutils/ddeutil-io/issues)
+for fix bug or request new feature if you want it.
