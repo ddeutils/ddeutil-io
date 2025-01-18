@@ -19,13 +19,12 @@ import fnmatch
 import os
 import shutil
 from collections.abc import Collection
-from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Union
 
+from ..__type import Icon, icons
 from .conf import RegexConf
-from .dir import (
-    Dir,
-)
+from .dir import Dir
 from .file import (
     CsvFl,
     CsvPipeFl,
@@ -85,16 +84,6 @@ def touch(path: str, times=None) -> None:  # pragma: no cover
         file_handle.close()
 
 
-@dataclass(frozen=True)  # pragma: no cover
-class Icon:
-    normal: str
-    next: str
-    last: str
-
-    def __len__(self) -> int:
-        return max(len(self.normal), len(self.next), len(self.last))
-
-
 class PathSearch:
     """Path Search object that use to search path tree from an input root path.
     It allow you to adjust recursive level value and exclude dir or file paths
@@ -108,7 +97,7 @@ class PathSearch:
         self,
         root: Path,
         *,
-        exclude: list[str] | None = None,
+        exclude: Optional[list[str]] = None,
         max_level: int = -1,
         length: int = 4,
         icon: int = 1,
@@ -120,7 +109,7 @@ class PathSearch:
         self.real_level: int = 0
 
         # NOTE: Define icon argument and check an input length.
-        self.icon: Icon = self.icons()[icon]
+        self.icon: Icon = icons(icon)
         assert (
             len(self.icon) + 1
         ) < self.length, "a `length` argument must gather than length of icon."
@@ -174,7 +163,7 @@ class PathSearch:
                 self.output_buf.append(f"{prefix}{idc}{sub_path}")
                 self.files.append(full_path)
 
-    def pick(self, filename: str | Collection[str]) -> list[Path]:
+    def pick(self, filename: Union[str, Collection[str]]) -> list[Path]:
         """Return filename with match with input argument."""
         patterns = (filename,) if isinstance(filename, str) else filename
         return list(
@@ -189,14 +178,6 @@ class PathSearch:
             )
         )
 
-    def tree(self, newline: str | None = None) -> str:  # pragma: no cover
+    def tree(self, newline: Optional[str] = None) -> str:  # pragma: no cover
         """Return path tree of root path."""
         return (newline or "\n").join(self.output_buf)
-
-    @staticmethod
-    def icons() -> dict[int, Icon]:
-        return {
-            1: Icon(normal="│", next="├─", last="└─"),
-            2: Icon(normal="┃", next="┣━", last="┗━"),
-            3: Icon(normal="│", next="├─", last="╰─"),
-        }
