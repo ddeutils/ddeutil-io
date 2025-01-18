@@ -84,7 +84,7 @@ __all__: tuple[str, ...] = (
 
 def compress_lib(compress: str) -> CompressProtocol:
     """Return Compress module that use to unpack data from the compressed file.
-    Now, it support for "gzip", "gz", "xz", "bz2"]
+    Now, it support for "gzip", "gz", "xz", and "bz2".
 
     :param compress: A compress string type value that want to get compress
         package.

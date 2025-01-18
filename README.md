@@ -17,7 +17,7 @@ lifecycle.
 This package has 3 parts of core module; **Register**, **Stores**, and **Files**.
 The base module is the file module that is open file objects with specific format
 that want to open include open directory objects (I think the open dir object do
-not should to use now because I do not done with its code.)
+not should to use now because I do not do with its code.)
 
 ## :round_pushpin: Installation
 
@@ -100,7 +100,7 @@ assert content['data']['get'] == "HELLO WORLD"
 
 > [!NOTE]
 > This module do not implement special function on IO like the build-in ``open``
-> function. It also make standard ``read`` and ``write`` file objects.
+> function. It also makes standard ``read`` and ``write`` file objects.
 
 ### Store
 
@@ -118,10 +118,10 @@ store.save('./stage/file.json', data)
 
 ```text
 conf/
-  examples/
-    config_file.yaml
-  stage/
-    file.json
+ ├─ examples/
+ │   ╰─ config_file.yaml
+ ╰─ stage/
+     ╰─file.json
 ```
 
 ### Register
@@ -169,5 +169,5 @@ data/
 
 I do not think this project will go around the world because it has specific propose,
 and you can create by your coding without this project dependency for long term
-solution. So, on this time, you can open [the GitHub issue on this project:raised_hands:](https://github.com/ddeutils/ddeutil-io/issues)
+solution. So, on this time, you can open [the GitHub issue on this project :raised_hands:](https://github.com/ddeutils/ddeutil-io/issues)
 for fix bug or request new feature if you want it.

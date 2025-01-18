@@ -18,7 +18,7 @@ class RegexConf:
 
     # NOTE: Normal regular expression for the secret value.
     # ---
-    # [\"\']?                             # single or double quoted value
+    # [\"\']?                             # single or double-quoted value
     # (?P<search>@secrets{                # search string for replacement
     #     (?P<braced>.*?)                 # value if use braced {}
     #     (?::(?P<braced_default>.*?))?   # value default with sep :
@@ -27,7 +27,7 @@ class RegexConf:
     #
     # NOTE: For secrets grouping level.
     # ---
-    # [\"\']?                             # single or double quoted value
+    # [\"\']?                             # single or double-quoted value
     # (?P<search>@secrets                 # search string for replacement
     # (?P<group>(\.\w+)*)?{               # search groups
     #     (?P<braced>.*?)                 # value if use braced {}

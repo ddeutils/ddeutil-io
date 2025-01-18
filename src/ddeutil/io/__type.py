@@ -24,6 +24,7 @@ class Icon:
 
 
 def icons(theme: int) -> Icon:
+    """Get the Icon object from a theme value."""
     return {
         1: Icon(normal="│", next="├─", last="└─"),
         2: Icon(normal="┃", next="┣━", last="┗━"),
