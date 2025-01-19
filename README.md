@@ -122,7 +122,7 @@ conf/
  ├─ examples/
  │   ╰─ config_file.yaml
  ╰─ stage/
-     ╰─file.json
+     ╰─ file.json
 ```
 
 ### Register
@@ -150,8 +150,8 @@ The raw data of this config was written in `conn_file.yaml` file.
 
 ```text
 conf/
-  examples/
-    conn_file.yaml
+ ╰─ examples/
+     ╰─ conn_file.yaml
 ```
 
 When call `move` method, it will transfer data from `.yaml` file to `json` file
@@ -159,11 +159,11 @@ with the data hashing algorithm.
 
 ```text
 data/
-  __METADATA/
-    exampleconn_data_local_file.base.json
-    exampleconn_data_local_file.raw.json
-  raw/
-    conn_file_20240101_000000.json
+ ├─ __METADATA/
+ │   ├─ exampleconn_data_local_file.base.json
+ │   ╰─ exampleconn_data_local_file.raw.json
+ ╰─ raw/
+     ╰─ conn_file_20240101_000000.json
 ```
 
 ## :speech_balloon: Contribute
