@@ -2,6 +2,39 @@
 
 ## Latest Changes
 
+## 0.2.4
+
+### :sparkles: Features
+
+- :dart: feat: move conf on files to __conf. (_2025-01-19_)
+- :dart: feat: move icon to __type mod. (_2025-01-18_)
+
+### :black_nib: Code Changes
+
+- :art: styled: change code style support typed hint. (_2025-01-19_)
+- :test_tube: tests: update testcase for path search object. (_2025-01-07_)
+- :construction: refactored: 📦 bump fmtutil from 1.0.11 to 1.0.12 (#39) (_2025-01-02_)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.12.2 to 1.12.3 (_2025-01-01_)
+- :construction: refactored: 📦 bump ddeutil[all] from 0.4.3 to 0.4.4 (_2025-01-01_)
+- :construction: refactored: 📦 bump deepdiff from 8.0.1 to 8.1.1 (_2025-01-01_)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.11.0 to 1.12.2 (_2024-12-01_)
+- :construction: refactored: ⬆ bump codecov/codecov-action from 4 to 5 (_2024-12-01_)
+- :construction: refactored: ⬆ bump deadsnakes/action from 3.1.0 to 3.2.0 (_2024-11-01_)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.10.2 to 1.11.0 (_2024-11-01_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file. (_2025-01-19_)
+- :page_facing_up: docs: update readme file. (_2025-01-18_)
+- :page_facing_up: docs: update header file. (_2025-01-18_)
+- :page_facing_up: docs: update readme file on installation topic. (_2025-01-18_)
+- :page_facing_up: docs: update readme file. (_2024-10-22_)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update pre-commit-hooks version to 5.0.0. (_2025-01-18_)
+- :pushpin: deps: update core deps version. (_2025-01-18_)
+
 ## 0.2.3
 
 ### :sparkles: Features
