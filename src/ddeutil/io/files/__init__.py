@@ -48,7 +48,7 @@ from .utils import (
 
 
 def rm(
-    path: str,
+    path: Union[str, Path],
     is_dir: bool = False,
     force_raise: bool = True,
 ) -> None:  # pragma: no cover
@@ -58,6 +58,7 @@ def rm(
     :param is_dir: A flag that tell this input path is dir or not.
     :param force_raise: A flag that disable raise error if it not remove.
     """
+    path: Path = Path(path) if isinstance(path, str) else path
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
     elif os.path.isdir(path) and is_dir:

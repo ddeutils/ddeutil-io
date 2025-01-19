@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Union
 
 from .__type import AnyData, TupleStr
 from .config import VERSION_DEFAULT
@@ -151,7 +151,7 @@ class BaseStore(abc.ABC):
             ),
         )
 
-    def move(self, path: Path, dest: Path) -> None:
+    def move(self, path: Union[str, Path], dest: Path) -> None:
         """Copy filename inside this config path to the destination path.
 
         :param path: A child path that exists in this store path.

@@ -4,7 +4,7 @@
 # license information.
 # ------------------------------------------------------------------------------
 """Register module provide the Register object for manage configuration file
-with multiple storing stages. That mean if you have original config file with
+with multiple storing stages. That is mean if you have original config file with
 YAML file format and want to save memory to reading in your any application
 you will convert it to JSON file or some binary file and always reuse it if the
 original config file does not change context data inside.
@@ -18,7 +18,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Literal, TypedDict
+from typing import Any, ClassVar, Optional, TypedDict
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -114,7 +114,7 @@ class BaseRegister:
 
     metadata: ClassVar[str] = "__METADATA"
 
-    def __init__(self, name: str, *, domain: str | None = None) -> None:
+    def __init__(self, name: str, *, domain: Optional[str] = None) -> None:
         self.name: str = name
         self.domain: str = (
             domain.replace(os.sep, "/").strip("/").lower() if domain else ""
@@ -222,19 +222,20 @@ class Register(BaseRegister):
 
     @classmethod
     def split_domain(cls, name: str) -> tuple[str, str]:
-        return splitter.must_rsplit(
+        rs: list[str] = splitter.must_rsplit(
             base.concat(name.split()),
             sep=":",
             maxsplit=1,
         )
+        return rs[0], rs[-1]
 
     def __init__(
         self,
         name: str,
-        stage: str | None = None,
+        stage: Optional[str] = None,
         *,
-        params: Params | None = None,
-        store: type[Store] | None = None,
+        params: Optional[Params] = None,
+        store: Optional[type[Store]] = None,
     ) -> None:
         domain, name = self.split_domain(name)
         super().__init__(name=name, domain=domain)
@@ -243,9 +244,9 @@ class Register(BaseRegister):
                 "This register instance can not do any actions because config "
                 "param does not set."
             )
-        self.params: Params | None = params
+        self.params: Optional[Params] = params
         self.stage: str = stage or REGISTER_BASE_STAGE_DEFAULT
-        self.store: type[Store] | None = store
+        self.store: Optional[type[Store]] = store
 
         # NOTE: Load latest version of data from data lake or data store of
         #   configuration files.
@@ -326,7 +327,7 @@ class Register(BaseRegister):
             } | self.__raw_data
 
         return (
-            hash.hash_all(_data, exclude={UPDATE_KEY, VERSION_KEY})
+            hash.hash_value(_data, exclude={UPDATE_KEY, VERSION_KEY})
             if hashing
             else _data
         )
@@ -365,7 +366,7 @@ class Register(BaseRegister):
         else:  # pragma: no cover
             return version.bump_major()
 
-    def fmt(self, update: dict[str, Any] | None = None) -> FormatterGroup:
+    def fmt(self, update: Optional[dict[str, Any]] = None) -> FormatterGroup:
         """Return FormatterGroup object that passing ``self.timestamp`` and
         ``self.version`` values.
 
@@ -381,7 +382,7 @@ class Register(BaseRegister):
             }
         )
 
-    def compare_data(self, data: dict[str, Any]) -> Literal[0, 1, 2, 99]:
+    def compare_data(self, data: dict[str, Any]) -> int:
         """Return difference column from dictionary comparison method which use
         the `deepdiff` library.
 
@@ -397,7 +398,7 @@ class Register(BaseRegister):
             self.data(hashing=True),
             data,
             ignore_order=True,
-            exclude_paths={f"root[{k!r}]" for k in (UPDATE_KEY, VERSION_KEY)},
+            exclude_paths=[f"root[{k!r}]" for k in (UPDATE_KEY, VERSION_KEY)],
         )
         if not rs:
             return 0
@@ -436,9 +437,9 @@ class Register(BaseRegister):
 
     def get(
         self,
-        stage: str | None = None,
+        stage: Optional[str] = None,
         *,
-        order: int | None = 1,
+        order: Optional[int] = 1,
         reverse: bool = False,
     ) -> AnyData:
         """Get the context data from the specific stage value (use 'base' if the
@@ -490,7 +491,7 @@ class Register(BaseRegister):
         )
         if (
             self.compare_data(
-                hash.hash_all(
+                hash.hash_value(
                     self.get(stage=stage), exclude=(UPDATE_KEY, VERSION_KEY)
                 )
             )
@@ -532,7 +533,7 @@ class Register(BaseRegister):
         """
         return self.__class__(self.fullname, stage=stage, params=self.params)
 
-    def purge(self, stage: str | None = None) -> None:
+    def purge(self, stage: Optional[str] = None) -> None:
         """Purge configuration files that match with any rules in the stage
         setting.
         """
@@ -558,7 +559,7 @@ class Register(BaseRegister):
                 print(f"Start remove {data['file']}")
                 rm(store.path / data["file"])
 
-    def deploy(self, stop: str | None = None) -> Self:
+    def deploy(self, stop: Optional[str] = None) -> Self:
         """Deploy the config data from the current stage to the final stage or
         specific an input stop stage.
 
@@ -567,7 +568,7 @@ class Register(BaseRegister):
         :type stop: str
 
         :raise RegisterArgumentError: If an input stop value does not exists on
-            the stages configuration.
+            the stages' configuration.
 
         :rtype: Self
         """
@@ -590,12 +591,8 @@ class Register(BaseRegister):
         stage value. So, this method does not allow to remove data on the base
         stage.
 
-        :param stage: a stage value that want to remove (Use current stage if it
-            does not pass to this method).
-        :type stage: str | None
-
         :raise RegisterArgumentError: If current stage be the base stage.
-            Because it do not do anything on origin config files.
+            Because it does not do anything on origin config files.
 
         :rtype: NoReturn
         """
@@ -616,7 +613,7 @@ class ArchiveRegister(Register):
 
     archiving: ClassVar[str] = ".archive"
 
-    def purge(self, stage: str | None = None) -> None:
+    def purge(self, stage: Optional[str] = None) -> None:
         """Purge configuration files that match with any rules in the stage
         setting and move it to archiving area.
 
