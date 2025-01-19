@@ -5,6 +5,7 @@
 # ------------------------------------------------------------------------------
 from . import files as base
 from .__about__ import __version__
+from .__conf import RegexConf
 from .config import (
     UPDATE_KEY,
     VERSION_KEY,
@@ -20,7 +21,6 @@ from .exceptions import (
 )
 from .files import (
     PathSearch,
-    RegexConf,
     rm,
     touch,
 )

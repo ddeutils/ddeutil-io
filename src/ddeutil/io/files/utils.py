@@ -9,11 +9,7 @@ import os
 from collections.abc import Iterator
 from typing import IO, AnyStr, Callable
 
-try:
-    from .conf import RegexConf
-except ImportError:  # pragma: no cover
-    from conf import RegexConf
-
+from ..__conf import RegexConf
 
 __all__: tuple[str, ...] = (
     "add_newline",

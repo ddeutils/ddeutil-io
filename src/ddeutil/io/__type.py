@@ -15,11 +15,14 @@ AnyData = Union[AnyValue, dict[str, AnyValue], list[AnyValue]]
 
 @dataclass(frozen=True)  # pragma: no cover
 class Icon:
+    """Icon dataclass object that keep necessary element for making tree."""
+
     normal: str
     next: str
     last: str
 
     def __len__(self) -> int:
+        """Return the maximum length of element characters."""
         return max(len(self.normal), len(self.next), len(self.last))
 
 

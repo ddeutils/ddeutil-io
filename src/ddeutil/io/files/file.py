@@ -24,7 +24,9 @@ from typing import (
     Callable,
     ClassVar,
     Literal,
+    Optional,
     Protocol,
+    Union,
     get_args,
 )
 
@@ -141,7 +143,7 @@ class Fl(FlABC):
     :param path: A path that respresent the file location.
     :type path: str | Path
     :param encoding: An open file encoding value, it will use UTF-8 by default.
-    :type encoding: str | None (None)
+    :type encoding: Optional[str] (None)
     :param compress: A compress type for this file.
     :type compress: FileCompressType | None (None)
 
@@ -154,9 +156,9 @@ class Fl(FlABC):
 
     def __init__(
         self,
-        path: str | Path,
+        path: Union[str, Path],
         *,
-        encoding: str | None = None,
+        encoding: Optional[str] = None,
         compress: FileCompressType | None = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
@@ -187,11 +189,11 @@ class Fl(FlABC):
             "Does not implement decompress method for None compress value."
         )
 
-    def __mode(self, mode: str | None = None) -> dict[str, str]:
+    def __mode(self, mode: Optional[str] = None) -> dict[str, str]:
         """Convert mode property before passing to the main standard lib.
 
         :param mode: a reading or writing mode for the open method.
-        :type mode: str | None (None)
+        :type mode: Optional[str] (None)
 
         :rtype: dict[str, str]
         :returns: A mapping of mode and other input parameters for standard
@@ -217,12 +219,12 @@ class Fl(FlABC):
             f"{get_args(FileCompressType)}."
         )
 
-    def open(self, *, mode: str | None = None, **kwargs) -> IO:
+    def open(self, *, mode: Optional[str] = None, **kwargs) -> IO:
         """Open this file object with standard libs that match with it file
         format subclass propose.
 
         :param mode: A opening mode that allow you to use read or write mode.
-        :type mode: str | None (None)
+        :type mode: Optional[str] (None)
         :rtype: IO
         """
         return compress_lib(self.compress).open(
@@ -230,11 +232,11 @@ class Fl(FlABC):
         )
 
     @contextmanager
-    def mopen(self, *, mode: str | None = None) -> IO:
+    def mopen(self, *, mode: Optional[str] = None) -> IO:
         """Open with memory mode context manager.
 
         :param mode: A opening mode that allow you to use read or write mode.
-        :type mode: str | None (None)
+        :type mode: Optional[str] (None)
         :rtype: IO
         """
         mode: str = mode or "r"
@@ -460,7 +462,7 @@ class CsvFl(Fl):
         self,
         data: list[Any] | dict[Any, Any],
         *,
-        mode: str | None = None,
+        mode: Optional[str] = None,
         **kwargs,
     ) -> None:
         """Write CSV file with an input data context. This method allow to use
@@ -493,7 +495,7 @@ class CsvFl(Fl):
     def has_header(self, pre_load: int = 128) -> bool:
         """Return true if the file with csv format already implement header.
 
-        :param pre_load: An input bytes number that use to pre-loading for
+        :param pre_load: An input bytes number that use to preloading for
             define header.
         :type pre_load: int (128)
         :rtype: bool
@@ -548,7 +550,7 @@ class CsvPipeFl(CsvFl):
         self,
         data: list[Any] | dict[Any, Any],
         *,
-        mode: str | None = None,
+        mode: Optional[str] = None,
         **kwargs,
     ) -> None:
         """Write data to the CSV file format."""
@@ -670,7 +672,7 @@ class JsonLineFl(Fl):
                     raise
         return rs
 
-    def write(self, data, *, mode: str | None = None) -> None:
+    def write(self, data, *, mode: Optional[str] = None) -> None:
         if not data:
             raise ValueError("data to write is empty")
 

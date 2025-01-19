@@ -9,7 +9,7 @@ from typing import Callable, TypeVar
 
 from ddeutil.core import convert, import_string
 
-from .files import RegexConf
+from .__conf import RegexConf
 
 T = TypeVar("T")
 

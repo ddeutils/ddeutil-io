@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import Optional, Union
 
 from ..__type import Icon, icons
-from .conf import RegexConf
 from .dir import Dir
 from .file import (
     CsvFl,
@@ -53,7 +52,7 @@ def rm(
     is_dir: bool = False,
     force_raise: bool = True,
 ) -> None:  # pragma: no cover
-    """Remove a file or dir from a input path.
+    """Remove a file or dir from an input path.
 
     :param path: A path of file or dir that want to remove.
     :param is_dir: A flag that tell this input path is dir or not.
@@ -70,7 +69,7 @@ def rm(
             )
 
 
-def touch(path: str, times=None) -> None:  # pragma: no cover
+def touch(path: Union[str, Path], times=None) -> None:  # pragma: no cover
     """Create an empty file with specific name and modified time of path it an
     input times was set.
 
@@ -95,14 +94,18 @@ class PathSearch:
 
     def __init__(
         self,
-        root: Path,
+        root: Union[str, Path],
         *,
         exclude: Optional[list[str]] = None,
         max_level: int = -1,
         length: int = 4,
         icon: int = 1,
     ) -> None:
-        self.root: Path = root
+        self.root: Path = Path(root) if isinstance(root, str) else root
+
+        if not self.root.exists():
+            raise FileNotFoundError(f"Does not found {self.root.resolve()}")
+
         self.exclude: list[str] = exclude or []
         self.max_level: int = max_level
         self.length: int = length
@@ -110,13 +113,14 @@ class PathSearch:
 
         # NOTE: Define icon argument and check an input length.
         self.icon: Icon = icons(icon)
+
         assert (
             len(self.icon) + 1
         ) < self.length, "a `length` argument must gather than length of icon."
 
         self.output_buf: list = [f"[{self.root.stem}]"]
         self.files: list[Path] = []
-        self.__recurse(self.root, list(self.root.iterdir()), "", 0)
+        self.__recurse(self.root, list(self.root.glob("*")), "", 0)
 
     @property
     def level(self) -> int:
