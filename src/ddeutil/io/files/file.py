@@ -159,11 +159,11 @@ class Fl(FlABC):
         path: Union[str, Path],
         *,
         encoding: Optional[str] = None,
-        compress: FileCompressType | None = None,
+        compress: Optional[FileCompressType] = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.encoding: str = encoding or "utf-8"
-        self.compress: FileCompressType | None = compress
+        self.compress: Optional[FileCompressType] = compress
 
         # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
@@ -447,10 +447,10 @@ class YamlEnvFl(YamlFl, EnvFlMixin):
 class CsvFl(Fl):
     """CSV open file object with comma (,) seperator charactor."""
 
-    def read(self, pre_load: int = 0) -> list[dict[str | int, Any]]:
+    def read(self, pre_load: int = 0) -> list[dict[Union[str, int], Any]]:
         """Return data context from csv file format.
 
-        :param pre_load: An input bytes number that use to pre-loading for
+        :param pre_load: An input bytes number that use to preloading for
             define column structure before reading with csv.
         :type pre_load: int (0)
         :rtype: list[dict[str | int, Any]]
@@ -460,7 +460,7 @@ class CsvFl(Fl):
 
     def write(
         self,
-        data: list[Any] | dict[Any, Any],
+        data: Union[list[Any], dict[Any, Any]],
         *,
         mode: Optional[str] = None,
         **kwargs,
@@ -469,18 +469,19 @@ class CsvFl(Fl):
         append write mode.
         """
         if not data:
-            raise ValueError("data to write is empty")
+            raise ValueError("data that want writing to CSV file was empty")
 
         mode: str = mode or "w"
         assert mode in (
             "a",
             "w",
-        ), "save mode must contain only value `a` nor `w`."
+        ), "save mode in CSV must contain only value `a` nor `w`."
 
         if isinstance(data, dict):
             data: list = [data]
 
         with self.open(mode=mode, newline="") as f:
+            # noinspection PyTypeChecker
             writer = csv.DictWriter(
                 f,
                 fieldnames=list(data[0].keys()),
@@ -510,10 +511,10 @@ class CsvFl(Fl):
 class CsvDynamicFl(CsvFl):  # pragma: no cover
     """CSV open file object with dynamic dialect reader."""
 
-    def read(self, pre_load: int = 128) -> list[dict[str | int, Any]]:
+    def read(self, pre_load: int = 128) -> list[dict[Union[str, int], Any]]:
         """Return data context from csv file format with dynamic dialect reader.
 
-        :param pre_load: An input bytes number that use to pre-loading for
+        :param pre_load: An input bytes number that use to preloading for
             define column structure before reading with csv.
         :type pre_load: int (128)
         :rtype: list[dict[str | int, Any]]
@@ -535,10 +536,10 @@ class CsvPipeFl(CsvFl):
 
     def read(self, pre_load: int = 0) -> list:
         """Return data context from csv file format with the pipe seperator.
-        This read method do not use ``pre_load`` parameter because it passing
+        This read method do not use ``pre_load`` parameter because it is passing
         fix dialect argument.
 
-        :param pre_load: An input bytes number that use to pre-loading for
+        :param pre_load: An input bytes number that use to preloading for
             define column structure before reading with csv.
         :type pre_load: int (0)
         :rtype: list[dict[str | int, Any]]
@@ -548,7 +549,7 @@ class CsvPipeFl(CsvFl):
 
     def write(
         self,
-        data: list[Any] | dict[Any, Any],
+        data: Union[list[Any], dict[Any, Any]],
         *,
         mode: Optional[str] = None,
         **kwargs,
@@ -567,6 +568,7 @@ class CsvPipeFl(CsvFl):
             data: list = [data]
 
         with self.open(mode=mode, newline="") as f:
+            # noinspection PyTypeChecker
             writer = csv.DictWriter(
                 f,
                 fieldnames=list(data[0].keys()),
@@ -618,7 +620,7 @@ class JsonFl(Fl):
     (.json).
     """
 
-    def read(self) -> dict[Any, Any] | list[Any]:
+    def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="r") as f:
             try:
                 return json.loads(f.read(), cls=JSONCommentsDecoder)
@@ -631,6 +633,7 @@ class JsonFl(Fl):
             if self.compress:
                 f.write(json.dumps(data, default=str))
             else:
+                # noinspection PyTypeChecker
                 json.dump(data, f, indent=indent, default=str)
 
 
@@ -639,7 +642,7 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
     parsing with json package.
     """
 
-    def read(self) -> dict[Any, Any] | list[Any]:
+    def read(self) -> Union[dict[Any, Any], list[Any]]:
         with self.open(mode="rt") as f:
             try:
                 return json.loads(
@@ -706,6 +709,7 @@ class TomlFl(Fl):
                 "toml via `pip install toml` first."
             )
         with self.open(mode="wt") as f:
+            # noinspection PyTypeChecker
             toml.dump(data, f)
 
 
@@ -735,6 +739,7 @@ class PickleFl(Fl):  # pragma: no cover
 
     def write(self, data):
         with self.open(mode="wb") as f:
+            # noinspection PyTypeChecker
             pickle.dump(data, f)
 
 
@@ -750,6 +755,7 @@ class MarshalFl(Fl):  # pragma: no cover
 
     def write(self, data):
         with self.open(mode="wb") as f:
+            # noinspection PyTypeChecker
             marshal.dump(data, f)
 
 
