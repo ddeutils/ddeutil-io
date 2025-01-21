@@ -2,6 +2,18 @@
 
 ## Latest Changes
 
+## 0.2.5
+
+### :black_nib: Code Changes
+
+- :art: styled: fixed typed hint on stores module. (_2025-01-21_)
+- :art: styled: fixed typed hint on dir module. (_2025-01-21_)
+- :art: styled: add comment for type checker that not valid in pycharm. (_2025-01-21_)
+
+### :card_file_box: Documents
+
+- :page_facing_up: docs: update readme file. (_2025-01-21_)
+
 ## 0.2.4
 
 ### :sparkles: Features
