@@ -84,7 +84,17 @@ __all__: tuple[str, ...] = (
 )
 
 
-def compress_lib(compress: str) -> CompressProtocol:
+class CompressProtocol(Protocol):  # pragma: no cover
+    """Compress protocol object that allow to implement and use ``decompress``
+    and ``open`` methods.
+    """
+
+    def decompress(self, *args, **kwargs) -> AnyStr: ...
+
+    def open(self, *args, **kwargs) -> IO: ...
+
+
+def compress_lib(compress: Optional[FileCompressType]) -> CompressProtocol:
     """Return Compress module that use to unpack data from the compressed file.
     Now, it support for "gzip", "gz", "xz", and "bz2".
 
@@ -110,16 +120,6 @@ def compress_lib(compress: str) -> CompressProtocol:
     raise NotImplementedError(f"Compress {compress} does not implement yet")
 
 
-class CompressProtocol(Protocol):  # pragma: no cover
-    """Compress protocol object that allow to implement and use ``decompress``
-    and ``open`` methods.
-    """
-
-    def decompress(self, *args, **kwargs) -> AnyStr: ...
-
-    def open(self, *args, **kwargs) -> IO: ...
-
-
 class FlABC(abc.ABC):  # pragma: no cover
     """Open File abstraction object for marking abstract methods that need to
     implement on any open file subclass.
@@ -138,7 +138,7 @@ class Fl(FlABC):
     storage like AWS S3, GCS, or ADLS).
 
         Note that, this object should to implement it with subclass again
-    because it do not override necessary methods from FlABC abstract class.
+    because it does not override necessary methods from FlABC abstract class.
 
     :param path: A path that respresent the file location.
     :type path: str | Path
@@ -223,7 +223,7 @@ class Fl(FlABC):
         """Open this file object with standard libs that match with it file
         format subclass propose.
 
-        :param mode: A opening mode that allow you to use read or write mode.
+        :param mode: An opening mode that allow you to use read or write mode.
         :type mode: Optional[str] (None)
         :rtype: IO
         """
@@ -281,6 +281,7 @@ class EnvFlMixin:
 
         :param value: A string value that passing from searching process
         :type value: str
+
         :rtype: str
         """
         return value

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from typing import IO, AnyStr, Callable
+from typing import IO, AnyStr, Callable, Optional
 
 from ..__conf import RegexConf
 
@@ -18,7 +18,7 @@ __all__: tuple[str, ...] = (
 )
 
 
-def add_newline(text: str, newline: str | None = None) -> str:
+def add_newline(text: str, newline: Optional[str] = None) -> str:
     """Add newline to a text value.
 
     :param text: A text value that want to add newline.
@@ -105,7 +105,7 @@ def search_env(
     contents: str,
     *,
     keep_newline: bool = False,
-    default: str | None = None,
+    default: Optional[str] = None,
 ) -> dict[str, str]:
     """Prepare content data from `.env` file before load to the OS environment
     variables.
@@ -145,7 +145,7 @@ def search_env(
                 f"of variable"
             )
         value: str = _value if keep_newline else "".join(_value.splitlines())
-        quoted: str | None = None
+        quoted: Optional[str] = None
 
         # NOTE: Remove surrounding quotes
         if m2 := RegexConf.RE_ENV_VALUE_QUOTED.match(value):
@@ -169,7 +169,7 @@ def __search_var(
     value: str,
     env: dict[str, str],
     *,
-    default: str | None = None,
+    default: Optional[str] = None,
 ) -> str:
     """Search variable on the string content.
 
@@ -229,7 +229,7 @@ def reverse_readline(
         f.seek(file_size - offset)
         buffer: AnyStr = f.read(min(remaining_size, buf_size))
         remaining_size -= buf_size
-        lines: AnyStr = buffer.splitlines(True)
+        lines: list[AnyStr] = buffer.splitlines(True)
 
         # NOTE: the first line of the buffer is probably not a complete line so
         #   we'll save it and append it to the last line of the next buffer
