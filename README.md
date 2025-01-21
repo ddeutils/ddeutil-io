@@ -9,15 +9,16 @@
 [![type check: mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-The **Input/Output Data Transport** utility objects was created for full managed
-engine of configuration file that include `load` from any config file format types
-like `.yaml`, `.json`, or `.toml`, and manage retention and version of config files
+An **input/output data transport** utility objects :bullettrain_front: was created
+for full managed object of configuration file that include `load` from any file
+format like `.yaml`, `.json`, or `.toml`, and manage retention and version of config files
 lifecycle.
 
 This package has 3 parts of core module; **Register**, **Stores**, and **Files**.
-The base module is the file module that is open file objects with specific format
-that want to open include open directory objects (I think the open dir object do
-not should to use now because I do not do with its code.)
+The core part of this project is **Files** module that is an open file object with
+specific format that want to open include open directory objects
+(I think the open dir object do not should to use now because I do not do with
+its code.)
 
 ## :round_pushpin: Installation
 
