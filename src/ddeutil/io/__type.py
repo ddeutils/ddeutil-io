@@ -10,7 +10,9 @@ from typing import Union
 
 TupleStr = tuple[str, ...]
 AnyValue = Union[str, int, float, bool, None]
-AnyData = Union[AnyValue, dict[str, AnyValue], list[AnyValue]]
+AnyData = Union[
+    AnyValue, dict[str, AnyValue], list[AnyValue], list[dict[str, AnyValue]]
+]
 
 
 @dataclass(frozen=True)  # pragma: no cover

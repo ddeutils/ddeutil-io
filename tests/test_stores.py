@@ -31,6 +31,7 @@ def target_path(test_path) -> Iterator[Path]:
         )
 
     with open(tgt_path / "test_01_conn.json", mode="w") as f:
+        # noinspection PyTypeChecker
         json.dump(
             {
                 "conn_local_file": {

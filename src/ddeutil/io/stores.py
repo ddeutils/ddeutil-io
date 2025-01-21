@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar, Optional, Union
 
 from .__type import AnyData, TupleStr
 from .config import VERSION_DEFAULT
@@ -66,12 +66,12 @@ class BaseStore(abc.ABC):
 
     def __init__(
         self,
-        path: str | Path,
+        path: Union[str, Path],
         *,
-        compress: str | None = None,
+        compress: Optional[str] = None,
     ) -> None:
         self.path: Path = Path(path) if isinstance(path, str) else path
-        self.compress: str | None = compress
+        self.compress: Optional[str] = compress
 
         # NOTE: Create parent dir and skip if it already exist
         if not self.path.exists():
@@ -129,10 +129,10 @@ class BaseStore(abc.ABC):
 
     def ls(
         self,
-        path: str | None = None,
-        name: str | None = None,
+        path: Optional[str] = None,
+        name: Optional[str] = None,
         *,
-        excluded: list[str] | None = None,
+        excluded: Optional[Union[list[str], tuple[str, ...]]] = None,
     ) -> Iterator[Path]:
         """Return all files that already exist in the store path.
 
@@ -172,7 +172,7 @@ class BaseStore(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def delete(self, name: str, data_name: str) -> None:  # pragma: no cover
+    def delete(self, path: str, name: str) -> None:  # pragma: no cover
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -192,14 +192,16 @@ class Store(BaseStore):
 
     def __init__(
         self,
-        path: str | Path,
+        path: Union[str, Path],
         *,
-        compress: str | None = None,
+        compress: Optional[str] = None,
     ) -> None:
         """Main initialize of config file loading object."""
         super().__init__(path, compress=compress)
 
-    def load(self, path: str | Path, *, default: AnyData = None) -> AnyData:
+    def load(
+        self, path: Union[str, Path], *, default: AnyData = None
+    ) -> AnyData:
         """Return content data from file with filename, default empty dict.
 
         :rtype: AnyData
@@ -211,7 +213,7 @@ class Store(BaseStore):
 
     def save(
         self,
-        path: str | Path,
+        path: Union[str, Path],
         data: AnyData,
         *,
         merge: bool = False,
@@ -256,7 +258,7 @@ class Store(BaseStore):
                 )
             raise
 
-    def delete(self, path: str | Path, name: str) -> None:
+    def delete(self, path: Union[str, Path], name: str) -> None:
         """Remove data by name insided the staging file with filename.
 
         :param path:
@@ -267,7 +269,9 @@ class Store(BaseStore):
             all_data.pop(name, None)
             (self.open_file_stg(path, compress=self.compress).write(all_data))
 
-    def create(self, path: str | Path, *, initial_data: AnyData = None) -> None:
+    def create(
+        self, path: Union[str, Path], *, initial_data: AnyData = None
+    ) -> None:
         """Create file with an input filename to the store path. This method
         allow to create with initial data.
 

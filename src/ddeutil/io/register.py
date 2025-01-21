@@ -651,7 +651,7 @@ class ArchiveRegister(Register):
         archiving area.
 
         :raise RegisterArgumentError: If current stage be the base stage.
-            Because it do not do anything on origin config files.
+            Because it does not do anything on origin config files.
 
         :rtype: NoReturn
         """
