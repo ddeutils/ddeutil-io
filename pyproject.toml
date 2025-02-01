@@ -22,7 +22,7 @@ classifiers = [
 requires-python = ">=3.9.13"
 dependencies = [
     "ddeutil==0.4.6",
-    "fmtutil==1.0.12",
+    "fmtutil==1.0.14",
     "tzdata==2024.2",
     "deepdiff==8.1.1",
 ]
