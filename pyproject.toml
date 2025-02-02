@@ -29,6 +29,9 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+test = [
+    "typing-extensions",
+]
 all = [
     "msgpack==1.1.0",
     "pyyaml==6.0.2",
@@ -78,6 +81,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "raise AssertionError",
     "pragma: no cover",
+    "if TYPE_CHECKING:",
 ]
 
 [tool.pytest.ini_options]
