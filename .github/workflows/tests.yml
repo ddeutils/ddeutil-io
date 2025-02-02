@@ -62,7 +62,7 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           uv venv
           uv pip install -U pip
-          uv pip install -e .[all]
+          uv pip install -e .[all,test]
           uv pip install pytest freezegun
 
       - name: Check GIL
@@ -87,4 +87,4 @@ jobs:
 
       - name: Test with Pytest
         run: |
-          pytest -v
+          pytest -vv

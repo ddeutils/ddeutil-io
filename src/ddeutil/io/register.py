@@ -18,7 +18,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypedDict
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -37,7 +37,9 @@ from fmtutil import (
     make_const,
     make_group,
 )
-from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from .__type import AnyData, TupleStr
 from .config import (

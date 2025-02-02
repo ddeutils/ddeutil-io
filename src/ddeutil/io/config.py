@@ -9,9 +9,10 @@ import os
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
-from typing_extensions import Self
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from .__type import TupleStr
 from .exceptions import ConfigArgumentError
@@ -170,7 +171,7 @@ class Params:
     paths: Paths = field(default_factory=Paths)
 
     @classmethod
-    def from_toml(cls, path: Path | None) -> Self:
+    def from_toml(cls, path: Union[Path]) -> Self:
         """Read params from .toml file"""
         import toml
 
@@ -184,7 +185,7 @@ class Params:
         return Params(**data)
 
     @classmethod
-    def from_yaml(cls, path: Path | None) -> Self:
+    def from_yaml(cls, path: Union[Path]) -> Self:
         """Read params from .yaml file"""
         return cls(
             **YamlEnvFl(path or "./io-register.yaml")
@@ -197,7 +198,7 @@ class Params:
     def __post_init__(self) -> Self:
         """Post initialize for prepare params."""
         for index, k in enumerate(self.stages, start=1):
-            stage: dict[str, Any] | Stage = self.stages[k]
+            stage: Union[dict[str, Any], Stage] = self.stages[k]
             if isinstance(stage, dict):
                 layer: int = stage.get("layer") or index
                 self.stages[k] = Stage(**(stage | {"alias": k, "layer": layer}))
@@ -229,7 +230,7 @@ class Params:
         """Return Stage model that match with stage name. If an input stage
         value equal 'base', it will return the default stage model.
 
-        :param name: A stage name that want to getting from this params.
+        :param name: A stage name that want to get from this params.
         :type name: str
         """
         if name == "base":

@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 
 def template_secret(value: T, secrets: dict[str, str]) -> T:
-    """Map the secret value to a any input data.
+    """Map the secret value to an any input data.
 
     :param value: An input value that want to map secrets
     :param secrets: A mapping of value secrets that use to replace.
