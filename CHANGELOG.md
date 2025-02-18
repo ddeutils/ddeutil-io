@@ -2,6 +2,23 @@
 
 ## Latest Changes
 
+## 0.2.6
+
+### :black_nib: Code Changes
+
+- :package: refactored: bump fmtutil from 1.0.12 to 1.0.14 (#41)
+- :package: refactored: bump tzdata from 2024.2 to 2025.1 (#42)
+- :construction: refactored: ⬆ bump pypa/gh-action-pypi-publish from 1.12.3 to 1.12.4 (#40)
+
+### :package: Build & Workflow
+
+- :toolbox: build: add clishelf config for fix message does not parse.
+- :toolbox: build: add test deps for tests workflow.
+
+### :postbox: Dependencies
+
+- :pushpin: deps: add lazy import for python dateutil package.
+
 ## 0.2.5
 
 ### :black_nib: Code Changes
