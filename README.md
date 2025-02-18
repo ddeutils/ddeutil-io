@@ -38,11 +38,12 @@ pip install -U ddeutil-io
 >
 > For optional dependencies that should to additional installation;
 >
-> | Module      | Installation           | Additional dependencies  |
-> |-------------|------------------------|--------------------------|
-> | `YamlFl`    | `ddeutil-io[yaml]`     | `pip install PyYaml`     |
-> | `TomlFl`    | `ddeutil-io[toml]`     | `pip install toml`       |
-> | `MsgpackFl` | `ddeutil-io[msgpack]`  | `pip install msgpack`    |
+> | Module      | Installation           | Additional dependencies       |
+> |-------------|------------------------|-------------------------------|
+> | `YamlFl`    | `ddeutil-io[yaml]`     | `pip install PyYaml`          |
+> | `TomlFl`    | `ddeutil-io[toml]`     | `pip install toml`            |
+> | `MsgpackFl` | `ddeutil-io[msgpack]`  | `pip install msgpack`         |
+> | `Register`  | `ddeutil-io[dateutil]` | `pip install python-dateutil` |
 
 ## :dart: Features
 
