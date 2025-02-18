@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypedDict
 from zoneinfo import ZoneInfo
 
-from dateutil.relativedelta import relativedelta
 from ddeutil.core import base, hash, merge, splitter
 from ddeutil.core.dtutils import get_date
 from deepdiff import DeepDiff
@@ -37,6 +36,12 @@ from fmtutil import (
     make_const,
     make_group,
 )
+
+try:  # pragma: no cove
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    relativedelta = None
+
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -547,6 +552,12 @@ class Register(BaseRegister):
         )
 
         if ts_timedelta := rule.timestamp:
+            if relativedelta is None:  # pragma: no cove
+                raise ImportError(
+                    "The purge method need to install `python-dateutil` "
+                    "package before."
+                )
+
             rs: dict[int, StageFl] = self._stage_files(stage, store)
 
             max_index, max_stage_file = max(
@@ -630,6 +641,12 @@ class ArchiveRegister(Register):
         )
 
         if ts_timedelta := rule.timestamp:
+            if relativedelta is None:  # pragma: no cove
+                raise ImportError(
+                    "The purge method need to install `python-dateutil` "
+                    "package before."
+                )
+
             rs: dict[int, StageFl] = self._stage_files(stage, store)
             max_index, max_stage_file = max(
                 rs.items(), key=lambda x: x[1]["parse"]

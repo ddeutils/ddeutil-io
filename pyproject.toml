@@ -30,12 +30,15 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
+    "ddeutil-io[all]",
     "typing-extensions",
 ]
 all = [
     "msgpack==1.1.0",
     "pyyaml==6.0.2",
     "toml==0.10.2",
+    "python-dateutil==2.9.0.post0",
+    "types-python-dateutil==2.9.0.20241206",
 ]
 yaml = [
     "pyyaml==6.0.2",
@@ -45,6 +48,10 @@ toml = [
 ]
 msgpack = [
     "msgpack==1.1.0",
+]
+dateutil = [
+    "python-dateutil==2.9.0.post0",
+    "types-python-dateutil==2.9.0.20241206",
 ]
 
 [project.urls]
