@@ -24,7 +24,7 @@ dependencies = [
     "ddeutil==0.4.6",
     "fmtutil==1.0.14",
     "tzdata==2025.1",
-    "deepdiff==8.1.1",
+    "deepdiff==8.2.0",
 ]
 dynamic = ["version"]
 
