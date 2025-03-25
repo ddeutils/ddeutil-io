@@ -34,7 +34,7 @@ from .files import (
     JsonLineFl,
     YamlEnvFl,
 )
-from .path import PathSearch
+from .paths import PathSearch
 from .utils import rm
 
 __all__: TupleStr = (
