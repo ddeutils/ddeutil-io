@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from ddeutil.io.paths import PathSearch
+from ddeutil.io.paths import PathSearch, ls, replace_sep
 from ddeutil.io.utils import touch
 
 
@@ -60,3 +60,48 @@ def test_base_path_search(make_path):
         make_path / "dir01/01_01_test.text",
         make_path / "dir01/01_02_test.text",
     } == set(ps.files)
+
+
+@pytest.fixture(scope="module")
+def make_ls(test_path: Path) -> Generator[Path, None, None]:
+    path_search: Path = test_path / "test_path_ls"
+    path_search.mkdir(exist_ok=True)
+
+    touch(path_search / "00_01_test.yml")
+    (path_search / "dir01").mkdir(exist_ok=True)
+    touch(path_search / "dir01" / "01_01_test.yml")
+    touch(path_search / "dir01" / "01_02_test.yml")
+
+    (path_search / "dir02").mkdir(exist_ok=True)
+    touch(path_search / "dir02" / "02_01_test.yml")
+    touch(path_search / "dir02" / "02_01_test.json")
+    touch(path_search / "dir02" / "02_02_test_ignore.yml")
+    touch(path_search / "dir02" / "02_03_test.yml")
+
+    (path_search / "dir02/tests").mkdir(exist_ok=True)
+    touch(path_search / "dir02/tests" / "02_01_01_demo.yml")
+
+    (path_search / "tests").mkdir(exist_ok=True)
+    touch(path_search / "tests" / "03_01_test.yml")
+    touch(path_search / "tests" / "03_02_test.yml")
+
+    with open(path_search / ".ignore", mode="w") as f:
+        f.write("tests\n")
+        f.write("*.json\n")
+        f.write("*_ignore.yml\n")
+        f.write("02_03_*\n")
+
+    yield path_search
+
+    shutil.rmtree(path_search)
+
+
+def test_ls(make_ls):
+    files = ls(make_ls, ignore_file=".ignore")
+
+    assert [replace_sep(str(f.relative_to(make_ls))) for f in files] == [
+        "00_01_test.yml",
+        "dir01/01_01_test.yml",
+        "dir01/01_02_test.yml",
+        "dir02/02_01_test.yml",
+    ]
