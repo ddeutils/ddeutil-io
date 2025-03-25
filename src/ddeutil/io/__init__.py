@@ -5,7 +5,7 @@
 # ------------------------------------------------------------------------------
 from . import files as base
 from .__about__ import __version__
-from .__conf import RegexConf
+from .__regex import RegexConf
 from .config import (
     UPDATE_KEY,
     VERSION_KEY,
@@ -14,18 +14,13 @@ from .config import (
     Rule,
     Stage,
 )
+from .dirs import Dir
 from .exceptions import (
     IOBaseError,
     StoreArgumentError,
     StoreNotFound,
 )
 from .files import (
-    PathSearch,
-    rm,
-    touch,
-)
-from .files.dir import Dir
-from .files.file import (
     CsvFl,
     CsvPipeFl,
     EnvFl,
@@ -42,14 +37,15 @@ from .files.file import (
     YamlFl,
     YamlFlResolve,
 )
-from .files.utils import (
-    search_env,
-    search_env_replace,
-)
+from .path import PathSearch
 from .register import ArchiveRegister, Register
 from .stores import BaseStore, Store, StoreJsonToCsv, StoreToJsonLine
 from .utils import (
     map_func,
+    rm,
+    search_env,
+    search_env_replace,
     template_func,
     template_secret,
+    touch,
 )

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from ddeutil.io import touch
-from ddeutil.io.files.file import Fl, compress_lib
+from ddeutil.io.files import Fl, compress_lib
 
 
 @pytest.fixture(scope="module")

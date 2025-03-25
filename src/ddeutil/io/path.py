@@ -3,85 +3,14 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
-"""
-This is the main function for open any files in local or remote space
-with the best python libraries and the best practice such as build-in
-``io.open``, ``mmap.mmap``, etc.
-
-TODO: Add more compress type such as
-    - h5,hdf5(h5py)
-    - fits(astropy)
-    - rar(...)
-"""
 from __future__ import annotations
 
 import fnmatch
-import os
-import shutil
 from collections.abc import Collection
 from pathlib import Path
 from typing import Optional, Union
 
-from ..__type import Icon, icons
-from .dir import Dir
-from .file import (
-    CsvFl,
-    CsvPipeFl,
-    EnvFl,
-    Fl,
-    JsonEnvFl,
-    JsonFl,
-    JsonLineFl,
-    MarshalFl,
-    MsgpackFl,
-    PickleFl,
-    TomlEnvFl,
-    TomlFl,
-    YamlEnvFl,
-    YamlFl,
-    YamlFlResolve,
-)
-from .utils import (
-    add_newline,
-    search_env_replace,
-)
-
-
-def rm(
-    path: Union[str, Path],
-    is_dir: bool = False,
-    force_raise: bool = True,
-) -> None:  # pragma: no cover
-    """Remove a file or dir from an input path.
-
-    :param path: A path of file or dir that want to remove.
-    :param is_dir: A flag that tell this input path is dir or not.
-    :param force_raise: A flag that disable raise error if it not remove.
-    """
-    path: Path = Path(path) if isinstance(path, str) else path
-    if os.path.isfile(path) or os.path.islink(path):
-        os.remove(path)
-    elif os.path.isdir(path) and is_dir:
-        shutil.rmtree(path)
-    else:
-        if force_raise:
-            raise ValueError(
-                f"Path {path!r} is not a file{' or dir' if is_dir else ''}."
-            )
-
-
-def touch(path: Union[str, Path], times=None) -> None:  # pragma: no cover
-    """Create an empty file with specific name and modified time of path it an
-    input times was set.
-
-    :param path: A file path that want to create.
-    :param times: A time that want to adjust modified time.
-    """
-    file_handle = open(path, mode="a")
-    try:
-        os.utime(path, times)
-    finally:
-        file_handle.close()
+from .__type import Icon, icons
 
 
 class PathSearch:

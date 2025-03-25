@@ -2,9 +2,9 @@ import shutil
 from collections.abc import Iterator
 from pathlib import Path
 
-import ddeutil.io.files.utils as utils
 import pytest
 from ddeutil.io.files import Fl
+from ddeutil.io.utils import add_newline
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +52,7 @@ def test_open_file_common_append(target_path, encoding):
     )
     with file.open(mode="w") as f:
         f.write(
-            utils.add_newline(
+            add_newline(
                 "Write data with common file append in normal mode",
             )
         )

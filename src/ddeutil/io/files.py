@@ -3,6 +3,16 @@
 # Licensed under the MIT License. See LICENSE in the project root for
 # license information.
 # ------------------------------------------------------------------------------
+"""
+This is the main function for open any files in local or remote space
+with the best python libraries and the best practice such as build-in
+``io.open``, ``mmap.mmap``, etc.
+
+TODO: Add more compress type such as
+    - h5,hdf5(h5py)
+    - fits(astropy)
+    - rar(...)
+"""
 from __future__ import annotations
 
 import abc

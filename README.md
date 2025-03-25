@@ -20,7 +20,7 @@ specific format that want to open include open directory objects
 (I think the open dir object do not should to use now because I do not do with
 its code.)
 
-## :round_pushpin: Installation
+## 📦 Installation
 
 ```shell
 pip install -U ddeutil-io

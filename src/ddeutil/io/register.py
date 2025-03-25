@@ -56,8 +56,8 @@ from .config import (
     Rule,
 )
 from .exceptions import RegisterArgumentError, StoreNotFound
-from .files import rm
 from .stores import Store
+from .utils import rm
 
 logger = logging.getLogger("ddeutil.io")
 

@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from ddeutil.io.files import Dir
+from ddeutil.io.dirs import Dir
 
 
 @pytest.fixture(scope="module")

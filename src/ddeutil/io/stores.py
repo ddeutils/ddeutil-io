@@ -32,10 +32,10 @@ from .files import (
     JsonEnvFl,
     JsonFl,
     JsonLineFl,
-    PathSearch,
     YamlEnvFl,
-    rm,
 )
+from .path import PathSearch
+from .utils import rm
 
 __all__: TupleStr = (
     "BaseStore",
@@ -73,7 +73,7 @@ class BaseStore(abc.ABC):
         self.path: Path = Path(path) if isinstance(path, str) else path
         self.compress: Optional[str] = compress
 
-        # NOTE: Create parent dir and skip if it already exist
+        # NOTE: Create parent dir and skip if it already exists
         if not self.path.exists():
             self.path.mkdir(parents=True)
 
