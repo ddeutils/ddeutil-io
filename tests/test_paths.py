@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from ddeutil.io.path import PathSearch
+from ddeutil.io.paths import PathSearch
 from ddeutil.io.utils import touch
 
 

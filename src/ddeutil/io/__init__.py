@@ -37,7 +37,7 @@ from .files import (
     YamlFl,
     YamlFlResolve,
 )
-from .path import PathSearch
+from .paths import PathSearch
 from .register import ArchiveRegister, Register
 from .stores import BaseStore, Store, StoreJsonToCsv, StoreToJsonLine
 from .utils import (
