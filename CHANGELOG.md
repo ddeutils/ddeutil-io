@@ -2,6 +2,20 @@
 
 ## Latest Changes
 
+## 0.2.8
+
+### :stars: Highlight Features
+
+- :star: hl: add ls func on paths module.
+
+### :sparkles: Features
+
+- :dart: feat: revise ignore filter algorithm.
+
+### :black_nib: Code Changes
+
+- :lipstick: styled: change prefix message for auto pr.
+
 ## 0.2.7
 
 ### :black_nib: Code Changes
