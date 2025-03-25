@@ -6,17 +6,19 @@
 from __future__ import annotations
 
 import fnmatch
-import os
-from collections.abc import Collection
-from functools import partial
+from collections.abc import Collection, Iterator
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 from .__type import Icon, icons
 
 
 def replace_sep(value: str) -> str:
     return value.replace("\\", "/")
+
+
+def glob_files(path: Path) -> Iterator[Path]:  # pragma: no cov
+    yield from (file for file in path.rglob("*") if file.is_file())
 
 
 class PathSearch:
@@ -123,36 +125,32 @@ class PathSearch:
         return (newline or "\n").join(self.output_buf)
 
 
-def is_ignored(path: Path, base_path: Path, ignores: list[str]) -> bool:
+def read_ignore(file: Union[str, Path]) -> list[str]:
+    """Read ignore file content to list of ignore pattern."""
+    ignores: list[str] = [file.name]
+    if file.exists():
+        ignores.extend(
+            [
+                line.strip()
+                for line in file.read_text().splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        )
+    return ignores
+
+
+def is_ignored(file: Path, ignores: list[str]) -> bool:
     """Check if a path should be ignored based on patterns.
 
-    :params base_path: (Path): Path to check against ignore patterns
-    :params path: (Path): Path to check against ignore patterns
+    :params file: (Path): a file path to check against ignore patterns
     :params ignores:
 
     :returns: True if path should be ignored, False otherwise
     """
-    rel_path: str = os.path.normpath(os.path.relpath(str(path), str(base_path)))
-    normalized_path: str = replace_sep(rel_path)
-    path_segments: list[str] = normalized_path.split("/")
-
-    # NOTE: Check against each ignore pattern
-    for pattern in ignores:
-        re_pattern: str = replace_sep(pattern)
-
-        for i in range(len(path_segments)):
-            # NOTE: Create sub-paths to check against the pattern
-            sub_path = "/".join(path_segments[: i + 1])
-
-            # NOTE: Check for exact match or glob match
-            if (
-                sub_path == re_pattern
-                or fnmatch.fnmatch(sub_path, re_pattern)
-                or fnmatch.fnmatch(os.path.basename(sub_path), re_pattern)
-            ):
-                return True
-
-    return False
+    return any(
+        (file.match(f"**/{pattern}/*") or file.match(f"**/{pattern}*"))
+        for pattern in ignores
+    )
 
 
 def ls(path: Union[str, Path], ignore_file: Optional[str] = None) -> list[Path]:
@@ -164,30 +162,9 @@ def ls(path: Union[str, Path], ignore_file: Optional[str] = None) -> list[Path]:
     :return: (list[Path]) Paths of file that are not ignored.
     """
     path: Path = Path(path).resolve()
-
-    ignore_patterns: list[str] = []
-    if ignore_file:
-        ignore_path: Path = path / ignore_file
-        ignore_patterns.append(ignore_file)
-
-        if ignore_path.exists():
-            ignore_patterns.extend(
-                [
-                    line.strip()
-                    for line in ignore_path.read_text().splitlines()
-                    if line.strip() and not line.strip().startswith("#")
-                ]
-            )
-
-    is_ignored_ls: Callable[[Path], bool] = partial(
-        is_ignored, base_path=path, ignores=ignore_patterns
-    )
-
-    config_files: list[Path] = []
-    for root, _, file_list in os.walk(path):
-        for filename in file_list:
-            file: Path = Path(os.path.join(root, filename))
-            if not is_ignored_ls(file):
-                config_files.append(Path(file))
-
-    return config_files
+    ignores: list[str] = read_ignore(path / ignore_file) if ignore_file else []
+    return [
+        file
+        for file in glob_files(path)
+        if not is_ignored(file, ignores=ignores)
+    ]

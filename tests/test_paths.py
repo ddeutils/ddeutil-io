@@ -105,3 +105,13 @@ def test_ls(make_ls):
         "dir01/01_02_test.yml",
         "dir02/02_01_test.yml",
     ]
+
+
+def test_ls_empty(test_path):
+    path_search: Path = test_path / "test_path_ls_empty"
+    path_search.mkdir(exist_ok=True)
+
+    files = ls(path_search, ignore_file=".ignore")
+    assert list(files) == []
+
+    shutil.rmtree(path_search)
