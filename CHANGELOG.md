@@ -2,6 +2,24 @@
 
 ## Latest Changes
 
+## 0.2.7
+
+### :black_nib: Code Changes
+
+- :test_tube: tests: update and fix testcase.
+- :package: refactored: bump tzdata from 2025.1 to 2025.2 (#46)
+- :package: refactored: bump deepdiff from 8.2.0 to 8.4.2 (#45)
+- :package: refactored: bump deepdiff from 8.1.1 to 8.2.0 (#44)
+- :package: refactored: bump fmtutil from 1.0.14 to 1.0.15 (#43)
+
+### :broom: Deprecate & Clean
+
+- :recycle: clean: clean and rename modules.
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update clishelf version on pre-commit config file.
+
 ## 0.2.6
 
 ### :black_nib: Code Changes
