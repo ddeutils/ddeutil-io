@@ -28,9 +28,9 @@ pip install -U ddeutil-io
 
 **Python version supported**:
 
-| Python Version | Installation                  | Support Fixed Bug  |
-|----------------|-------------------------------|--------------------|
-| `>=3.9,<3.14`  | `pip install -U ddeutil-io`   | :heavy_check_mark: |
+| Python Version | Installation                | Support Fixed Bug  |
+|:---------------|:----------------------------|:------------------:|
+| `>=3.9,<3.14`  | `pip install -U ddeutil-io` | :heavy_check_mark: |
 
 > [!NOTE]
 > This package need to install `ddeutil` first to be core package namespace.
