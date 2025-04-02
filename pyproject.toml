@@ -4,7 +4,7 @@ description = "Input/Output transport utility objects"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
 authors = [{ name = "ddeutils", email = "korawich.anu@gmail.com" }]
-keywords = ['io', 'utility']
+keywords = [ 'io', 'utility' ]
 classifiers = [
     "Topic :: Utilities",
     "Natural Language :: English",
@@ -22,11 +22,9 @@ classifiers = [
 requires-python = ">=3.9.13"
 dependencies = [
     "ddeutil==0.4.6",
-    "fmtutil==1.0.15",
     "tzdata==2025.2",
-    "deepdiff==8.4.2",
 ]
-dynamic = ["version"]
+dynamic = [ "version" ]
 
 [project.optional-dependencies]
 test = [
@@ -37,22 +35,20 @@ all = [
     "msgpack==1.1.0",
     "pyyaml==6.0.2",
     "toml==0.10.2",
+    "fmtutil==1.0.15",
+    "deepdiff==8.4.2",
     "python-dateutil==2.9.0.post0",
     "types-python-dateutil==2.9.0.20241206",
 ]
-yaml = [
-    "pyyaml==6.0.2",
-]
-toml = [
-    "toml==0.10.2",
-]
-msgpack = [
-    "msgpack==1.1.0",
-]
-dateutil = [
+register = [
+    "fmtutil==1.0.15",
+    "deepdiff==8.4.2",
     "python-dateutil==2.9.0.post0",
     "types-python-dateutil==2.9.0.20241206",
 ]
+yaml = [ "pyyaml==6.0.2" ]
+toml = [ "toml==0.10.2" ]
+msgpack = [ "msgpack==1.1.0" ]
 
 [project.urls]
 Homepage = "https://github.com/korawica/ddeutil-io/"

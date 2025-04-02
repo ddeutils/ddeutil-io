@@ -23,19 +23,33 @@ from zoneinfo import ZoneInfo
 
 from ddeutil.core import base, hash, merge, splitter
 from ddeutil.core.dtutils import get_date
-from deepdiff import DeepDiff
-from fmtutil import (
-    ConstantType,
-    Datetime,
-    FormatterArgumentError,
-    FormatterGroup,
-    FormatterGroupType,
-    Naming,
-    VerPackage,
-    Version,
-    make_const,
-    make_group,
-)
+
+try:
+    from deepdiff import DeepDiff
+except ImportError as err:
+    raise ImportError(
+        "Register module need `deepdiff` package, so, please install it by "
+        "`pip install deepdiff`"
+    ) from err
+
+try:  # pragma: no cove
+    from fmtutil import (
+        ConstantType,
+        Datetime,
+        FormatterArgumentError,
+        FormatterGroup,
+        FormatterGroupType,
+        Naming,
+        VerPackage,
+        Version,
+        make_const,
+        make_group,
+    )
+except ImportError as err:
+    raise ImportError(
+        "Register module need `fmtutil` package, so, please install it by "
+        "`pip install fmtutil`"
+    ) from err
 
 try:  # pragma: no cove
     from dateutil.relativedelta import relativedelta
