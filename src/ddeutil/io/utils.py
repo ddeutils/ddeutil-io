@@ -22,7 +22,7 @@ def rm(
     path: Union[str, Path],
     is_dir: bool = False,
     force_raise: bool = True,
-) -> None:  # pragma: no cover
+) -> None:  # pragma: no cov
     """Remove a file or dir from an input path.
 
     :param path: A path of file or dir that want to remove.
@@ -41,7 +41,7 @@ def rm(
             )
 
 
-def touch(path: Union[str, Path], times=None) -> None:  # pragma: no cover
+def touch(path: Union[str, Path], times=None) -> None:  # pragma: no cov
     """Create an empty file with specific name and modified time of path it an
     input times was set.
 
@@ -324,7 +324,7 @@ def __search_var(
 def reverse_readline(
     f: IO,
     buf_size: int = 8192,
-) -> Iterator[AnyStr]:  # pragma: no cover
+) -> Iterator[AnyStr]:  # pragma: no cov
     """A generator that returns the lines of a file in reverse order
 
     Reference:

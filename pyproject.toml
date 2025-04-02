@@ -87,7 +87,7 @@ relative_files = true
 exclude_lines = [
     "raise NotImplementedError",
     "raise AssertionError",
-    "pragma: no cover",
+    "pragma: no cov",
     "if TYPE_CHECKING:",
 ]
 

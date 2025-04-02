@@ -15,7 +15,7 @@ AnyData = Union[
 ]
 
 
-@dataclass(frozen=True)  # pragma: no cover
+@dataclass(frozen=True)  # pragma: no cov
 class Icon:
     """Icon dataclass object that keep necessary element for making tree."""
 

@@ -26,13 +26,13 @@ from ddeutil.core.dtutils import get_date
 
 try:
     from deepdiff import DeepDiff
-except ImportError as err:
+except ImportError as err:  # pragma: no cov
     raise ImportError(
         "Register module need `deepdiff` package, so, please install it by "
         "`pip install deepdiff`"
     ) from err
 
-try:  # pragma: no cove
+try:
     from fmtutil import (
         ConstantType,
         Datetime,
@@ -45,15 +45,15 @@ try:  # pragma: no cove
         make_const,
         make_group,
     )
-except ImportError as err:
+except ImportError as err:  # pragma: no cov
     raise ImportError(
         "Register module need `fmtutil` package, so, please install it by "
         "`pip install fmtutil`"
     ) from err
 
-try:  # pragma: no cove
+try:
     from dateutil.relativedelta import relativedelta
-except ImportError:
+except ImportError:  # pragma: no cov
     relativedelta = None
 
 
@@ -168,7 +168,7 @@ class BaseRegister:
         return base.concat(word[0] for word in self.name.split("_"))
 
     @property
-    def fmt_type(self) -> FormatterGroupType:  # pragma: no cove
+    def fmt_type(self) -> FormatterGroupType:  # pragma: no cov
         """Return the generated formatter group that include constant formatters
         from ``self.name`` and ``self.domain``.
 
@@ -384,7 +384,7 @@ class Register(BaseRegister):
             return version.bump_patch()
         elif self.changed == 2:
             return version.bump_minor()
-        else:  # pragma: no cover
+        else:  # pragma: no cov
             return version.bump_major()
 
     def fmt(self, update: Optional[dict[str, Any]] = None) -> FormatterGroup:
@@ -426,7 +426,7 @@ class Register(BaseRegister):
         for level, diffs in REGISTER_DIFF_LEVEL.items():
             if any(_ in rs for _ in diffs):
                 return level
-        raise NotImplementedError(  # pragma: no cover
+        raise NotImplementedError(  # pragma: no cov
             f"Compare change do not implement for deepdiff result: {rs}"
         )
 
@@ -566,7 +566,7 @@ class Register(BaseRegister):
         )
 
         if ts_timedelta := rule.timestamp:
-            if relativedelta is None:  # pragma: no cove
+            if relativedelta is None:  # pragma: no cov
                 raise ImportError(
                     "The purge method need to install `python-dateutil` "
                     "package before."
@@ -611,7 +611,7 @@ class Register(BaseRegister):
             _base: Register = _base.move(stage)
             if stage == _stop:
                 break
-        return _base  # pragma: no cover
+        return _base  # pragma: no cov
 
     def remove(self) -> None:
         """Remove all config files that move from the base stage by an input
@@ -655,7 +655,7 @@ class ArchiveRegister(Register):
         )
 
         if ts_timedelta := rule.timestamp:
-            if relativedelta is None:  # pragma: no cove
+            if relativedelta is None:  # pragma: no cov
                 raise ImportError(
                     "The purge method need to install `python-dateutil` "
                     "package before."

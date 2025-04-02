@@ -22,7 +22,7 @@ from ddeutil.core import splitter
 DirCompressType = Literal["zip", "rar", "tar", "h5", "hdf5", "fits"]
 
 
-class OpenDirProtocol(Protocol):  # pragma: no cover
+class OpenDirProtocol(Protocol):  # pragma: no cov
     """Open Directory Protocol object."""
 
     def write(self, name, arcname: Optional[str]): ...
@@ -48,7 +48,7 @@ class CustomTarFl(TarFile):
         path: Path = path if isinstance(path, Path) else Path(path)
 
         # NOTE: For Python version >= 3.12
-        if sys.version_info >= (3, 12):  # pragma: no cover
+        if sys.version_info >= (3, 12):  # pragma: no cov
             self.extractall(path, members, filter="data")
             return
 

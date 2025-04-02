@@ -42,7 +42,7 @@ from typing import (
 
 try:
     import msgpack
-except ImportError:  # pragma: no cover
+except ImportError:  # pragma: no cov
     msgpack = None
 
 try:
@@ -51,21 +51,21 @@ try:
     try:
         from yaml import CSafeLoader as SafeLoader
         from yaml import CUnsafeLoader as UnsafeLoader
-    except ImportError:  # pragma: no cover
+    except ImportError:  # pragma: no cov
         from yaml import SafeLoader, UnsafeLoader
-except ImportError:  # pragma: no cover
+except ImportError:  # pragma: no cov
     yaml = None
     SafeLoader = None
     UnsafeLoader = None
 
 try:
     import toml
-except ImportError:  # pragma: no cover
+except ImportError:  # pragma: no cov
     toml = None
 
 try:
     import tomllib
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:  # pragma: no cov
     import pip._vendor.tomli as tomllib
 
 from .utils import search_env, search_env_replace
@@ -94,7 +94,7 @@ __all__: tuple[str, ...] = (
 )
 
 
-class CompressProtocol(Protocol):  # pragma: no cover
+class CompressProtocol(Protocol):  # pragma: no cov
     """Compress protocol object that allow to implement and use ``decompress``
     and ``open`` methods.
     """
@@ -130,7 +130,7 @@ def compress_lib(compress: Optional[FileCompressType]) -> CompressProtocol:
     raise NotImplementedError(f"Compress {compress} does not implement yet")
 
 
-class FlABC(abc.ABC):  # pragma: no cover
+class FlABC(abc.ABC):  # pragma: no cov
     """Open File abstraction object for marking abstract methods that need to
     implement on any open file subclass.
     """
@@ -178,7 +178,7 @@ class Fl(FlABC):
         # NOTE: Action anything after set up attributes.
         self.after_set_attrs()
 
-    def after_set_attrs(self) -> None:  # pragma: no cover
+    def after_set_attrs(self) -> None:  # pragma: no cov
         """Do any action after the object initialize step."""
 
     def __call__(self, *args, **kwargs) -> IO:
@@ -260,13 +260,13 @@ class Fl(FlABC):
         finally:
             file.close()
 
-    def read(self, *args, **kwargs):  # pragma: no cover
+    def read(self, *args, **kwargs):  # pragma: no cov
         raise NotImplementedError(
             "This is abstract class only, so, you should implement open file "
             "object with this class and override this method."
         )
 
-    def write(self, *args, **kwargs) -> None:  # pragma: no cover
+    def write(self, *args, **kwargs) -> None:  # pragma: no cov
         raise NotImplementedError(
             "This is abstract class only, so, you should implement open file "
             "object with this class and override this method."
@@ -336,7 +336,7 @@ class EnvFl(Fl):
             os.environ.update(**rs)
         return rs
 
-    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cov
         raise NotImplementedError(
             "Dot env open file object does not allow to write."
         )
@@ -449,7 +449,7 @@ class YamlEnvFl(YamlFl, EnvFlMixin):
             (SafeLoader if safe else UnsafeLoader),
         )
 
-    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cov
         raise NotImplementedError(
             "Yaml open file with mapping env var does not allow to write."
         )
@@ -519,7 +519,7 @@ class CsvFl(Fl):
                 return False
 
 
-class CsvDynamicFl(CsvFl):  # pragma: no cover
+class CsvDynamicFl(CsvFl):  # pragma: no cov
     """CSV open file object with dynamic dialect reader."""
 
     def read(self, pre_load: int = 128) -> list[dict[Union[str, int], Any]]:
@@ -664,7 +664,7 @@ class JsonEnvFl(JsonFl, EnvFlMixin):
                 logger.exception(err)
                 raise
 
-    def write(self, data, *, indent: int = 4) -> None:  # pragma: no cover
+    def write(self, data, *, indent: int = 4) -> None:  # pragma: no cov
         raise NotImplementedError(
             "Json open file with mapping env var does not allow to write."
         )
@@ -714,7 +714,7 @@ class TomlFl(Fl):
             return tomllib.loads(f.read())
 
     def write(self, data: dict[str, Any]) -> None:
-        if toml is None:  # pragma: no cover
+        if toml is None:  # pragma: no cov
             raise ImportError(
                 "writing toml file need `toml` package, you should to install "
                 "toml via `pip install toml` first."
@@ -733,13 +733,13 @@ class TomlEnvFl(TomlFl, EnvFlMixin):
         with self.open(mode="rt") as f:
             return tomllib.loads(self.search_env_replace(f.read()))
 
-    def write(self, data: dict[str, Any]) -> None:  # pragma: no cover
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cov
         raise NotImplementedError(
             "Toml open file with mapping env var does not allow to write."
         )
 
 
-class PickleFl(Fl):  # pragma: no cover
+class PickleFl(Fl):  # pragma: no cov
     """Pickle open file object that read data context from Pickle file format
     (.pickle).
     """
@@ -754,7 +754,7 @@ class PickleFl(Fl):  # pragma: no cover
             pickle.dump(data, f)
 
 
-class MarshalFl(Fl):  # pragma: no cover
+class MarshalFl(Fl):  # pragma: no cov
     """Marshal open file object that read data context from Marshal file format.
 
     Note: use marshal package
@@ -770,7 +770,7 @@ class MarshalFl(Fl):  # pragma: no cover
             marshal.dump(data, f)
 
 
-class MsgpackFl(Fl):  # pragma: no cover
+class MsgpackFl(Fl):  # pragma: no cov
     """Msgpack open file object that read data context from Msgpack file format.
 
     Note: use msgpack package

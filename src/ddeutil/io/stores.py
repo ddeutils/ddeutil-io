@@ -162,21 +162,21 @@ class BaseStore(abc.ABC):
         shutil.copy(self.path / path, dest)
 
     @abc.abstractmethod
-    def load(self, name: str) -> dict[str, Any]:  # pragma: no cover
+    def load(self, name: str) -> dict[str, Any]:  # pragma: no cov
         raise NotImplementedError()
 
     @abc.abstractmethod
     def save(
         self, name: str, data: dict, *, merge: bool = False
-    ) -> None:  # pragma: no cover
+    ) -> None:  # pragma: no cov
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def delete(self, path: str, name: str) -> None:  # pragma: no cover
+    def delete(self, path: str, name: str) -> None:  # pragma: no cov
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def create(self, name: str, **kwargs) -> None:  # pragma: no cover
+    def create(self, name: str, **kwargs) -> None:  # pragma: no cov
         raise NotImplementedError()
 
 
