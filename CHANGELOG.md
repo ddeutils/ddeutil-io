@@ -2,6 +2,12 @@
 
 ## Latest Changes
 
+## 0.2.9
+
+### :postbox: Dependencies
+
+- :pushpin: deps: separate deepdiff and fmtutil packages from core deps. (#48)
+
 ## 0.2.8
 
 ### :stars: Highlight Features
