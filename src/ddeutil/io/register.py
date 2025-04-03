@@ -415,7 +415,7 @@ class Register(BaseRegister):
         if not data:
             return 99
 
-        rs = DeepDiff(
+        rs: DeepDiff = DeepDiff(
             self.data(hashing=True),
             data,
             ignore_order=True,
