@@ -14,7 +14,6 @@ from .config import (
     Rule,
     Stage,
 )
-from .dirs import Dir
 from .exceptions import (
     IOBaseError,
     StoreArgumentError,

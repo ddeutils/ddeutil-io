@@ -9,16 +9,13 @@
 [![type check: mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-An **input/output data transport** utility objects :bullettrain_front: was created
-for full managed object of configuration file that include `load` from any file
-format like `.yaml`, `.json`, or `.toml`, and manage retention and version of config files
-lifecycle.
+An **input/output data transport** utility objects 🚅 was created for full managed
+object of configuration file that include `load` from any file
+format like `.yaml`, `.json`, or `.toml`, and manage retention and version of
+config files lifecycle ♻️.
 
-This package has 3 parts of core module; **Register**, **Stores**, and **Files**.
-The core part of this project is **Files** module that is an open file object with
-specific format that want to open include open directory objects
-(I think the open dir object do not should to use now because I do not do with
-its code.)
+The core part of this project is **Files** module that is an open file object
+with specific file format.
 
 ## 📦 Installation
 
@@ -45,7 +42,7 @@ pip install -U ddeutil-io
 > | `MsgpackFl` | `ddeutil-io[msgpack]`  | `pip install msgpack`                          |
 > | `Register`  | `ddeutil-io[register]` | `pip install python-dateutil deepdiff fmtutil` |
 
-## :dart: Features
+## 🎯 Features
 
 The features of this package is Input/Output data transport utility objects.
 
@@ -77,13 +74,13 @@ The features of this package is Input/Output data transport utility objects.
 | utils    |       rm        | Remove a file or dir from an input path.                                                                                                  |          |
 |          |      touch      | Create an empty file with specific name and modified time of path it an input times was set.                                              |          |
 
-## :beers: Usages
+## 💡 Usages
 
 I will show some usage example of function in this package. If you want to use
 complex or adjust some parameter, please see doc-string or real source code
 (I think it does not complex, and you can see how that function work).
 
-### Files
+### ⭕ Files
 
 For example, I will represent `YamlEnvFl` object that passing environment variable
 to reading content before passing to the Yaml loader.
@@ -106,13 +103,18 @@ assert content['data']['get'] == "HELLO WORLD"
 > This module do not implement special function on IO like the build-in ``open``
 > function. It also makes standard ``read`` and ``write`` file objects.
 
-### Store
+### ❌ Dirs
+
+> [!WARNING]
+> This module should not use on production.
+
+### ⭕ Store
 
 Store object is the storing dir system handler object that manage any files in
 that dir path with `get`, `move`, `load`, `save`, or `ls` operations.
 
 ```python
-from ddeutil.io.stores import Store
+from ddeutil.io import Store
 
 store: Store = Store(path='./conf', compress="gzip")
 
@@ -128,7 +130,7 @@ conf/
      ╰─ file.json
 ```
 
-### Register
+### ⭕ Register
 
 The **Register Object** is the metadata generator object for the config data.
 If you passing name and configs to this object, it will find the config name
@@ -136,7 +138,7 @@ in any stage storage and generate its metadata to you.
 
 ```python
 from ddeutil.io.register import Register
-from ddeutil.io.config import Params
+from ddeutil.io import Params
 
 registry: Register = Register(
     name='examples:conn_data_local_file',
@@ -169,9 +171,9 @@ data/
      ╰─ conn_file_20240101_000000.json
 ```
 
-## :speech_balloon: Contribute
+## 💬 Contribute
 
 I do not think this project will go around the world because it has specific propose,
 and you can create by your coding without this project dependency for long term
-solution. So, on this time, you can open [the GitHub issue on this project :raised_hands:](https://github.com/ddeutils/ddeutil-io/issues)
+solution. So, on this time, you can open [the GitHub issue on this project 🙌](https://github.com/ddeutils/ddeutil-io/issues)
 for fix bug or request new feature if you want it.
