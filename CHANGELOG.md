@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+## 0.2.10
+
+### :bug: Bug fixes
+
+- :gear: fixed: add no cov comment on import try-except.
+
+### :postbox: Dependencies
+
+- :pushpin: deps: remove import register module on init.
+
 ## 0.2.9
 
 ### :postbox: Dependencies
