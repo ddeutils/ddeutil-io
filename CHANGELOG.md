@@ -2,6 +2,12 @@
 
 ## Latest Changes
 
+## 0.2.11
+
+### :postbox: Dependencies
+
+- :pushpin: deps: update ddeutil from 0.4.6 to 0.4.7.
+
 ## 0.2.10
 
 ### :bug: Bug fixes
