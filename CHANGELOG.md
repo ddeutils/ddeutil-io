@@ -2,6 +2,12 @@
 
 ## Latest Changes
 
+## 0.2.12
+
+### :postbox: Dependencies
+
+- :pushpin: deps: change toml package to rtoml for perf and python version support.
+
 ## 0.2.11
 
 ### :postbox: Dependencies
