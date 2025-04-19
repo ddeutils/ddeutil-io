@@ -172,21 +172,21 @@ class Params:
 
     @classmethod
     def from_toml(cls, path: Union[Path]) -> Self:
-        """Read params from .toml file"""
-        import toml
+        """Read params from the `.toml` file"""
+        import rtoml
 
         with open(
             path or "./io-register.toml",
             encoding="utf-8",
         ) as f:
             data: dict[str, Any] = (
-                toml.load(f).get("tool", {}).get("io", {}).get("register", {})
+                rtoml.load(f).get("tool", {}).get("io", {}).get("register", {})
             )
         return Params(**data)
 
     @classmethod
     def from_yaml(cls, path: Union[Path]) -> Self:
-        """Read params from .yaml file"""
+        """Read params from the `.yaml` file"""
         return cls(
             **YamlEnvFl(path or "./io-register.yaml")
             .read()
