@@ -9,13 +9,13 @@
 [![type check: mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-An **input/output data transport** utility objects 🚅 was created for full managed
-object of configuration file that include `load` from any file
-format like `.yaml`, `.json`, or `.toml`, and manage retention and version of
-config files lifecycle ♻️.
+An **Input/Output Transport Objects** 🚅 was created for full managed configuration
+file that include `read` and `write` from any file format like `.yaml`, `.json`,
+or `.toml`. This package also provide retention and version management of config
+files for configuration data lifecycle ♻️.
 
-The core part of this project is **Files** module that is an open file object
-with specific file format.
+> [!NOTE]
+> The core part of this project is **Files** module.
 
 ## 📦 Installation
 
