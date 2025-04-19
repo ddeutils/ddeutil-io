@@ -34,7 +34,7 @@ test = [
 all = [
     "msgpack==1.1.0",
     "pyyaml==6.0.2",
-    "toml==0.10.2",
+    "rtoml==0.12.0",
     "fmtutil==1.0.15",
     "deepdiff==8.4.2",
     "python-dateutil==2.9.0.post0",
@@ -47,7 +47,7 @@ register = [
     "types-python-dateutil==2.9.0.20241206",
 ]
 yaml = [ "pyyaml==6.0.2" ]
-toml = [ "toml==0.10.2" ]
+toml = [ "rtoml==0.12.0" ]
 msgpack = [ "msgpack==1.1.0" ]
 
 [project.urls]

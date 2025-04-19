@@ -38,7 +38,7 @@ pip install -U ddeutil-io
 > | Module      | Installation           | Additional dependencies                        |
 > |-------------|------------------------|------------------------------------------------|
 > | `YamlFl`    | `ddeutil-io[yaml]`     | `pip install PyYaml`                           |
-> | `TomlFl`    | `ddeutil-io[toml]`     | `pip install toml`                             |
+> | `TomlFl`    | `ddeutil-io[toml]`     | `pip install rtoml`                            |
 > | `MsgpackFl` | `ddeutil-io[msgpack]`  | `pip install msgpack`                          |
 > | `Register`  | `ddeutil-io[register]` | `pip install python-dateutil deepdiff fmtutil` |
 

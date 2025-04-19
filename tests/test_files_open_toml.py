@@ -49,7 +49,7 @@ def test_files_open_toml_write(toml_path):
         {"config": {"value": "foo"}}
     )
     with open(toml_path / "test_simple_write.toml") as f:
-        assert f.read() == ("[config]\n" 'value = "foo"\n')
+        assert f.read() == "[config]\n" 'value = "foo"\n'
 
 
 def test_files_open_toml_env_read(toml_path):

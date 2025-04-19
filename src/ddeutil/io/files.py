@@ -59,14 +59,9 @@ except ImportError:  # pragma: no cov
     UnsafeLoader = None
 
 try:
-    import toml
+    import rtoml
 except ImportError:  # pragma: no cov
-    toml = None
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cov
-    import pip._vendor.tomli as tomllib
+    rtoml = None
 
 from .utils import search_env, search_env_replace
 
@@ -710,28 +705,38 @@ class TomlFl(Fl):
     """
 
     def read(self):
+        if rtoml is None:  # pragma: no cov
+            raise ImportError(
+                "writing toml file need `rtoml` package, you should to install "
+                "rtoml via `pip install rtoml` first."
+            )
         with self.open(mode="rt") as f:
-            return tomllib.loads(f.read())
+            return rtoml.loads(f.read())
 
     def write(self, data: dict[str, Any]) -> None:
-        if toml is None:  # pragma: no cov
+        if rtoml is None:  # pragma: no cov
             raise ImportError(
-                "writing toml file need `toml` package, you should to install "
-                "toml via `pip install toml` first."
+                "writing toml file need `rtoml` package, you should to install "
+                "rtoml via `pip install rtoml` first."
             )
         with self.open(mode="wt") as f:
             # noinspection PyTypeChecker
-            toml.dump(data, f)
+            rtoml.dump(data, f)
 
 
 class TomlEnvFl(TomlFl, EnvFlMixin):
     """TOML open file object which mapping search environment variable before
-    parsing with toml package from TOML file format (.toml).
+    parsing with `rtoml` package from TOML file format (.toml).
     """
 
     def read(self):
+        if rtoml is None:  # pragma: no cov
+            raise ImportError(
+                "writing toml file need `rtoml` package, you should to install "
+                "rtoml via `pip install rtoml` first."
+            )
         with self.open(mode="rt") as f:
-            return tomllib.loads(self.search_env_replace(f.read()))
+            return rtoml.loads(self.search_env_replace(f.read()))
 
     def write(self, data: dict[str, Any]) -> None:  # pragma: no cov
         raise NotImplementedError(
