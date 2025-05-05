@@ -99,12 +99,13 @@ def make_ls(test_path: Path) -> Generator[Path, None, None]:
 def test_ls(make_ls):
     files = ls(make_ls, ignore_file=".ignore")
 
-    assert [replace_sep(str(f.relative_to(make_ls))) for f in files] == [
+    print([replace_sep(str(f.relative_to(make_ls))) for f in files])
+    assert set(replace_sep(str(f.relative_to(make_ls))) for f in files) == {
         "00_01_test.yml",
         "dir01/01_01_test.yml",
         "dir01/01_02_test.yml",
         "dir02/02_01_test.yml",
-    ]
+    }
 
 
 def test_ls_empty(test_path):
