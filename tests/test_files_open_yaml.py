@@ -1,6 +1,8 @@
 import os
 import shutil
+import time
 from collections.abc import Generator
+from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -69,11 +71,30 @@ def test_read_yaml_resolve_file(target_path, yaml_str_safe, yaml_data_safe):
         f.write(yaml_str_safe)
 
     data = YamlFlResolve(path=yaml_path).read(safe=False)
-    assert "on" == data["main_key"]["sub_key"]["str2bool"]
+    assert data["main_key"]["sub_key"]["str2bool"] == "on"
     assert (
         "# Comment ${DEMO_ENV_VALUE}\n"
         "This is a long statement with comment above"
     ) == data["main_key"]["sub_key"]["statement"]
+
+
+def test_read_yaml_resolve_file_multithread(target_path, yaml_str_safe, yaml_data_safe):
+    yaml_path: Path = target_path / "test_read_file_resolve.yaml"
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        f.write(yaml_str_safe)
+
+    def read_task():  # pragma: no cov
+        data = YamlFlResolve(path=yaml_path).read()
+        time.sleep(0.5)
+        assert data["main_key"]["sub_key"]["str2bool"] == "on"
+        assert (
+            "# Comment ${DEMO_ENV_VALUE}\n"
+            "This is a long statement with comment above"
+        ) == data["main_key"]["sub_key"]["statement"]
+
+    with ThreadPoolExecutor() as executor:
+        executor.submit(read_task)
+        read_task()
 
 
 def test_read_yaml_file_with_safe(target_path, yaml_str_safe, yaml_data_safe):
@@ -137,7 +158,7 @@ def test_read_yaml_file_with_safe_mode(
     yaml_data_env_safe,
     target_path,
 ):
-    yaml_path: str = target_path / "test_read_file_env.yaml"
+    yaml_path: Path = target_path / "test_read_file_env.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
@@ -152,7 +173,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare(
     target_path,
     yaml_str_env_safe,
 ):
-    yaml_path: str = target_path / "test_read_file_env_prepare.yaml"
+    yaml_path: Path = target_path / "test_read_file_env_prepare.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
@@ -182,7 +203,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare_2(
     target_path,
     yaml_str_env_safe,
 ):
-    yaml_path: str = target_path / "test_read_file_env_prepare_2.yaml"
+    yaml_path: Path = target_path / "test_read_file_env_prepare_2.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(yaml.safe_load(yaml_str_env_safe), f)

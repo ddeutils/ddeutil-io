@@ -27,6 +27,7 @@ import pickle
 import re
 from contextlib import contextmanager
 from pathlib import Path
+from threading import Lock
 from typing import (
     IO,
     Any,
@@ -38,6 +39,7 @@ from typing import (
     Protocol,
     Union,
     get_args,
+    Iterator,
 )
 
 try:
@@ -67,6 +69,7 @@ from .utils import search_env, search_env_replace
 
 logger = logging.getLogger("ddeutil.io")
 FileCompressType = Literal["gzip", "gz", "xz", "bz2"]
+LOCK: Lock = Lock()
 
 __all__: tuple[str, ...] = (
     "Fl",
@@ -237,12 +240,12 @@ class Fl(FlABC):
         )
 
     @contextmanager
-    def mopen(self, *, mode: Optional[str] = None) -> IO:
+    def mopen(self, *, mode: Optional[str] = None) -> Iterator[IO]:
         """Open with memory mode context manager.
 
-        :param mode: A opening mode that allow you to use read or write mode.
+        :param mode: An opening mode that allow you to use read or write mode.
         :type mode: Optional[str] (None)
-        :rtype: IO
+        :rtype: Iterator[IO]
         """
         mode: str = mode or "r"
         file: IO = self.open(mode=mode)
@@ -379,11 +382,11 @@ class YamlFlResolve(YamlFl):
             Handle top level yaml property ``on``
             docs: https://github.com/yaml/pyyaml/issues/696
 
-            ```
+            ```python
             import re
             from yaml.resolver import Resolver
 
-            # zap the Resolver class' internal dispatch table
+            # NOTE: zap the Resolver class' internal dispatch table
             Resolver.yaml_implicit_resolvers = {}
 
             # NOTE: Current Resolver
@@ -401,27 +404,28 @@ class YamlFlResolve(YamlFl):
                     list('tf'))
             ```
         """
-        from yaml.resolver import Resolver
+        with LOCK:
+            from yaml.resolver import Resolver
 
-        revert = Resolver.yaml_implicit_resolvers.copy()
+            revert = Resolver.yaml_implicit_resolvers.copy()
 
-        for ch in "OoYyNn":
-            if len(Resolver.yaml_implicit_resolvers[ch]) == 1:
-                del Resolver.yaml_implicit_resolvers[ch]
-            else:
-                Resolver.yaml_implicit_resolvers[ch] = [
-                    x
-                    for x in Resolver.yaml_implicit_resolvers[ch]
-                    if x[0] != "tag:yaml.org,2002:bool"
-                ]
+            for ch in "OoYyNn":
+                if len(Resolver.yaml_implicit_resolvers[ch]) == 1:
+                    del Resolver.yaml_implicit_resolvers[ch]
+                else:
+                    Resolver.yaml_implicit_resolvers[ch] = [
+                        x
+                        for x in Resolver.yaml_implicit_resolvers[ch]
+                        if x[0] != "tag:yaml.org,2002:bool"
+                    ]
 
-        with self.open(mode="r") as f:
-            rs: dict[str, Any] = yaml.load(
-                f.read(), (SafeLoader if safe else UnsafeLoader)
-            )
-            # NOTE: Override revert resolver when want to use safe load.
-            Resolver.yaml_implicit_resolvers = revert
-            return rs
+            with self.open(mode="r") as f:
+                rs: dict[str, Any] = yaml.load(
+                    f.read(), (SafeLoader if safe else UnsafeLoader)
+                )
+                # NOTE: Override revert resolver when want to use safe load.
+                Resolver.yaml_implicit_resolvers = revert
+                return rs
 
 
 class YamlEnvFl(YamlFl, EnvFlMixin):
