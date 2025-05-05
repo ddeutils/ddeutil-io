@@ -2,6 +2,12 @@
 
 ## Latest Changes
 
+## 0.2.13
+
+### :bug: Bug fixes
+
+- :gear: fixed: add threading lock for YAML resolve that error when run multithread (#50)
+
 ## 0.2.12
 
 ### :postbox: Dependencies
