@@ -2,6 +2,20 @@
 
 ## Latest Changes
 
+## 0.2.14
+
+### :bug: Bug fixes
+
+- :gear: fixed: add space between env key on search env replace.
+
+### :package: Build & Workflow
+
+- :toolbox: build: revise precommit local run for pytest.
+
+### :book: Documentations
+
+- :page_facing_up: docs: update readme file and docs-string.
+
 ## 0.2.13
 
 ### :bug: Bug fixes
