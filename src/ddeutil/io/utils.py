@@ -158,12 +158,12 @@ def search_env_replace(
     :type contents: str
     :param raise_if_default_not_exists: A flag that will allow this function
         raise the error when default of env var does not set from contents.
-    :type raise_if_default_not_exists: bool(=False)
+    :type raise_if_default_not_exists: bool (False)
     :param default: a default value.
-    :type default: str(='null')
-    :param escape: a escape value that use for initial replace when found escape
+    :type default: str (Default is 'null')
+    :param escape: An escape value that use for initial replace when found escape
         char on searching.
-    :type escape: str(='ESC')
+    :type escape: str (Default is 'ESC')
     :param caller: a prepare function that will execute before replace env var.
     :type caller: Callable[[str], str]
 
@@ -239,9 +239,16 @@ def search_env(
     fit with my package. (https://github.com/theskumar/python-dotenv)
 
     Examples:
-        >>> search_env("Data='demo'\\nfoo=bar")
+        >>> search_env(
+        ...     "Data='demo'\\n"
+        ...     "foo=bar"
+        ... )
         {'Data': 'demo', 'foo': 'bar'}
-        >>> search_env("Data='demo'\\n# foo=bar\\nhello=${Data}-2")
+        >>> search_env(
+        ...     "Data='demo'\\n"
+        ...     "# foo=bar\\n"
+        ...     "hello=${Data}-2"
+        ... )
         {'Data': 'demo', 'hello': 'demo-2'}
     """
     _default: str = default or ""
