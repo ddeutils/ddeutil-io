@@ -101,6 +101,8 @@ def csv_data() -> list[dict[str, str]]:
 def test_files_utils_search_env_replace():
     os.environ["NAME"] = "foo"
     assert "Hello foo" == search_env_replace("Hello ${NAME}")
+    assert "foo" == search_env_replace("${NAME}")
+    assert "foo" == search_env_replace("${ NAME }")
 
 
 def test_files_utils_search_env_replace_raise():

@@ -122,10 +122,12 @@ class RegexConf:
             (?P<escaped>\$|\d+)             # escape $ or number like $1
             |
             (\{
+                \s?
                 (?P<braced>([^{}]*?))       # value in braced {} not contain {}
                 (:                          # : seperator for default
                     (?P<braced_default>[^{}]*?) # value default with sep :
                 )?
+                \s?
             })
         ))
         [\"\']?                             # single or double quoted value
