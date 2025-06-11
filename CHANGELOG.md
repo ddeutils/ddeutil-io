@@ -2,6 +2,21 @@
 
 ## Latest Changes
 
+## 0.2.15
+
+### :bug: Bug fixes
+
+- :gear: fixed: fix is_ignored function do not resolve path before matching.
+
+### :package: Build & Workflow
+
+- :package: build: bump types-python-dateutil (#52)
+- :package: build: bump deepdiff from 8.4.2 to 8.5.0 (#51)
+
+### :postbox: Dependencies
+
+- :pushpin: deps: change fix version on deps.
+
 ## 0.2.14
 
 ### :bug: Bug fixes
