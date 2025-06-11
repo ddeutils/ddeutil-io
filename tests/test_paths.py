@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from ddeutil.io.paths import PathSearch, ls, replace_sep
+from ddeutil.io.paths import PathSearch, is_ignored, ls, replace_sep
 from ddeutil.io.utils import touch
 
 
@@ -85,22 +85,26 @@ def make_ls(test_path: Path) -> Generator[Path, None, None]:
     touch(path_search / "tests" / "03_01_test.yml")
     touch(path_search / "tests" / "03_02_test.yml")
 
-    with open(path_search / ".ignore", mode="w") as f:
+    (path_search / "ignore_dir").mkdir(exist_ok=True)
+    touch(path_search / "ignore_dir" / "ignore_01.yml")
+    touch(path_search / "ignore_dir" / "ignore_02.yml")
+
+    with open(path_search / ".ignore_file", mode="w") as f:
         f.write("tests\n")
         f.write("*.json\n")
         f.write("*_ignore.yml\n")
         f.write("02_03_*\n")
+        f.write("ignore_dir/\n")
 
     yield path_search
 
     shutil.rmtree(path_search)
 
 
-def test_ls(make_ls):
-    files = ls(make_ls, ignore_file=".ignore")
-
+def test_ls(make_ls: Path):
+    files = ls(make_ls, ignore_file=".ignore_file")
     print([replace_sep(str(f.relative_to(make_ls))) for f in files])
-    assert set(replace_sep(str(f.relative_to(make_ls))) for f in files) == {
+    assert {replace_sep(str(f.relative_to(make_ls))) for f in files} == {
         "00_01_test.yml",
         "dir01/01_01_test.yml",
         "dir01/01_02_test.yml",
@@ -116,3 +120,12 @@ def test_ls_empty(test_path):
     assert list(files) == []
 
     shutil.rmtree(path_search)
+
+
+def test_is_ignored():
+    assert is_ignored(Path("./ignore_dir"), ["ignore_dir/"])
+    assert is_ignored(Path("./ignore_dir/test.yml"), ["ignore_dir/"])
+    assert is_ignored(Path("./ignore_dir"), ["ignore_dir"])
+    assert is_ignored(Path("./ignore_dir/test.yml"), ["ignore_dir"])
+    assert is_ignored(Path("./test/ignore_dir/test.yml"), ["ignore_dir"])
+    assert is_ignored(Path("./test/ignore_dir/test.yml"), ["ignore_dir/"])

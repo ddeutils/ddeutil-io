@@ -148,7 +148,10 @@ def is_ignored(file: Path, ignores: list[str]) -> bool:
     :returns: True if path should be ignored, False otherwise
     """
     return any(
-        (file.match(f"**/{pattern}/*") or file.match(f"**/{pattern}*"))
+        (
+            file.resolve().match(f"**/{pattern.removesuffix('/')}/*")
+            or file.resolve().match(f"**/{pattern.removesuffix('/')}*")
+        )
         for pattern in ignores
     )
 
