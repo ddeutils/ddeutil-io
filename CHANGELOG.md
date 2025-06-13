@@ -2,6 +2,20 @@
 
 ## Latest Changes
 
+## 0.2.16
+
+### :sparkles: Features
+
+- :dart: feat: add support and testcase for is_ignored function.
+
+### :bug: Bug fixes
+
+- :gear: fixed: remove resolve for fnmatch.
+
+### :package: Build & Workflow
+
+- :toolbox: build: fix testing workflow.
+
 ## 0.2.15
 
 ### :bug: Bug fixes
