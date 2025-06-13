@@ -152,8 +152,8 @@ def is_ignored(file: Path, ignores: list[str]) -> bool:
         (
             file.resolve().match(f"**/{p}/*")
             or file.resolve().match(f"**/{p}*")
-            or fnmatch.fnmatch(str(file.resolve()), f"**/{p}/**")
-            or fnmatch.fnmatch(str(file.resolve()), f"*{p}*")
+            or fnmatch.fnmatch(str(file), f"**/{p}/**")
+            or fnmatch.fnmatch(str(file), f"*{p}*")
         )
         for pattern in ignores
         if (p := pattern.rstrip("/"))

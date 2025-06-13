@@ -78,19 +78,19 @@ def make_ls(test_path: Path) -> Generator[Path, None, None]:
     touch(path_search / "dir02" / "02_02_test_ignore.yml")
     touch(path_search / "dir02" / "02_03_test.yml")
 
-    (path_search / "dir02/tests").mkdir(exist_ok=True)
-    touch(path_search / "dir02/tests" / "02_01_01_demo.yml")
+    (path_search / "dir02/tests_dir").mkdir(exist_ok=True)
+    touch(path_search / "dir02/tests_dir" / "02_01_01_demo.yml")
 
-    (path_search / "tests").mkdir(exist_ok=True)
-    touch(path_search / "tests" / "03_01_test.yml")
-    touch(path_search / "tests" / "03_02_test.yml")
+    (path_search / "tests_dir").mkdir(exist_ok=True)
+    touch(path_search / "tests_dir" / "03_01_test.yml")
+    touch(path_search / "tests_dir" / "03_02_test.yml")
 
     (path_search / "ignore_dir").mkdir(exist_ok=True)
     touch(path_search / "ignore_dir" / "ignore_01.yml")
     touch(path_search / "ignore_dir" / "ignore_02.yml")
 
     with open(path_search / ".ignore_file", mode="w") as f:
-        f.write("tests\n")
+        f.write("tests_dir\n")
         f.write("*.json\n")
         f.write("*_ignore.yml\n")
         f.write("02_03_*\n")
