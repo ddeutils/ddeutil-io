@@ -123,9 +123,57 @@ def test_ls_empty(test_path):
 
 
 def test_is_ignored():
-    assert is_ignored(Path("./ignore_dir"), ["ignore_dir/"])
-    assert is_ignored(Path("./ignore_dir/test.yml"), ["ignore_dir/"])
-    assert is_ignored(Path("./ignore_dir"), ["ignore_dir"])
-    assert is_ignored(Path("./ignore_dir/test.yml"), ["ignore_dir"])
-    assert is_ignored(Path("./test/ignore_dir/test.yml"), ["ignore_dir"])
-    assert is_ignored(Path("./test/ignore_dir/test.yml"), ["ignore_dir/"])
+    assert is_ignored(Path(".foo/ignore_dir"), ["ignore_dir/"])
+    assert is_ignored(Path(".foo/ignore_dir/test.yml"), ["ignore_dir/"])
+    assert is_ignored(Path(".foo/ignore_dir"), ["ignore_dir"])
+    assert is_ignored(Path(".foo/ignore_dir/test.yml"), ["ignore_dir"])
+    assert is_ignored(Path(".foo/test/ignore_dir/test.yml"), ["ignore_dir"])
+    assert is_ignored(Path(".foo/test/ignore_dir/test.yml"), ["ignore_dir/"])
+
+    # Test case 1: Basic directory and file patterns
+    patterns1 = ["ignore_dir/", "*_test.json"]
+    assert is_ignored(Path("foo/demo_test.json"), patterns1)
+    assert is_ignored(Path("foo/ignore_dir"), patterns1)
+    assert is_ignored(Path("foo/ignore_dir/file.json"), patterns1)
+    assert not is_ignored(Path("foo/regular_file.json"), patterns1)
+
+    # Test case 2: Wildcard patterns
+    patterns2 = ["*.log", "temp*/", "build/"]
+    assert is_ignored(Path("error.log"), patterns2)
+    assert is_ignored(Path("debug.log"), patterns2)
+    assert is_ignored(Path("temp_backup/"), patterns2)
+    assert is_ignored(Path("temp_backup/file.txt"), patterns2)
+    assert is_ignored(Path("build/output.exe"), patterns2)
+    assert not is_ignored(Path("src/main.py"), patterns2)
+
+    # Test case 3: Nested patterns
+    patterns3 = ["node_modules/", "**/*.pyc", ".git/"]
+    assert is_ignored(Path("node_modules/package/index.js"), patterns3)
+    assert is_ignored(Path("src/__pycache__/module.pyc"), patterns3)
+    assert is_ignored(Path(".git/config"), patterns3)
+    assert not is_ignored(Path("src/main.py"), patterns3)
+
+    # Test case 4: Complex patterns
+    patterns4 = ["*.tmp", "cache*/", "*_backup.*", "test_*"]
+    assert is_ignored(Path("data.tmp"), patterns4)
+    assert is_ignored(Path("cache_old/data.json"), patterns4)
+    assert is_ignored(Path("config_backup.json"), patterns4)
+    assert is_ignored(Path("test_module.py"), patterns4)
+    assert not is_ignored(Path("main.py"), patterns4)
+
+    # Test case 5: Edge cases
+    patterns5 = [".DS_Store", "Thumbs.db", "*.swp", "__pycache__/"]
+    assert is_ignored(Path(".DS_Store"), patterns5)
+    assert is_ignored(Path("folder/.DS_Store"), patterns5)
+    assert is_ignored(Path("Thumbs.db"), patterns5)
+    assert is_ignored(Path("file.swp"), patterns5)
+    assert is_ignored(Path("__pycache__/module.pyc"), patterns5)
+    assert not is_ignored(Path("regular_file.txt"), patterns5)
+
+    # Test case 6: Path-specific patterns
+    patterns6 = ["src/test/", "docs/*.md", "config/*.ini"]
+    assert is_ignored(Path("src/test/unit_test.py"), patterns6)
+    assert is_ignored(Path("docs/readme.md"), patterns6)
+    assert is_ignored(Path("config/settings.ini"), patterns6)
+    assert not is_ignored(Path("src/main.py"), patterns6)
+    assert not is_ignored(Path("readme.md"), patterns6)

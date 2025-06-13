@@ -127,6 +127,7 @@ class PathSearch:
 
 def read_ignore(file: Union[str, Path]) -> list[str]:
     """Read ignore file content to list of ignore pattern."""
+    file = Path(file)
     ignores: list[str] = [file.name]
     if file.exists():
         ignores.extend(
@@ -149,10 +150,13 @@ def is_ignored(file: Path, ignores: list[str]) -> bool:
     """
     return any(
         (
-            file.resolve().match(f"**/{pattern.removesuffix('/')}/*")
-            or file.resolve().match(f"**/{pattern.removesuffix('/')}*")
+            file.resolve().match(f"**/{p}/*")
+            or file.resolve().match(f"**/{p}*")
+            or fnmatch.fnmatch(str(file.resolve()), f"**/{p}/**")
+            or fnmatch.fnmatch(str(file.resolve()), f"*{p}*")
         )
         for pattern in ignores
+        if (p := pattern.rstrip("/"))
     )
 
 
