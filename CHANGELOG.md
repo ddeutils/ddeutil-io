@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+## 0.2.17
+
+### :stars: Highlight Features
+
+- :star: hl: add YamlEnvFlResolve object for resolve before passing env.
+
+### :book: Documentations
+
+- :page_facing_up: docs: update readme file.
+
 ## 0.2.16
 
 ### :sparkles: Features
