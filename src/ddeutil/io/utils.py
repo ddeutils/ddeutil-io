@@ -339,7 +339,7 @@ def reverse_readline(
             how-to-read-a-file-in-reverse-order
         - https://stackoverflow.com/a/23646049/8776239
     """
-    segment: AnyStr | None = None
+    segment: Optional[AnyStr] = None
     offset: int = 0
     f.seek(0, os.SEEK_END)
     file_size = remaining_size = f.tell()

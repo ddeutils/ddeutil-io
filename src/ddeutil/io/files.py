@@ -25,6 +25,7 @@ import mmap
 import os
 import pickle
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from threading import Lock
@@ -39,7 +40,6 @@ from typing import (
     Protocol,
     Union,
     get_args,
-    Iterator,
 )
 
 try:
@@ -80,6 +80,7 @@ __all__: tuple[str, ...] = (
     "JsonLineFl",
     "YamlFl",
     "YamlFlResolve",
+    "YamlEnvFlResolve",
     "YamlEnvFl",
     "CsvFl",
     "CsvPipeFl",
@@ -240,7 +241,7 @@ class Fl(FlABC):
         )
 
     @contextmanager
-    def mopen(self, *, mode: Optional[str] = None) -> Iterator[IO]:
+    def mopen(self, *, mode: Optional[str] = None) -> Iterator[Union[IO, mmap]]:
         """Open with memory mode context manager.
 
         :param mode: An opening mode that allow you to use read or write mode.
@@ -378,37 +379,34 @@ class YamlFlResolve(YamlFl):
         :type safe: bool (True)
         :rtype: dict[str, Any]
 
-        Note that:
+        Notes:
             Handle top level yaml property ``on``
             docs: https://github.com/yaml/pyyaml/issues/696
 
-            ```python
-            import re
-            from yaml.resolver import Resolver
-
-            # NOTE: zap the Resolver class' internal dispatch table
-            Resolver.yaml_implicit_resolvers = {}
-
-            # NOTE: Current Resolver
-            Resolver.add_implicit_resolver(
-                    'tag:yaml.org,2002:bool',
-                    re.compile(r'''^(?:yes|Yes|YES|no|No|NO
-                                |true|True|TRUE|false|False|FALSE
-                                |on|On|ON|off|Off|OFF)$''', re.X),
-                    list('yYnNtTfFoO'))
-
-            # NOTE: The 1.2 bool impl Resolver:
-            Resolver.add_implicit_resolver(
-                    'tag:yaml.org,2002:bool',
-                    re.compile(r'^(?:true|false)$', re.X),
-                    list('tf'))
-            ```
+            >>> import re
+            >>> from yaml.resolver import Resolver
+            >>> # NOTE: zap the Resolver class' internal dispatch table
+            >>> Resolver.yaml_implicit_resolvers = {}
+            >>> # NOTE: Current Resolver
+            >>> Resolver.add_implicit_resolver(
+            ...     'tag:yaml.org,2002:bool',
+            ...     re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+            ...                 |true|True|TRUE|false|False|FALSE
+            ...                 |on|On|ON|off|Off|OFF)$''', re.X),
+            ...     list('yYnNtTfFoO')
+            ... )
+            >>> # NOTE: The 1.2 bool impl Resolver:
+            >>> Resolver.add_implicit_resolver(
+            ...         'tag:yaml.org,2002:bool',
+            ...         re.compile(r'^(?:true|false)$', re.X),
+            ...         list('tf'))
         """
         with LOCK:
             from yaml.resolver import Resolver
 
             revert = Resolver.yaml_implicit_resolvers.copy()
 
+            # NOTE: remove resolver entries for On/Off/Yes/No
             for ch in "OoYyNn":
                 if len(Resolver.yaml_implicit_resolvers[ch]) == 1:
                     del Resolver.yaml_implicit_resolvers[ch]
@@ -423,9 +421,48 @@ class YamlFlResolve(YamlFl):
                 rs: dict[str, Any] = yaml.load(
                     f.read(), (SafeLoader if safe else UnsafeLoader)
                 )
-                # NOTE: Override revert resolver when want to use safe load.
-                Resolver.yaml_implicit_resolvers = revert
-                return rs
+
+            # NOTE: Override revert resolver when want to use safe load.
+            Resolver.yaml_implicit_resolvers = revert
+            return rs
+
+
+class YamlEnvFlResolve(YamlFlResolve, EnvFlMixin):
+    def read(self, safe: bool = True) -> dict[str, Any]:
+        with LOCK:
+            from yaml.resolver import Resolver
+
+            revert = Resolver.yaml_implicit_resolvers.copy()
+
+            # NOTE: remove resolver entries for On/Off/Yes/No
+            for ch in "OoYyNn":
+                if len(Resolver.yaml_implicit_resolvers[ch]) == 1:
+                    del Resolver.yaml_implicit_resolvers[ch]
+                else:
+                    Resolver.yaml_implicit_resolvers[ch] = [
+                        x
+                        for x in Resolver.yaml_implicit_resolvers[ch]
+                        if x[0] != "tag:yaml.org,2002:bool"
+                    ]
+
+            with self.open(mode="r") as f:
+                context_env_replace: str = self.search_env_replace(
+                    yaml.dump(yaml.load(f.read(), UnsafeLoader))
+                )
+
+            rs: dict[str, Any] = yaml.load(
+                context_env_replace, (SafeLoader if safe else UnsafeLoader)
+            )
+
+            # NOTE: Override revert resolver when want to use safe load.
+            Resolver.yaml_implicit_resolvers = revert
+            return rs
+
+    def write(self, data: dict[str, Any]) -> None:  # pragma: no cov
+        raise NotImplementedError(
+            "Yaml Resolve open file with mapping env var does not allow to "
+            "write."
+        )
 
 
 class YamlEnvFl(YamlFl, EnvFlMixin):

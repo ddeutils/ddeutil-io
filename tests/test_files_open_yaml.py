@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 import yaml
-from ddeutil.io.files import YamlEnvFl, YamlFl, YamlFlResolve
+from ddeutil.io.files import YamlEnvFl, YamlEnvFlResolve, YamlFl, YamlFlResolve
 
 
 @pytest.fixture(scope="module")
@@ -78,7 +78,9 @@ def test_read_yaml_resolve_file(target_path, yaml_str_safe, yaml_data_safe):
     ) == data["main_key"]["sub_key"]["statement"]
 
 
-def test_read_yaml_resolve_file_multithread(target_path, yaml_str_safe, yaml_data_safe):
+def test_read_yaml_resolve_file_multithread(
+    target_path, yaml_str_safe, yaml_data_safe
+):
     yaml_path: Path = target_path / "test_read_file_resolve.yaml"
     with open(yaml_path, mode="w", encoding="utf-8") as f:
         f.write(yaml_str_safe)
@@ -161,7 +163,7 @@ def test_read_yaml_file_with_safe_mode(
     yaml_path: Path = target_path / "test_read_file_env.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
-        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
+        f.write(yaml_str_env_safe)
 
     os.environ["DEMO_ENV_VALUE"] = "demo"
 
@@ -176,7 +178,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare(
     yaml_path: Path = target_path / "test_read_file_env_prepare.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
-        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
+        f.write(yaml_str_env_safe)
 
     os.environ["DEMO_ENV_VALUE"] = "demo"
 
@@ -206,7 +208,7 @@ def test_read_yaml_file_with_safe_mode_and_prepare_2(
     yaml_path: Path = target_path / "test_read_file_env_prepare_2.yaml"
 
     with open(yaml_path, mode="w", encoding="utf-8") as f:
-        yaml.dump(yaml.safe_load(yaml_str_env_safe), f)
+        f.write(yaml_str_env_safe)
 
     os.environ["DEMO_ENV_VALUE"] = "P@ssW0rd"
 
@@ -229,3 +231,57 @@ def test_read_yaml_file_with_safe_mode_and_prepare_2(
             }
         }
     } == data
+
+
+@pytest.fixture(scope="module")
+def yaml_str_env_resolve_safe() -> str:
+    return dedent(
+        """
+    main_key:
+        sub_key:
+            key01: 'test ${DEMO_ENV_VALUE} value'
+            key02: $1 This is escape with number
+            key03: $$ESCAPE This is escape with $
+            key04: ['i1', 'i2', '${DEMO_ENV_VALUE}']
+            key05: ${DEMO_ENV_VALUE_EMPTY:default}
+            key06: $${DEMO_ENV_VALUE}
+            key07: This ${DEMO_ENV_VALUE} ${{DEMO_ENV_VALUE}}
+            key08: |
+                # Comment
+                statement ${DEMO_ENV_VALUE}
+            key09:
+                off: off
+                yes: yes
+                no: no
+                on: on
+    """
+    ).strip()
+
+
+def test_read_yaml_env_resolve_file_with_safe_mode(
+    yaml_str_env_resolve_safe,
+    target_path,
+):
+    yaml_path: Path = target_path / "test_read_file_env.yaml"
+
+    with open(yaml_path, mode="w", encoding="utf-8") as f:
+        f.write(yaml_str_env_resolve_safe)
+
+    os.environ["DEMO_ENV_VALUE"] = "demo"
+
+    data = YamlEnvFlResolve(path=yaml_path).read()
+    assert data == {
+        "main_key": {
+            "sub_key": {
+                "key01": "test demo value",
+                "key02": "$1 This is escape with number",
+                "key03": "$ESCAPE This is escape with $",
+                "key04": ["i1", "i2", "demo"],
+                "key05": "default",
+                "key06": "${DEMO_ENV_VALUE}",
+                "key07": "This demo ${{DEMO_ENV_VALUE}}",
+                "key08": "# Comment\nstatement demo\n",
+                "key09": {"no": "no", "off": "off", "on": "on", "yes": "yes"},
+            }
+        }
+    }
